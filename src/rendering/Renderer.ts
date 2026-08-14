@@ -7,10 +7,12 @@ import type { EnemyTypeId } from '../enemies/EnemyTypes';
 import { ChaosSystem } from '../systems/ChaosSystem';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { MapRenderer } from '../map/MapRenderer';
+import { DecalSystem } from '../map/DecalSystem';
 
 export class Renderer {
   private readonly context: CanvasRenderingContext2D;
   private readonly map = new MapRenderer();
+  private readonly decals = new DecalSystem();
 
   constructor(context: CanvasRenderingContext2D) {
     this.context = context;
@@ -22,6 +24,7 @@ export class Renderer {
     context.save();
     if (screenShake && feedback.shakeAmount > 0) context.translate((Math.random() - 0.5) * feedback.shakeAmount, (Math.random() - 0.5) * feedback.shakeAmount);
     this.map.renderBackground(context);
+    this.decals.render(context);
 
     let lastType = -1;
     for (let index = 0; index < enemies.count; index++) {
@@ -57,5 +60,13 @@ export class Renderer {
 
     this.map.renderDefenseLine(context, weapons, wallHp, wallMaxHp);
     context.restore();
+  }
+
+  addDeathDecal(x: number, y: number): void {
+    this.decals.add(x, y, 'blood', 0.7 + ((x + y) % 7) / 14);
+  }
+
+  clearDecals(): void {
+    this.decals.clear();
   }
 }

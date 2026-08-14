@@ -74,7 +74,7 @@ export class Game {
       this.elapsed += simulationDelta;
       this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
         const spawn = this.mapSpawns.nextSpawn();
-        this.enemies.spawn(spawn.x, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
+        this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
       });
       this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
         this.registerKill(reward);
@@ -111,8 +111,10 @@ export class Game {
     this.weapons.reset();
     this.upgrades.reset();
     this.waveDirector.reset();
+    this.mapSpawns.reset();
     this.chaos.reset();
     this.feedback.reset();
+    this.renderer.clearDecals();
     this.runWallBonus = 0;
     this.earnedTokens = 0;
     this.mapIntroTimer = 2;
@@ -259,6 +261,7 @@ export class Game {
 
   private registerKill(reward: number): void {
     this.kills++;
+    this.renderer.addDeathDecal(this.enemies.lastDeathX, this.enemies.lastDeathY);
     this.feedback.registerKill(this.kills);
     this.highestCombo = Math.max(this.highestCombo, this.feedback.currentCombo);
     this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier * this.feedback.goldMultiplier));

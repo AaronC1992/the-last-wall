@@ -1,6 +1,7 @@
 import { TUNING } from '../core/Constants';
 import { SeededRandom } from './SeededRandom';
 import { KING_APPROACH } from './MapConfig';
+import type { TowerPad } from './MapConfig';
 import type { WeaponManager } from '../weapons/WeaponManager';
 
 export class MapRenderer {
@@ -21,92 +22,261 @@ export class MapRenderer {
   }
 
   renderDefenseLine(context: CanvasRenderingContext2D, weapons: WeaponManager, wallHp: number, wallMaxHp: number): void {
-    const palette = KING_APPROACH.palette;
+    this.renderTowerPads(context, weapons);
+    this.renderWall(context);
+    this.renderTowerStructures(context, weapons);
     const wallY = TUNING.logicalHeight - TUNING.wallHeight;
-    this.renderTowerPad(context, KING_APPROACH.towerPads.ballista.x, KING_APPROACH.towerPads.ballista.y, '#9c7654', true);
-    this.renderTowerPad(context, KING_APPROACH.towerPads.cannon.x, KING_APPROACH.towerPads.cannon.y, '#8a97a5', weapons.isBuilt('cannon'));
-    this.renderTowerPad(context, KING_APPROACH.towerPads.fireTower.x, KING_APPROACH.towerPads.fireTower.y, '#e16b45', weapons.isBuilt('fireTower'));
-    this.renderTowerPad(context, KING_APPROACH.towerPads.lightning.x, KING_APPROACH.towerPads.lightning.y, '#79b8e8', weapons.isBuilt('lightningTower'));
-
-    context.fillStyle = palette.wallDark;
-    context.fillRect(0, wallY, TUNING.logicalWidth, TUNING.wallHeight);
-    context.fillStyle = palette.wall;
-    context.fillRect(0, wallY + 7, TUNING.logicalWidth, 43);
-    context.fillStyle = palette.wallDark;
-    for (let x = 0; x < TUNING.logicalWidth; x += 42) {
-      context.fillRect(x + 4, wallY, 24, 10);
-      context.fillRect(x + 3, wallY + 24, 34, 2);
-    }
-    context.fillStyle = '#3d3027';
-    context.fillRect(535, wallY + 17, 130, 33);
-    context.fillStyle = '#1e272b';
-    context.fillRect(554, wallY + 21, 92, 29);
-    context.fillStyle = palette.banner;
-    context.fillRect(595, wallY - 34, 4, 34);
-    context.fillRect(599, wallY - 33, 25, 13);
-
     const healthWidth = Math.max(0, wallHp / wallMaxHp * 180);
-    context.fillStyle = '#242b28'; context.fillRect(20, wallY - 21, 180, 10);
-    context.fillStyle = wallHp > wallMaxHp * 0.35 ? '#77c377' : '#e06458'; context.fillRect(20, wallY - 21, healthWidth, 10);
+    context.fillStyle = '#242b28';
+    context.fillRect(20, wallY - 21, 180, 10);
+    context.fillStyle = wallHp > wallMaxHp * 0.35 ? '#77c377' : '#e06458';
+    context.fillRect(20, wallY - 21, healthWidth, 10);
   }
 
   private generateStaticTerrain(): void {
     const context = this.cachedContext;
     const palette = KING_APPROACH.palette;
-    context.fillStyle = palette.grass; context.fillRect(0, 0, TUNING.logicalWidth, TUNING.logicalHeight);
-    for (let index = 0; index < 950; index++) {
-      context.fillStyle = this.random.next() > 0.55 ? palette.grassLight : palette.dryGrass;
-      context.globalAlpha = 0.18;
-      context.fillRect(this.random.range(30, 1170), this.random.range(85, 650), this.random.range(1, 4), this.random.range(1, 4));
-    }
-    context.globalAlpha = 1;
-    this.drawRoad(context, 600, 45, 600, 690, 105);
-    this.drawRoad(context, 170, 95, 390, 690, 56);
-    this.drawRoad(context, 1025, 95, 810, 690, 56);
+    context.fillStyle = palette.grass;
+    context.fillRect(0, 0, TUNING.logicalWidth, TUNING.logicalHeight);
+    this.drawHorizon(context);
+    this.drawRoads(context);
+    this.drawTerrainTexture(context);
     this.drawForestEdges(context);
-    this.drawDebris(context);
+    this.drawSideStream(context);
+    this.drawBattlefieldHistory(context);
     this.drawCity(context);
   }
 
-  private drawRoad(context: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number, width: number): void {
-    context.strokeStyle = KING_APPROACH.palette.dirtEdge; context.lineWidth = width + 12; context.lineCap = 'round';
-    context.beginPath(); context.moveTo(startX, startY); context.bezierCurveTo(startX + (endX - startX) * 0.1, 260, endX + (startX - endX) * 0.13, 480, endX, endY); context.stroke();
-    context.strokeStyle = KING_APPROACH.palette.dirt; context.lineWidth = width;
-    context.beginPath(); context.moveTo(startX, startY); context.bezierCurveTo(startX + (endX - startX) * 0.1, 260, endX + (startX - endX) * 0.13, 480, endX, endY); context.stroke();
+  private drawHorizon(context: CanvasRenderingContext2D): void {
+    const palette = KING_APPROACH.palette;
+    context.fillStyle = '#344838';
+    context.fillRect(0, 0, TUNING.logicalWidth, 78);
+    context.fillStyle = '#2a3b31';
+    context.beginPath();
+    context.moveTo(0, 74);
+    for (let x = 0; x <= TUNING.logicalWidth; x += 80) context.lineTo(x, 45 + Math.sin(x * 0.018) * 18);
+    context.lineTo(TUNING.logicalWidth, 115);
+    context.lineTo(0, 115);
+    context.closePath();
+    context.fill();
+    for (let index = 0; index < 12; index++) this.drawTree(context, 35 + index * 100 + this.random.range(-24, 24), this.random.range(24, 66), this.random.range(14, 24));
+    for (const zone of KING_APPROACH.spawnZones) {
+      context.fillStyle = '#554437';
+      context.fillRect(zone.x - zone.width * 0.3, zone.y + 20, zone.width * 0.6, 3);
+      context.fillStyle = '#8b5d3b';
+      context.beginPath();
+      context.moveTo(zone.x - 13, zone.y + 20);
+      context.lineTo(zone.x, zone.y - 2);
+      context.lineTo(zone.x + 13, zone.y + 20);
+      context.closePath();
+      context.fill();
+      context.fillStyle = palette.torch;
+      context.beginPath();
+      context.arc(zone.x + zone.width * 0.3, zone.y + 13, 3, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.fillStyle = palette.banner;
+    context.fillRect(454, 21, 3, 42);
+    context.fillRect(457, 24, 22, 12);
+    context.fillStyle = '#6b3d34';
+    context.fillRect(738, 30, 3, 33);
+    context.fillRect(741, 32, 20, 10);
+  }
+
+  private drawRoads(context: CanvasRenderingContext2D): void {
+    const palette = KING_APPROACH.palette;
+    for (const road of KING_APPROACH.roadPaths) {
+      this.strokeRoad(context, road, road.width + 14, palette.dirtEdge);
+      this.strokeRoad(context, road, road.width, palette.dirt);
+    }
+    context.save();
+    context.globalAlpha = 0.32;
+    context.setLineDash([22, 18]);
+    this.strokeRoad(context, KING_APPROACH.roadPaths[0], 8, '#403529');
+    context.restore();
+  }
+
+  private strokeRoad(context: CanvasRenderingContext2D, road: typeof KING_APPROACH.roadPaths[number], width: number, color: string): void {
+    context.strokeStyle = color;
+    context.lineWidth = width;
+    context.lineCap = 'round';
+    context.beginPath();
+    context.moveTo(road.startX, road.startY);
+    context.bezierCurveTo(road.controlX1, road.controlY1, road.controlX2, road.controlY2, road.endX, road.endY);
+    context.stroke();
+  }
+
+  private drawTerrainTexture(context: CanvasRenderingContext2D): void {
+    const palette = KING_APPROACH.palette;
+    context.save();
+    for (let index = 0; index < 620; index++) {
+      const x = this.random.range(35, 1165);
+      const y = this.random.range(125, 690);
+      context.strokeStyle = index % 4 === 0 ? palette.dryGrass : palette.grassLight;
+      context.globalAlpha = this.random.range(0.12, 0.28);
+      context.lineWidth = this.random.range(1, 2);
+      context.beginPath();
+      context.moveTo(x, y + 3);
+      context.lineTo(x + this.random.range(-2, 3), y - this.random.range(2, 6));
+      context.stroke();
+    }
+    for (let index = 0; index < 90; index++) {
+      context.fillStyle = index % 3 === 0 ? palette.mud : palette.stone;
+      context.globalAlpha = 0.28;
+      context.beginPath();
+      context.ellipse(this.random.range(170, 1030), this.random.range(150, 625), this.random.range(2, 6), this.random.range(1, 3), this.random.next(), 0, Math.PI * 2);
+      context.fill();
+    }
+    context.restore();
   }
 
   private drawForestEdges(context: CanvasRenderingContext2D): void {
-    for (let index = 0; index < 78; index++) {
-      const side = index % 2 === 0 ? this.random.range(10, 185) : this.random.range(1015, 1190);
-      const y = this.random.range(35, 630); const size = this.random.range(10, 24);
-      context.fillStyle = 'rgba(28, 44, 31, .35)'; context.beginPath(); context.arc(side + 4, y + 5, size, 0, Math.PI * 2); context.fill();
-      context.fillStyle = KING_APPROACH.palette.forest; context.beginPath(); context.arc(side, y, size, 0, Math.PI * 2); context.fill();
-      context.fillStyle = '#36513a'; context.beginPath(); context.arc(side - size * .32, y - size * .28, size * .55, 0, Math.PI * 2); context.fill();
+    for (let index = 0; index < 62; index++) {
+      const x = index % 2 === 0 ? this.random.range(12, 165) : this.random.range(1035, 1188);
+      this.drawTree(context, x, this.random.range(86, 635), this.random.range(12, 25));
+    }
+    context.fillStyle = KING_APPROACH.palette.stone;
+    for (let index = 0; index < 18; index++) {
+      const x = index % 2 === 0 ? this.random.range(25, 175) : this.random.range(1025, 1175);
+      const y = this.random.range(140, 635);
+      context.beginPath();
+      context.moveTo(x - 8, y + 7);
+      context.lineTo(x - 3, y - 7);
+      context.lineTo(x + 10, y - 4);
+      context.lineTo(x + 13, y + 6);
+      context.closePath();
+      context.fill();
     }
   }
 
-  private drawDebris(context: CanvasRenderingContext2D): void {
-    for (let index = 0; index < 44; index++) {
-      const x = this.random.range(205, 995); const y = this.random.range(145, 610);
-      context.fillStyle = index % 3 === 0 ? KING_APPROACH.palette.stone : KING_APPROACH.palette.mud;
-      context.fillRect(x, y, this.random.range(3, 10), this.random.range(2, 6));
-    }
-    context.strokeStyle = '#6c5140'; context.lineWidth = 3; context.beginPath(); context.moveTo(260, 420); context.lineTo(285, 432); context.lineTo(268, 445); context.stroke();
-    context.fillStyle = '#5b4633'; context.fillRect(890, 275, 31, 16); context.fillStyle = '#3d3027'; context.fillRect(895, 291, 7, 7); context.fillRect(912, 291, 7, 7);
+  private drawTree(context: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+    const palette = KING_APPROACH.palette;
+    context.fillStyle = 'rgba(27, 32, 25, .28)';
+    context.beginPath(); context.ellipse(x + 4, y + 6, size, size * 0.55, 0, 0, Math.PI * 2); context.fill();
+    context.fillStyle = '#4b3829';
+    context.fillRect(x - 3, y + size * 0.1, 6, size * 0.7);
+    context.fillStyle = palette.forest;
+    context.beginPath(); context.arc(x, y, size * 0.75, 0, Math.PI * 2); context.fill();
+    context.fillStyle = palette.forestLight;
+    context.beginPath(); context.arc(x - size * 0.35, y - size * 0.28, size * 0.42, 0, Math.PI * 2); context.fill();
+    context.beginPath(); context.arc(x + size * 0.34, y - size * 0.12, size * 0.34, 0, Math.PI * 2); context.fill();
+  }
+
+  private drawSideStream(context: CanvasRenderingContext2D): void {
+    context.save();
+    context.globalAlpha = 0.32;
+    context.strokeStyle = KING_APPROACH.palette.water;
+    context.lineWidth = 10;
+    context.lineCap = 'round';
+    context.beginPath();
+    context.moveTo(30, 184); context.bezierCurveTo(65, 250, 26, 340, 67, 430); context.bezierCurveTo(105, 515, 55, 588, 88, 675); context.stroke();
+    context.restore();
+  }
+
+  private drawBattlefieldHistory(context: CanvasRenderingContext2D): void {
+    const palette = KING_APPROACH.palette;
+    context.save();
+    context.globalAlpha = 0.65;
+    context.strokeStyle = '#49382e';
+    context.lineWidth = 4;
+    context.beginPath(); context.moveTo(237, 382); context.lineTo(282, 402); context.lineTo(254, 425); context.stroke();
+    context.beginPath(); context.moveTo(915, 286); context.lineTo(947, 308); context.lineTo(902, 317); context.stroke();
+    context.fillStyle = palette.stone;
+    context.fillRect(226, 377, 22, 9); context.fillRect(930, 279, 18, 8);
+    context.fillStyle = palette.mud;
+    context.fillRect(885, 458, 42, 20); context.fillRect(891, 478, 7, 13); context.fillRect(916, 478, 7, 13);
+    context.fillStyle = palette.blood;
+    for (let index = 0; index < 8; index++) { context.beginPath(); context.arc(320 + index * 7, 520 + (index % 2) * 5, 2, 0, Math.PI * 2); context.fill(); }
+    context.restore();
   }
 
   private drawCity(context: CanvasRenderingContext2D): void {
-    context.fillStyle = KING_APPROACH.palette.city;
-    context.fillRect(40, 711, 95, 30); context.fillRect(1010, 711, 110, 30); context.fillRect(930, 692, 35, 48);
-    context.fillStyle = '#2e393a'; context.beginPath(); context.moveTo(40, 711); context.lineTo(87, 681); context.lineTo(135, 711); context.fill(); context.beginPath(); context.moveTo(1010, 711); context.lineTo(1065, 676); context.lineTo(1120, 711); context.fill();
-    context.fillStyle = KING_APPROACH.palette.torch; context.fillRect(76, 701, 4, 5); context.fillRect(1110, 701, 4, 5);
+    const palette = KING_APPROACH.palette;
+    context.fillStyle = palette.city;
+    context.fillRect(35, 687, 120, 73); context.fillRect(1005, 684, 155, 76); context.fillRect(505, 670, 190, 90);
+    context.fillStyle = '#2e393a';
+    context.beginPath(); context.moveTo(35, 687); context.lineTo(95, 650); context.lineTo(155, 687); context.fill();
+    context.beginPath(); context.moveTo(1005, 684); context.lineTo(1080, 644); context.lineTo(1160, 684); context.fill();
+    context.fillStyle = '#242e30';
+    context.fillRect(555, 630, 74, 92);
+    context.beginPath(); context.moveTo(548, 630); context.lineTo(592, 594); context.lineTo(636, 630); context.fill();
+    context.fillStyle = palette.torch;
+    context.fillRect(80, 677, 5, 7); context.fillRect(1090, 674, 5, 7); context.fillRect(582, 649, 7, 9); context.fillRect(615, 649, 7, 9);
   }
 
-  private renderTowerPad(context: CanvasRenderingContext2D, x: number, y: number, color: string, built: boolean): void {
-    context.fillStyle = '#5c5a50'; context.beginPath(); context.arc(x, y, 23, 0, Math.PI * 2); context.fill();
-    context.fillStyle = '#777267'; context.beginPath(); context.arc(x, y, 17, 0, Math.PI * 2); context.fill();
-    if (!built) return;
-    context.fillStyle = color; context.fillRect(x - 12, y - 21, 24, 24);
-    context.fillStyle = '#d8b479'; context.fillRect(x - 3, y - 41, 6, 25);
+  private renderTowerPads(context: CanvasRenderingContext2D, weapons: WeaponManager): void {
+    for (const pad of KING_APPROACH.towerPads) {
+      const built = pad.kind === 'ballista' || weapons.isBuilt(this.weaponId(pad.kind));
+      context.fillStyle = '#514d43';
+      context.beginPath(); context.arc(pad.x, pad.y + 5, 30, 0, Math.PI * 2); context.fill();
+      context.fillStyle = built ? '#827b68' : '#68685d';
+      context.beginPath(); context.arc(pad.x, pad.y, 24, 0, Math.PI * 2); context.fill();
+      context.strokeStyle = built ? '#b7a889' : '#858170';
+      context.lineWidth = 2;
+      context.stroke();
+    }
+  }
+
+  private renderTowerStructures(context: CanvasRenderingContext2D, weapons: WeaponManager): void {
+    this.drawBallista(context, weapons.ballista.x, weapons.ballista.y);
+    if (weapons.isBuilt('cannon')) this.drawCannon(context, weapons.cannon.x, weapons.cannon.y);
+    if (weapons.isBuilt('fireTower')) this.drawFireTower(context, weapons.fireTower.x, weapons.fireTower.y);
+    if (weapons.isBuilt('lightningTower')) this.drawLightningTower(context, weapons.lightningTower.x, weapons.lightningTower.y);
+  }
+
+  private drawBallista(context: CanvasRenderingContext2D, x: number, y: number): void {
+    context.fillStyle = '#5b3f2d'; context.fillRect(x - 17, y - 28, 34, 15);
+    context.strokeStyle = '#d1b477'; context.lineWidth = 4; context.beginPath(); context.moveTo(x - 20, y - 30); context.lineTo(x + 20, y - 30); context.stroke();
+    context.fillStyle = '#bd8b4e'; context.fillRect(x - 3, y - 47, 6, 28);
+  }
+
+  private drawCannon(context: CanvasRenderingContext2D, x: number, y: number): void {
+    context.fillStyle = '#343b3b'; context.fillRect(x - 19, y - 25, 38, 19); context.fillStyle = '#1d2729'; context.fillRect(x - 5, y - 48, 10, 30);
+    context.fillStyle = '#ab8d61'; context.beginPath(); context.arc(x - 16, y - 3, 7, 0, Math.PI * 2); context.arc(x + 16, y - 3, 7, 0, Math.PI * 2); context.fill();
+  }
+
+  private drawFireTower(context: CanvasRenderingContext2D, x: number, y: number): void {
+    context.fillStyle = '#75402d'; context.fillRect(x - 16, y - 27, 32, 22); context.fillStyle = '#d9673d'; context.beginPath(); context.arc(x, y - 35, 12, 0, Math.PI * 2); context.fill(); context.fillStyle = '#ffd17a'; context.beginPath(); context.arc(x, y - 37, 5, 0, Math.PI * 2); context.fill();
+  }
+
+  private drawLightningTower(context: CanvasRenderingContext2D, x: number, y: number): void {
+    context.fillStyle = '#4f6371'; context.fillRect(x - 15, y - 26, 30, 22); context.fillStyle = '#b4d7d5'; context.beginPath(); context.moveTo(x, y - 63); context.lineTo(x - 11, y - 35); context.lineTo(x + 5, y - 40); context.lineTo(x - 2, y - 24); context.lineTo(x + 14, y - 47); context.lineTo(x + 1, y - 44); context.closePath(); context.fill();
+  }
+
+  private renderWall(context: CanvasRenderingContext2D): void {
+    const palette = KING_APPROACH.palette;
+    const wallY = TUNING.logicalHeight - TUNING.wallHeight;
+    context.fillStyle = palette.wallDark;
+    context.fillRect(0, wallY, TUNING.logicalWidth, TUNING.wallHeight);
+    context.fillStyle = palette.wall;
+    context.fillRect(0, wallY + 8, TUNING.logicalWidth, 50);
+    context.fillStyle = palette.stoneLight;
+    for (let x = 0; x < TUNING.logicalWidth; x += 48) {
+      context.fillRect(x + 3, wallY, 28, 12);
+      context.fillStyle = palette.wallDark;
+      context.fillRect(x + 31, wallY + 12, 3, 15);
+      context.fillStyle = palette.stoneLight;
+    }
+    context.strokeStyle = palette.wallDark;
+    context.lineWidth = 2;
+    for (let row = 0; row < 2; row++) for (let x = (row % 2) * 23; x < TUNING.logicalWidth; x += 46) {
+      context.beginPath(); context.moveTo(x, wallY + 14 + row * 21); context.lineTo(x, wallY + 34 + row * 21); context.stroke();
+    }
+    context.fillStyle = '#3d3027'; context.fillRect(530, wallY + 18, 140, 40);
+    context.fillStyle = '#1e272b'; context.fillRect(550, wallY + 22, 100, 36);
+    context.fillStyle = '#8d6d49'; context.fillRect(541, wallY + 18, 10, 40); context.fillRect(649, wallY + 18, 10, 40);
+    context.fillStyle = palette.wallDark;
+    context.fillRect(70, wallY - 13, 76, 22); context.fillRect(1054, wallY - 13, 76, 22);
+    context.fillStyle = palette.banner;
+    context.fillRect(105, wallY - 45, 4, 32); context.fillRect(109, wallY - 43, 27, 14);
+    context.fillRect(1090, wallY - 45, 4, 32); context.fillRect(1094, wallY - 43, 27, 14);
+    context.fillStyle = '#47382b';
+    for (let x = 8; x < TUNING.logicalWidth; x += 66) context.fillRect(x, wallY + 55, 6, 13);
+  }
+
+  private weaponId(kind: TowerPad['kind']): 'cannon' | 'fireTower' | 'lightningTower' {
+    if (kind === 'cannon') return 'cannon';
+    if (kind === 'fireTower') return 'fireTower';
+    return 'lightningTower';
   }
 }

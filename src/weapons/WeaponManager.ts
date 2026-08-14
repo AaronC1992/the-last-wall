@@ -6,6 +6,7 @@ import { Cannon } from './Cannon';
 import { FireTower } from './FireTower';
 import { LightningTower } from './LightningTower';
 import { ProjectileManager } from './ProjectileManager';
+import { KING_APPROACH } from '../map/MapConfig';
 
 export class WeaponManager {
   readonly ballista: Ballista;
@@ -16,11 +17,13 @@ export class WeaponManager {
   private fireBuilt = false;
   private lightningBuilt = false;
 
-  constructor(wallY: number, width: number) {
-    this.ballista = new Ballista(width / 2, wallY - 45);
-    this.cannon = new Cannon(width * 0.24, wallY - 35);
-    this.fireTower = new FireTower(width * 0.76, wallY - 35);
-    this.lightningTower = new LightningTower(width * 0.62, wallY - 35);
+  constructor(_wallY: number, _width: number) {
+    const pads = KING_APPROACH.towerPads;
+    const pad = (kind: typeof pads[number]['kind']) => pads.find((towerPad) => towerPad.kind === kind)!;
+    this.ballista = new Ballista(pad('ballista').x, pad('ballista').y);
+    this.cannon = new Cannon(pad('cannon').x, pad('cannon').y);
+    this.fireTower = new FireTower(pad('fireTower').x, pad('fireTower').y);
+    this.lightningTower = new LightningTower(pad('lightningTower').x, pad('lightningTower').y);
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, projectiles: ProjectileManager, onKill: (reward: number) => void): void {

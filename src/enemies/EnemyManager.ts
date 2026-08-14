@@ -25,6 +25,8 @@ export class EnemyManager {
   count = 0;
   totalSpawned = 0;
   lastDamageDealt = 0;
+  lastDeathX = 0;
+  lastDeathY = 0;
 
   spawn(x: number, speedMultiplier = 1, hpMultiplier = 1, type: EnemyTypeId = EnemyType.Grunt, isElite = false, targetX = x): boolean {
     if (this.count >= this.capacity) return false;
@@ -73,6 +75,8 @@ export class EnemyManager {
     this.hp[index] -= this.lastDamageDealt;
     if (this.hp[index] > 0) return 0;
     this.active[index] = 0;
+    this.lastDeathX = this.x[index];
+    this.lastDeathY = this.y[index];
     return this.reward[index];
   }
 
