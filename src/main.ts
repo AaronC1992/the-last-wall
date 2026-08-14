@@ -26,6 +26,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </header>
     <section class="battlefield">
       <canvas id="game-canvas" aria-label="The Last Wall battlefield"></canvas>
+      <div id="map-intro" class="map-intro" hidden><strong>THE LAST WALL</strong><span>KING'S APPROACH</span></div>
       <div id="horde-announcement" class="horde-announcement" hidden></div>
       <div id="game-over" class="game-over" hidden>
         <h1>${GAME_TEXT.gameOver}</h1>

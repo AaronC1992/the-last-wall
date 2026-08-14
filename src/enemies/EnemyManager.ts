@@ -10,6 +10,7 @@ export class EnemyManager {
   readonly hp = new Float32Array(this.capacity);
   readonly speed = new Float32Array(this.capacity);
   readonly drift = new Float32Array(this.capacity);
+  readonly targetX = new Float32Array(this.capacity);
   readonly maxHp = new Float32Array(this.capacity);
   readonly armor = new Float32Array(this.capacity);
   readonly radius = new Float32Array(this.capacity);
@@ -25,20 +26,20 @@ export class EnemyManager {
   totalSpawned = 0;
   lastDamageDealt = 0;
 
-  spawn(x: number, speedMultiplier = 1, hpMultiplier = 1, type: EnemyTypeId = EnemyType.Grunt, isElite = false): boolean {
+  spawn(x: number, speedMultiplier = 1, hpMultiplier = 1, type: EnemyTypeId = EnemyType.Grunt, isElite = false, targetX = x): boolean {
     if (this.count >= this.capacity) return false;
     const index = this.count++;
     this.x[index] = x;
     this.y[index] = -TUNING.enemyRadius * 2;
-    this.configure(index, x, speedMultiplier, hpMultiplier, type, isElite);
+    this.configure(index, x, speedMultiplier, hpMultiplier, type, isElite, targetX);
     return true;
   }
 
-  spawnAt(x: number, y: number, speedMultiplier = 1, hpMultiplier = 1, type: EnemyTypeId = EnemyType.Grunt, isElite = false): boolean {
+  spawnAt(x: number, y: number, speedMultiplier = 1, hpMultiplier = 1, type: EnemyTypeId = EnemyType.Grunt, isElite = false, targetX = x): boolean {
     if (this.count >= this.capacity) return false;
     const index = this.count++;
     this.y[index] = y;
-    this.configure(index, x, speedMultiplier, hpMultiplier, type, isElite);
+    this.configure(index, x, speedMultiplier, hpMultiplier, type, isElite, targetX);
     return true;
   }
 
@@ -56,6 +57,7 @@ export class EnemyManager {
       this.stunTime[index] = Math.max(0, this.stunTime[index] - deltaTime);
       if (this.stunTime[index] > 0) continue;
       this.y[index] += this.speed[index] * deltaTime;
+      this.x[index] += (this.targetX[index] - this.x[index]) * deltaTime * 0.08;
       this.x[index] += this.drift[index] * deltaTime;
       if (this.x[index] < TUNING.enemyRadius || this.x[index] > width - TUNING.enemyRadius) this.drift[index] *= -1;
       if (this.y[index] >= wallY - this.radius[index]) {
@@ -95,6 +97,7 @@ export class EnemyManager {
         this.hp[writeIndex] = this.hp[readIndex];
         this.speed[writeIndex] = this.speed[readIndex];
         this.drift[writeIndex] = this.drift[readIndex];
+        this.targetX[writeIndex] = this.targetX[readIndex];
         this.maxHp[writeIndex] = this.maxHp[readIndex];
         this.armor[writeIndex] = this.armor[readIndex];
         this.radius[writeIndex] = this.radius[readIndex];
@@ -116,7 +119,7 @@ export class EnemyManager {
     this.count = 0;
   }
 
-  private configure(index: number, x: number, speedMultiplier: number, hpMultiplier: number, type: EnemyTypeId, isElite: boolean): void {
+  private configure(index: number, x: number, speedMultiplier: number, hpMultiplier: number, type: EnemyTypeId, isElite: boolean, targetX: number): void {
     const definition = ENEMY_DATA[type];
     const eliteMultiplier = isElite ? 2.5 : 1;
     this.maxHp[index] = definition.hp * hpMultiplier * eliteMultiplier;
@@ -124,6 +127,7 @@ export class EnemyManager {
     this.speed[index] = definition.speed * speedMultiplier * (isElite ? 1.12 : 1);
     this.drift[index] = (Math.random() - 0.5) * 18;
     this.x[index] = x;
+    this.targetX[index] = targetX;
     this.armor[index] = definition.armor + (isElite ? 2 : 0);
     this.radius[index] = definition.radius * (isElite ? 1.25 : 1);
     this.reward[index] = definition.reward * (isElite ? 3 : 1);

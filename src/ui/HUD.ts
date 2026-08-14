@@ -9,6 +9,7 @@ export interface HudState {
   wave: number;
   waveBudget: number;
   announcement: string;
+  mapIntro: boolean;
   warTokens: number;
   earnedTokens: number;
   gameOver: boolean;
@@ -26,6 +27,7 @@ export class HUD {
   private readonly earnedTokens: HTMLElement;
   private readonly wave: HTMLElement;
   private readonly announcement: HTMLElement;
+  private readonly mapIntro: HTMLElement;
 
   constructor(onRestart: () => void) {
     this.wall = this.element('wall-value');
@@ -39,6 +41,7 @@ export class HUD {
     this.earnedTokens = this.element('earned-tokens');
     this.wave = this.element('wave-value');
     this.announcement = this.element('horde-announcement');
+    this.mapIntro = this.element('map-intro');
     document.querySelector<HTMLButtonElement>('#restart-button')!.addEventListener('click', onRestart);
   }
 
@@ -54,6 +57,7 @@ export class HUD {
     this.wave.textContent = state.wave > 0 ? `${state.wave} / ${state.waveBudget}` : 'Ready';
     this.announcement.textContent = state.announcement;
     this.announcement.hidden = state.announcement.length === 0;
+    this.mapIntro.hidden = !state.mapIntro;
     this.gameOver.hidden = !state.gameOver;
   }
 

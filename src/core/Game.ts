@@ -15,6 +15,7 @@ import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { EVOLUTION_DEFINITIONS } from '../systems/UpgradeDefinitions';
+import { MapSpawnSystem } from '../map/MapSpawnSystem';
 
 export class Game {
   private readonly canvas: HTMLCanvasElement;
@@ -29,6 +30,7 @@ export class Game {
   private readonly progression: MetaProgression;
   private readonly chaos: ChaosSystem;
   private readonly feedback = new FeedbackSystem();
+  private readonly mapSpawns = new MapSpawnSystem();
   private readonly onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void;
   private wallHp: number = TUNING.wallMaxHp;
   private gold = 0;
@@ -48,6 +50,7 @@ export class Game {
   private highestCombo = 0;
   private progressionOpen = false;
   private started = false;
+  private mapIntroTimer = 0;
 
   constructor(canvas: HTMLCanvasElement, hud: HUD, progression: MetaProgression, onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void) {
     this.canvas = canvas;
@@ -67,9 +70,11 @@ export class Game {
   updateSimulation(deltaTime: number): void {
     if (this.started && !this.gameOver && !this.progressionOpen && !this.upgrades.takePendingChoices()) {
       const simulationDelta = deltaTime * this.gameSpeed;
+      this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
       this.elapsed += simulationDelta;
       this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
-        this.enemies.spawn(18 + Math.random() * (TUNING.logicalWidth - 36), 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite);
+        const spawn = this.mapSpawns.nextSpawn();
+        this.enemies.spawn(spawn.x, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
       });
       this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
         this.registerKill(reward);
@@ -87,7 +92,7 @@ export class Game {
   render(fps: number): void {
     this.fps = fps;
     this.renderer.render(TUNING.logicalWidth, TUNING.logicalHeight, this.enemies, this.projectiles, this.weapons, this.chaos, this.feedback, this.wallHp, this.wallMaxHp, this.progression.settings.damageNumbers, this.progression.settings.screenShake);
-    this.hud.update({ wallHp: this.wallHp, maxWallHp: this.wallMaxHp, gold: this.gold, kills: this.kills, enemyCount: this.enemies.count, fps: this.fps, level: this.upgrades.currentLevel, wave: this.waveDirector.currentWave, waveBudget: this.waveDirector.currentBudget, announcement: this.waveDirector.announcement, warTokens: this.progression.warTokens, earnedTokens: this.earnedTokens, gameOver: this.gameOver });
+    this.hud.update({ wallHp: this.wallHp, maxWallHp: this.wallMaxHp, gold: this.gold, kills: this.kills, enemyCount: this.enemies.count, fps: this.fps, level: this.upgrades.currentLevel, wave: this.waveDirector.currentWave, waveBudget: this.waveDirector.currentBudget, announcement: this.waveDirector.announcement, mapIntro: this.mapIntroTimer > 0, warTokens: this.progression.warTokens, earnedTokens: this.earnedTokens, gameOver: this.gameOver });
   }
 
   restart(): void {
@@ -110,6 +115,7 @@ export class Game {
     this.feedback.reset();
     this.runWallBonus = 0;
     this.earnedTokens = 0;
+    this.mapIntroTimer = 2;
     this.highestCombo = 0;
     this.onUpgradeChoices(null);
   }

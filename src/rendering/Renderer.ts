@@ -1,4 +1,3 @@
-import { TUNING } from '../core/Constants';
 import { EnemyManager } from '../enemies/EnemyManager';
 import { ProjectileManager } from '../weapons/ProjectileManager';
 import { WeaponManager } from '../weapons/WeaponManager';
@@ -7,9 +6,11 @@ import { ENEMY_DATA } from '../enemies/EnemyData';
 import type { EnemyTypeId } from '../enemies/EnemyTypes';
 import { ChaosSystem } from '../systems/ChaosSystem';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
+import { MapRenderer } from '../map/MapRenderer';
 
 export class Renderer {
   private readonly context: CanvasRenderingContext2D;
+  private readonly map = new MapRenderer();
 
   constructor(context: CanvasRenderingContext2D) {
     this.context = context;
@@ -20,12 +21,7 @@ export class Renderer {
     context.clearRect(0, 0, width, height);
     context.save();
     if (screenShake && feedback.shakeAmount > 0) context.translate((Math.random() - 0.5) * feedback.shakeAmount, (Math.random() - 0.5) * feedback.shakeAmount);
-    context.fillStyle = '#121a20';
-    context.fillRect(0, 0, width, height);
-    context.strokeStyle = 'rgba(255,255,255,0.045)';
-    context.lineWidth = 1;
-    for (let x = 0; x < width; x += 50) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, height); context.stroke(); }
-    for (let y = 0; y < height; y += 50) { context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); }
+    this.map.renderBackground(context);
 
     let lastType = -1;
     for (let index = 0; index < enemies.count; index++) {
@@ -59,24 +55,7 @@ export class Renderer {
     chaos.render(context);
     feedback.render(context, damageNumbers);
 
-    const wallY = height - TUNING.wallHeight;
-    context.fillStyle = '#586f78';
-    context.fillRect(0, wallY, width, TUNING.wallHeight);
-    context.fillStyle = '#7b98a3';
-    for (let x = 0; x < width; x += 48) context.fillRect(x + 4, wallY + 8, 34, 10);
-    context.fillStyle = '#9c7654';
-    context.fillRect(weapons.ballista.x - 14, weapons.ballista.y - 14, 28, 28);
-    context.fillStyle = '#d8b479';
-    context.fillRect(weapons.ballista.x - 3, weapons.ballista.y - 42, 6, 34);
-    if (weapons.isBuilt('cannon')) { context.fillStyle = '#8a97a5'; context.fillRect(weapons.cannon.x - 13, weapons.cannon.y - 13, 26, 26); }
-    if (weapons.isBuilt('fireTower')) { context.fillStyle = '#e16b45'; context.fillRect(weapons.fireTower.x - 11, weapons.fireTower.y - 11, 22, 22); }
-    if (weapons.isBuilt('lightningTower')) { context.fillStyle = '#79b8e8'; context.fillRect(weapons.lightningTower.x - 10, weapons.lightningTower.y - 10, 20, 20); }
-
-    const healthWidth = Math.max(0, (wallHp / wallMaxHp) * 180);
-    context.fillStyle = '#181f22';
-    context.fillRect(20, wallY - 22, 180, 10);
-    context.fillStyle = wallHp > 35 ? '#6fcf97' : '#ef6b5e';
-    context.fillRect(20, wallY - 22, healthWidth, 10);
+    this.map.renderDefenseLine(context, weapons, wallHp, wallMaxHp);
     context.restore();
   }
 }
