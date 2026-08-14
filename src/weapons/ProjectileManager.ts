@@ -10,10 +10,12 @@ export class ProjectileManager {
   private readonly velocityY = new Float32Array(this.capacity);
   private readonly damage = new Float32Array(this.capacity);
   private readonly life = new Float32Array(this.capacity);
+  private readonly penetration = new Uint8Array(this.capacity);
   count = 0;
+  droppedProjectiles = 0;
 
-  fire(originX: number, originY: number, targetX: number, targetY: number, damage: number, speed: number): void {
-    if (this.count >= this.capacity) return;
+  fire(originX: number, originY: number, targetX: number, targetY: number, damage: number, speed: number, penetration = 0): void {
+    if (this.count >= this.capacity) { this.droppedProjectiles++; return; }
     const deltaX = targetX - originX;
     const deltaY = targetY - originY;
     const length = Math.hypot(deltaX, deltaY) || 1;
@@ -24,9 +26,10 @@ export class ProjectileManager {
     this.velocityY[index] = (deltaY / length) * speed;
     this.damage[index] = damage;
     this.life[index] = TUNING.projectileLifetime;
+    this.penetration[index] = penetration;
   }
 
-  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
+  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, onDamage: (x: number, y: number, damage: number) => void): void {
     let index = 0;
     while (index < this.count) {
       this.x[index] += this.velocityX[index] * deltaTime;
@@ -35,9 +38,16 @@ export class ProjectileManager {
       const target = grid.findClosestInRange(this.x[index], this.y[index], 14, enemies);
       if (target >= 0) {
         const reward = enemies.damage(target, this.damage[index]);
+        if (enemies.lastDamageDealt > 0) onDamage(enemies.x[target], enemies.y[target], enemies.lastDamageDealt);
         if (reward > 0) onKill(reward);
-        this.remove(index);
-        continue;
+        if (this.penetration[index] > 0) {
+          this.penetration[index]--;
+          this.x[index] += this.velocityX[index] * 0.025;
+          this.y[index] += this.velocityY[index] * 0.025;
+        } else {
+          this.remove(index);
+          continue;
+        }
       }
       if (this.life[index] <= 0) {
         this.remove(index);
@@ -56,5 +66,6 @@ export class ProjectileManager {
     this.velocityY[index] = this.velocityY[lastIndex];
     this.damage[index] = this.damage[lastIndex];
     this.life[index] = this.life[lastIndex];
+    this.penetration[index] = this.penetration[lastIndex];
   }
 }

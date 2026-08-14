@@ -8,6 +8,7 @@ export class LightningTower {
   private damage = 18;
   private chains = 5;
   private chainRange = 110;
+  private staticLock = false;
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -23,6 +24,7 @@ export class LightningTower {
     for (let index = 0; index < count; index++) {
       const reward = enemies.damage(grid.resultAt(index), this.damage);
       if (reward > 0) onKill(reward);
+      else if (this.staticLock && Math.random() < 0.3) enemies.stun(grid.resultAt(index), 0.55);
     }
     this.cooldown = 0.52;
   }
@@ -30,7 +32,8 @@ export class LightningTower {
   reset(): void {
     this.cooldown = 0;
     this.damage = 18; this.chains = 5; this.chainRange = 110;
+    this.staticLock = false;
   }
 
-  applyUpgrade(id: string): void { if (id === 'lightningDamage') this.damage *= 1.3; if (id === 'lightningChains') this.chains += 2; if (id === 'lightningRange') this.chainRange *= 1.25; if (id === 'lightningStun') this.damage *= 1.15; if (id === 'thunderstorm') { this.chains += 10; this.damage *= 2; } }
+  applyUpgrade(id: string): void { if (id === 'lightningDamage') this.damage *= 1.3; if (id === 'lightningChains') this.chains += 2; if (id === 'lightningRange') this.chainRange *= 1.25; if (id === 'lightningStun') this.staticLock = true; if (id === 'thunderstorm') { this.chains += 10; this.damage *= 2; } }
 }

@@ -56,7 +56,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </section>
     <aside id="debug-panel" class="debug-panel" hidden>
       <div class="debug-title"><strong>Performance Monitor</strong><span>F2</span></div>
-      <div class="debug-readout"><span>FPS <b id="debug-fps">60</b></span><span>Enemies <b id="debug-enemies">0</b></span><span>Projectiles <b id="debug-projectiles">0</b></span><span>Effects <b id="debug-effects">0</b></span><span>Grid cells <b id="debug-cells">0</b></span><span>Spawned <b id="debug-spawned">0</b></span></div>
+      <div class="debug-readout"><span>FPS <b id="debug-fps">60</b></span><span>Enemies <b id="debug-enemies">0</b></span><span>Projectiles <b id="debug-projectiles">0</b></span><span>Dropped bolts <b id="debug-dropped-projectiles">0</b></span><span>Effects <b id="debug-effects">0</b></span><span>Grid cells <b id="debug-cells">0</b></span><span>Spawned <b id="debug-spawned">0</b></span></div>
       <div class="debug-actions"><button id="debug-spawn-100" type="button">Spawn 100</button><button id="debug-spawn-500" type="button">Spawn 500</button><button id="debug-spawn-1000" type="button">Spawn 1,000</button><button id="debug-spawn-5000" type="button">Spawn 5,000</button><button id="debug-spawn-10000" type="button">Spawn 10,000</button><button id="debug-boss" type="button">Spawn Boss</button><button id="debug-elite" type="button">Spawn Elite</button><button id="debug-end-run" type="button">End Run</button><button id="debug-kill-all" type="button">Kill All</button><button id="debug-gold" type="button">Add Gold</button><button id="debug-heal" type="button">Heal Wall</button><button id="debug-invincible" type="button">Invincible</button><button id="debug-speed" type="button">Game Speed</button></div>
       <div id="debug-mode" class="debug-mode">Speed 1x Invincible Off</div>
     </aside>
@@ -96,6 +96,23 @@ document.querySelector<HTMLButtonElement>('#build-cannon')!.addEventListener('cl
 document.querySelector<HTMLButtonElement>('#build-fire')!.addEventListener('click', () => game.buildWeapon('fireTower'));
 document.querySelector<HTMLButtonElement>('#build-lightning')!.addEventListener('click', () => game.buildWeapon('lightningTower'));
 document.querySelector<HTMLButtonElement>('#repair-wall')!.addEventListener('click', () => game.repairWall());
+const updateEconomyButtons = () => {
+  const state = game.economyState;
+  const configure = (id: string, unlocked: boolean, built: boolean, cost: number) => {
+    const button = document.querySelector<HTMLButtonElement>(`#${id}`)!;
+    const label = button.firstChild!;
+    const detail = button.querySelector<HTMLElement>('small')!;
+    if (!unlocked) { button.disabled = true; label.textContent = id === 'build-cannon' ? 'Build Cannon ' : id === 'build-fire' ? 'Build Fire ' : 'Build Lightning '; detail.textContent = 'LOCKED'; return; }
+    if (built) { button.disabled = true; detail.textContent = 'BUILT'; return; }
+    button.disabled = state.gold < cost;
+    detail.textContent = `${cost} Gold`;
+  };
+  configure('build-cannon', state.cannonUnlocked, state.cannonBuilt, 150);
+  configure('build-fire', state.fireUnlocked, state.fireBuilt, 240);
+  configure('build-lightning', state.lightningUnlocked, state.lightningBuilt, 360);
+  const repair = document.querySelector<HTMLButtonElement>('#repair-wall')!;
+  repair.disabled = state.gold < 40 || state.wallFull;
+};
 new GameLoop((deltaTime) => {
   game.updateSimulation(deltaTime);
 }, (fps) => {
@@ -103,4 +120,5 @@ new GameLoop((deltaTime) => {
   debugPanel.update(game.debugState);
   upgradeMenu.updateShop(game.shopState);
   abilityPanel.update((id) => game.getAbilityCooldown(id));
+  updateEconomyButtons();
 }).start();

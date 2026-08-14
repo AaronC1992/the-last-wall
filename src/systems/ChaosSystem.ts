@@ -35,6 +35,7 @@ export class ChaosSystem {
   private dragonTime = 0;
   private dragonTick = 0;
   private chainBudget = 0;
+  private cooldownMultiplier = 1;
 
   constructor(width: number, height: number) {
     this.width = width;
@@ -43,7 +44,7 @@ export class ChaosSystem {
 
   activate(id: AbilityIdValue, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): boolean {
     if (this.cooldowns[id] > 0) return false;
-    this.cooldowns[id] = COOLDOWNS[id];
+    this.cooldowns[id] = COOLDOWNS[id] * this.cooldownMultiplier;
     if (id === AbilityId.Meteor) this.queueTargetedStrike(enemies, grid, 0.55, 100, 110);
     if (id === AbilityId.Artillery) {
       for (let index = 0; index < 6; index++) this.queueTargetedStrike(enemies, grid, 0.18 + index * 0.18, 68, 58);
@@ -129,6 +130,11 @@ export class ChaosSystem {
     this.effectTime.fill(0);
     this.strikeActive.fill(0);
     this.dragonTime = 0;
+    this.cooldownMultiplier = 1;
+  }
+
+  applyCooldownHaste(): void {
+    this.cooldownMultiplier *= 0.88;
   }
 
   private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number): void {

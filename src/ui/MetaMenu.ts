@@ -15,7 +15,7 @@ export class MetaMenu {
     document.querySelector<HTMLButtonElement>('#meta-button')!.addEventListener('click', () => this.show());
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => this.hide());
     this.list.addEventListener('click', (event) => {
-      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-upgrade]');
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-upgrade], [data-unlock]');
       if (!button) return;
       if (button.dataset.unlock) this.progression.purchaseUnlock(button.dataset.unlock as FeatureUnlockId);
       else this.progression.purchase(button.dataset.upgrade as MetaUpgradeId);

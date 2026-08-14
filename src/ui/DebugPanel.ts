@@ -2,6 +2,7 @@ export interface DebugState {
   fps: number;
   enemies: number;
   projectiles: number;
+  droppedProjectiles: number;
   gridCells: number;
   totalSpawned: number;
   activeEffects: number;
@@ -26,6 +27,7 @@ export class DebugPanel {
   private readonly fps = this.element('debug-fps');
   private readonly enemies = this.element('debug-enemies');
   private readonly projectiles = this.element('debug-projectiles');
+  private readonly droppedProjectiles = this.element('debug-dropped-projectiles');
   private readonly cells = this.element('debug-cells');
   private readonly spawned = this.element('debug-spawned');
   private readonly effects = this.element('debug-effects');
@@ -57,6 +59,7 @@ export class DebugPanel {
     this.fps.textContent = Math.round(state.fps).toString();
     this.enemies.textContent = state.enemies.toLocaleString();
     this.projectiles.textContent = state.projectiles.toLocaleString();
+    this.droppedProjectiles.textContent = state.droppedProjectiles.toLocaleString();
     this.cells.textContent = state.gridCells.toString();
     this.spawned.textContent = state.totalSpawned.toLocaleString();
     this.effects.textContent = state.activeEffects.toString();

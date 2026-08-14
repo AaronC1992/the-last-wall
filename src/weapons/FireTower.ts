@@ -8,6 +8,7 @@ export class FireTower {
   private radius = 58;
   private burnDamage = 11;
   private burnDuration = 3;
+  private wildfire = false;
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -27,7 +28,14 @@ export class FireTower {
   reset(): void {
     this.cooldown = 0;
     this.radius = 58; this.burnDamage = 11; this.burnDuration = 3;
+    this.wildfire = false;
   }
 
-  applyUpgrade(id: string): void { if (id === 'fireDamage') this.burnDamage *= 1.3; if (id === 'fireDuration') this.burnDuration += 1; if (id === 'fireRadius') this.radius *= 1.25; if (id === 'fireSpread') this.burnDamage *= 1.2; if (id === 'hellfire') { this.burnDamage *= 2; this.radius *= 1.5; } }
+  applyUpgrade(id: string): void { if (id === 'fireDamage') this.burnDamage *= 1.3; if (id === 'fireDuration') this.burnDuration += 1; if (id === 'fireRadius') this.radius *= 1.25; if (id === 'fireSpread') this.wildfire = true; if (id === 'hellfire') { this.burnDamage *= 2; this.radius *= 1.5; this.wildfire = true; } }
+
+  spreadFromDeath(x: number, y: number, enemies: EnemyManager, grid: SpatialGrid): void {
+    if (!this.wildfire) return;
+    const count = grid.collectInRange(x, y, 78, enemies, 6);
+    for (let index = 0; index < count; index++) enemies.applyBurn(grid.resultAt(index), this.burnDuration, this.burnDamage * 0.8);
+  }
 }

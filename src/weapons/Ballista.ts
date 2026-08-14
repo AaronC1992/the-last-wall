@@ -14,6 +14,8 @@ export class Ballista {
   private projectileSpeed = TUNING.projectileSpeed;
   private projectileCount = 1;
   private criticalChance = 0;
+  private criticalDamage = 2;
+  private penetration = 0;
   private permanentDamageMultiplier = 1;
   private permanentSpeedMultiplier = 1;
 
@@ -30,7 +32,7 @@ export class Ballista {
     for (let index = 0; index < this.projectileCount; index++) {
       const spread = (index - (this.projectileCount - 1) / 2) * 13;
       const critical = Math.random() < this.criticalChance;
-      projectiles.fire(this.x, this.y, enemies.x[target] + spread, enemies.y[target], critical ? this.damage * 2 : this.damage, this.projectileSpeed);
+      projectiles.fire(this.x, this.y, enemies.x[target] + spread, enemies.y[target], critical ? this.damage * this.criticalDamage : this.damage, this.projectileSpeed, this.penetration);
     }
     this.cooldown = this.cooldownDuration;
   }
@@ -41,7 +43,10 @@ export class Ballista {
     if (kind === 'range') this.range *= 1.2;
     if (kind === 'projectiles') this.projectileCount++;
     if (kind === 'criticalChance') this.criticalChance = Math.min(0.9, this.criticalChance + 0.12);
+    if (kind === 'criticalDamage') this.criticalDamage += 0.5;
+    if (kind === 'penetration') this.penetration++;
     if (kind === 'projectileSpeed') this.projectileSpeed *= 1.35;
+    if (kind === 'boltStorm') { this.projectileCount += 8; this.cooldownDuration *= 0.5; this.penetration += 5; }
   }
 
   reset(): void {
@@ -52,6 +57,8 @@ export class Ballista {
     this.projectileSpeed = TUNING.projectileSpeed;
     this.projectileCount = 1;
     this.criticalChance = 0;
+    this.criticalDamage = 2;
+    this.penetration = 0;
   }
 
   setPermanentBonuses(damageMultiplier: number, speedMultiplier: number): void {

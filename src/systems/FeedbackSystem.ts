@@ -10,20 +10,23 @@ export class FeedbackSystem {
   private milestoneTime = 0;
   private shake = 0;
 
-  registerKill(x: number, y: number, reward: number, totalKills: number, enabled: boolean): void {
+  registerKill(totalKills: number): void {
     this.combo++;
     this.comboTimer = 2;
-    if (enabled && this.time[this.numberIndex] <= 0) {
-      this.x[this.numberIndex] = x;
-      this.y[this.numberIndex] = y;
-      this.value[this.numberIndex] = reward;
-      this.time[this.numberIndex] = 0.65;
-      this.numberIndex = (this.numberIndex + 1) % this.time.length;
-    }
     if (totalKills === 100 || totalKills === 1000 || totalKills === 5000 || totalKills === 10000 || totalKills === 50000) {
       this.milestone = `${totalKills.toLocaleString()} KILLS`;
       this.milestoneTime = 2.2;
       this.shake = Math.max(this.shake, 6);
+    }
+  }
+
+  registerDamage(x: number, y: number, damage: number, enabled: boolean): void {
+    if (enabled && this.time[this.numberIndex] <= 0) {
+      this.x[this.numberIndex] = x;
+      this.y[this.numberIndex] = y;
+      this.value[this.numberIndex] = damage;
+      this.time[this.numberIndex] = 0.65;
+      this.numberIndex = (this.numberIndex + 1) % this.time.length;
     }
   }
 
@@ -59,5 +62,12 @@ export class FeedbackSystem {
   triggerShake(amount: number): void { this.shake = Math.max(this.shake, amount); }
   get shakeAmount(): number { return this.shake; }
   get currentCombo(): number { return this.combo; }
+  get goldMultiplier(): number {
+    if (this.combo >= 500) return 1.2;
+    if (this.combo >= 250) return 1.15;
+    if (this.combo >= 100) return 1.1;
+    if (this.combo >= 25) return 1.05;
+    return 1;
+  }
   reset(): void { this.time.fill(0); this.combo = 0; this.comboTimer = 0; this.milestoneTime = 0; this.shake = 0; }
 }

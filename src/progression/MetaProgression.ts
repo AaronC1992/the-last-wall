@@ -4,6 +4,7 @@ import type { MetaUpgradeDefinition, MetaUpgradeId } from './UpgradeDefinitions'
 import type { SaveData } from '../systems/SaveSystem';
 import { FEATURE_UNLOCKS } from './FeatureUnlocks';
 import type { FeatureUnlockDefinition, FeatureUnlockId } from './FeatureUnlocks';
+import type { UpgradeRarity } from '../systems/UpgradeDefinitions';
 
 export interface PermanentBonuses {
   damageMultiplier: number;
@@ -35,6 +36,13 @@ export class MetaProgression {
     return this.data.unlocks[id] === true;
   }
 
+  isRarityUnlocked(rarity: UpgradeRarity): boolean {
+    if (rarity === 'Common' || rarity === 'Uncommon') return true;
+    if (rarity === 'Rare') return this.isUnlocked('rareUpgrades');
+    if (rarity === 'Epic') return this.isUnlocked('epicUpgrades');
+    return this.isUnlocked('legendaryUpgrades');
+  }
+
   purchaseUnlock(id: FeatureUnlockId): boolean {
     const definition = FEATURE_UNLOCKS.find((feature) => feature.id === id)!;
     if (this.isUnlocked(id) || this.data.warTokens < definition.cost) return false;
@@ -64,13 +72,14 @@ export class MetaProgression {
     return true;
   }
 
-  awardTokens(amount: number, kills: number, gold: number): number {
+  awardTokens(amount: number, kills: number, gold: number, highestCombo: number): number {
     const total = Math.max(1, Math.floor(amount * this.bonuses.tokenMultiplier));
     this.data.warTokens += total;
     this.data.statistics.totalKills += kills;
     this.data.statistics.totalRuns++;
     this.data.statistics.totalGold += gold;
     this.data.statistics.highestKills = Math.max(this.data.statistics.highestKills, kills);
+    this.data.statistics.highestLifetimeCombo = Math.max(this.data.statistics.highestLifetimeCombo, highestCombo);
     this.persist();
     return total;
   }

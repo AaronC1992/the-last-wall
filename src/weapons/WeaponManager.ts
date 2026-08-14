@@ -31,7 +31,7 @@ export class WeaponManager {
   }
 
   applyUpgrade(kind: UpgradeKind): void {
-    if (kind.startsWith('cannon')) this.cannon.applyUpgrade(kind);
+    if (kind.startsWith('cannon') || kind === 'carpetBombardment') this.cannon.applyUpgrade(kind);
     else if (kind.startsWith('fire') || kind === 'hellfire') this.fireTower.applyUpgrade(kind);
     else if (kind.startsWith('lightning') || kind === 'thunderstorm') this.lightningTower.applyUpgrade(kind);
     else this.ballista.applyUpgrade(kind);
@@ -65,6 +65,11 @@ export class WeaponManager {
     if (target === 'cannon') return this.cannonBuilt;
     if (target === 'fire') return this.fireBuilt;
     return this.lightningBuilt;
+  }
+
+  handleBurnDeath(index: number, enemies: EnemyManager, grid: SpatialGrid): void {
+    if (!this.fireBuilt) return;
+    this.fireTower.spreadFromDeath(enemies.x[index], enemies.y[index], enemies, grid);
   }
 
   setPermanentBonuses(damageMultiplier: number, speedMultiplier: number): void {

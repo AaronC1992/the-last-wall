@@ -1,11 +1,14 @@
-import { RARITY_WEIGHTS, UPGRADE_DEFINITIONS } from './UpgradeDefinitions';
+import { EVOLUTION_IDS, RARITY_WEIGHTS, UPGRADE_DEFINITIONS } from './UpgradeDefinitions';
 import type { UpgradeDefinition } from './UpgradeDefinitions';
 
 export class UpgradeSystem {
   private targetAvailable: (target: UpgradeDefinition['target']) => boolean = () => true;
+  private rarityAvailable: (rarity: UpgradeDefinition['rarity']) => boolean = () => true;
   private level = 0;
   private nextLevelKills = 10;
   private pendingChoices: UpgradeDefinition[] | null = null;
+  private readonly levels: Record<string, number> = {};
+  private readonly evolutions: Record<string, boolean> = {};
 
   registerKill(totalKills: number): boolean {
     if (this.pendingChoices || totalKills < this.nextLevelKills) return false;
@@ -23,6 +26,8 @@ export class UpgradeSystem {
     if (!this.pendingChoices || index < 0 || index >= this.pendingChoices.length) return null;
     const choice = this.pendingChoices[index];
     this.pendingChoices = null;
+    this.levels[choice.id] = (this.levels[choice.id] ?? 0) + 1;
+    if (EVOLUTION_IDS.has(choice.id)) this.evolutions[choice.id] = true;
     return choice;
   }
 
@@ -30,6 +35,8 @@ export class UpgradeSystem {
     this.level = 0;
     this.nextLevelKills = 10;
     this.pendingChoices = null;
+    for (const key in this.levels) delete this.levels[key];
+    for (const key in this.evolutions) delete this.evolutions[key];
   }
 
   get currentLevel(): number {
@@ -40,11 +47,23 @@ export class UpgradeSystem {
     this.targetAvailable = targetAvailable;
   }
 
+  setRarityAvailability(rarityAvailable: (rarity: UpgradeDefinition['rarity']) => boolean): void {
+    this.rarityAvailable = rarityAvailable;
+  }
+
+  getLevel(id: string): number { return this.levels[id] ?? 0; }
+  hasEvolution(id: string): boolean { return this.evolutions[id] === true; }
+  offerEvolution(evolution: UpgradeDefinition): boolean {
+    if (this.pendingChoices || this.hasEvolution(evolution.id)) return false;
+    this.pendingChoices = [evolution];
+    return true;
+  }
+
   private createChoices(): UpgradeDefinition[] {
     const pool: UpgradeDefinition[] = [];
     for (let index = 0; index < UPGRADE_DEFINITIONS.length; index++) {
       const upgrade = UPGRADE_DEFINITIONS[index];
-      if (this.targetAvailable(upgrade.target)) pool.push(upgrade);
+      if (!EVOLUTION_IDS.has(upgrade.id) && this.targetAvailable(upgrade.target) && this.rarityAvailable(upgrade.rarity)) pool.push(upgrade);
     }
     const choices: UpgradeDefinition[] = [];
     while (choices.length < 3 && pool.length > 0) {

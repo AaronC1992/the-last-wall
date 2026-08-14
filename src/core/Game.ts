@@ -14,6 +14,7 @@ import { ChaosSystem } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
+import { EVOLUTION_DEFINITIONS } from '../systems/UpgradeDefinitions';
 
 export class Game {
   private readonly canvas: HTMLCanvasElement;
@@ -42,7 +43,9 @@ export class Game {
   private wallMaxHp: number = TUNING.wallMaxHp;
   private wallArmor = 0;
   private rewardMultiplier = 1;
+  private runWallBonus = 0;
   private earnedTokens = 0;
+  private highestCombo = 0;
   private progressionOpen = false;
   private started = false;
 
@@ -54,6 +57,7 @@ export class Game {
     this.renderer = new Renderer(canvas.getContext('2d')!);
     this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth);
     this.upgrades.setTargetAvailability((target) => this.weapons.isTargetBuilt(target));
+    this.upgrades.setRarityAvailability((rarity) => this.progression.isRarityUnlocked(rarity));
     this.chaos = new ChaosSystem(TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight);
     this.applyPermanentBonuses();
     this.resize();
@@ -67,10 +71,13 @@ export class Game {
       this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
         this.enemies.spawn(18 + Math.random() * (TUNING.logicalWidth - 36), 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite);
       });
-      this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward) => this.registerKill(reward));
+      this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
+        this.registerKill(reward);
+        if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
+      });
       this.grid.rebuild(this.enemies);
       this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, (reward) => this.registerKill(reward));
-      this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
+      this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers));
       this.chaos.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
       this.enemies.compact();
       this.feedback.update(simulationDelta);
@@ -87,6 +94,7 @@ export class Game {
     this.started = true;
     this.enemies.clear();
     this.projectiles.count = 0;
+    this.projectiles.droppedProjectiles = 0;
     this.applyPermanentBonuses();
     this.wallHp = this.wallMaxHp;
     this.gold = this.progression.bonuses.startingGold;
@@ -100,7 +108,9 @@ export class Game {
     this.waveDirector.reset();
     this.chaos.reset();
     this.feedback.reset();
+    this.runWallBonus = 0;
     this.earnedTokens = 0;
+    this.highestCombo = 0;
     this.onUpgradeChoices(null);
   }
 
@@ -111,8 +121,10 @@ export class Game {
   chooseUpgrade(index: number): void {
     const choice = this.upgrades.choose(index);
     if (!choice) return;
-    this.weapons.applyUpgrade(choice.id);
+    if (choice.target === 'general') this.applyGeneralUpgrade(choice.id);
+    else this.weapons.applyUpgrade(choice.id);
     this.onUpgradeChoices(null);
+    this.offerEligibleEvolution();
   }
 
   setProgressionOpen(isOpen: boolean): void {
@@ -167,6 +179,16 @@ export class Game {
     return { gold: this.gold, damageCost: this.damageUpgradeCost, speedCost: this.speedUpgradeCost };
   }
 
+  get economyState() {
+    return {
+      gold: this.gold,
+      wallFull: this.wallHp >= this.wallMaxHp,
+      cannonUnlocked: this.progression.isUnlocked('cannon'), cannonBuilt: this.weapons.isBuilt('cannon'),
+      fireUnlocked: this.progression.isUnlocked('fireTower'), fireBuilt: this.weapons.isBuilt('fireTower'),
+      lightningUnlocked: this.progression.isUnlocked('lightningTower'), lightningBuilt: this.weapons.isBuilt('lightningTower'),
+    };
+  }
+
   spawnHorde(count: number): void {
     const wallY = TUNING.logicalHeight - TUNING.wallHeight - TUNING.enemyRadius * 2;
     for (let index = 0; index < count; index++) {
@@ -214,6 +236,7 @@ export class Game {
       fps: this.fps,
       enemies: this.enemies.count,
       projectiles: this.projectiles.count,
+      droppedProjectiles: this.projectiles.droppedProjectiles,
       gridCells: this.grid.cellCount,
       totalSpawned: this.enemies.totalSpawned,
       activeEffects: this.chaos.activeEffects,
@@ -230,8 +253,9 @@ export class Game {
 
   private registerKill(reward: number): void {
     this.kills++;
-    this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier));
-    this.feedback.registerKill(TUNING.logicalWidth / 2, TUNING.logicalHeight * 0.45, reward, this.kills, this.progression.settings.damageNumbers);
+    this.feedback.registerKill(this.kills);
+    this.highestCombo = Math.max(this.highestCombo, this.feedback.currentCombo);
+    this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier * this.feedback.goldMultiplier));
     if (this.upgrades.registerKill(this.kills)) this.onUpgradeChoices(this.upgrades.takePendingChoices());
   }
 
@@ -261,7 +285,7 @@ export class Game {
     if (this.gameOver) return;
     this.gameOver = true;
     const baseTokens = Math.floor(this.kills / 20 + this.elapsed / 90);
-    this.earnedTokens = this.progression.awardTokens(baseTokens, this.kills, this.gold);
+    this.earnedTokens = this.progression.awardTokens(baseTokens, this.kills, this.gold, this.highestCombo);
   }
 
   private applyPermanentBonuses(): void {
@@ -271,5 +295,33 @@ export class Game {
     this.rewardMultiplier = bonuses.rewardMultiplier;
     this.weapons.setPermanentBonuses(bonuses.damageMultiplier, bonuses.ballistaSpeedMultiplier);
     this.wallHp = this.wallMaxHp;
+  }
+
+  private applyGeneralUpgrade(id: string): void {
+    if (id === 'repair') {
+      this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 20);
+      return;
+    }
+    if (id === 'wallMax') {
+      this.runWallBonus += 20;
+      this.wallMaxHp += 20;
+      this.wallHp += 20;
+      return;
+    }
+    if (id === 'goldBonus') {
+      this.rewardMultiplier *= 1.15;
+      return;
+    }
+    if (id === 'abilityHaste') this.chaos.applyCooldownHaste();
+  }
+
+  private offerEligibleEvolution(): void {
+    if (!this.progression.isUnlocked('evolutions')) return;
+    let evolution: keyof typeof EVOLUTION_DEFINITIONS | null = null;
+    if (!this.upgrades.hasEvolution('boltStorm') && this.upgrades.getLevel('projectiles') >= 3 && this.upgrades.getLevel('penetration') >= 3 && this.upgrades.getLevel('attackSpeed') >= 3) evolution = 'boltStorm';
+    else if (this.weapons.isBuilt('cannon') && !this.upgrades.hasEvolution('carpetBombardment') && this.upgrades.getLevel('cannonDamage') >= 3 && this.upgrades.getLevel('cannonRadius') >= 3 && this.upgrades.getLevel('clusterShells') >= 1) evolution = 'carpetBombardment';
+    else if (this.weapons.isBuilt('fireTower') && !this.upgrades.hasEvolution('hellfire') && this.upgrades.getLevel('fireDamage') >= 3 && this.upgrades.getLevel('fireRadius') >= 3 && this.upgrades.getLevel('fireSpread') >= 1) evolution = 'hellfire';
+    else if (this.weapons.isBuilt('lightningTower') && !this.upgrades.hasEvolution('thunderstorm') && this.upgrades.getLevel('lightningDamage') >= 3 && this.upgrades.getLevel('lightningChains') >= 3 && this.upgrades.getLevel('lightningRange') >= 3) evolution = 'thunderstorm';
+    if (evolution && this.upgrades.offerEvolution(EVOLUTION_DEFINITIONS[evolution])) this.onUpgradeChoices(this.upgrades.takePendingChoices());
   }
 }
