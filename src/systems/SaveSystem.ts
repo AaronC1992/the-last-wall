@@ -1,0 +1,49 @@
+export const SAVE_VERSION = 1;
+export const SAVE_KEY = 'the-last-wall-save';
+
+export interface SaveData {
+  version: number;
+  warTokens: number;
+  upgrades: Record<string, number>;
+  statistics: { totalKills: number; totalRuns: number; totalGold: number; highestKills: number };
+  settings: { damageNumbers: boolean; screenShake: boolean; masterVolume: number; sfxVolume: number; musicVolume: number; particleAmount: number };
+}
+
+export class SaveSystem {
+  load(): SaveData {
+    const fallback = this.createDefault();
+    try {
+      const rawSave = localStorage.getItem(SAVE_KEY);
+      if (!rawSave) return fallback;
+      const parsed = JSON.parse(rawSave) as Partial<SaveData>;
+      if (parsed.version !== SAVE_VERSION || typeof parsed.warTokens !== 'number' || !parsed.upgrades) return fallback;
+      return {
+        version: SAVE_VERSION,
+        warTokens: Math.max(0, parsed.warTokens),
+        upgrades: parsed.upgrades,
+        statistics: { totalKills: parsed.statistics?.totalKills ?? 0, totalRuns: parsed.statistics?.totalRuns ?? 0, totalGold: parsed.statistics?.totalGold ?? 0, highestKills: parsed.statistics?.highestKills ?? 0 },
+        settings: { damageNumbers: parsed.settings?.damageNumbers ?? true, screenShake: parsed.settings?.screenShake ?? true, masterVolume: parsed.settings?.masterVolume ?? 0.5, sfxVolume: parsed.settings?.sfxVolume ?? 0.6, musicVolume: parsed.settings?.musicVolume ?? 0.3, particleAmount: parsed.settings?.particleAmount ?? 1 },
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
+  save(data: SaveData): void {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch {
+      // Saving is optional when browser storage is unavailable.
+    }
+  }
+
+  private createDefault(): SaveData {
+    return {
+      version: SAVE_VERSION,
+      warTokens: 0,
+      upgrades: {},
+      statistics: { totalKills: 0, totalRuns: 0, totalGold: 0, highestKills: 0 },
+      settings: { damageNumbers: true, screenShake: true, masterVolume: 0.5, sfxVolume: 0.6, musicVolume: 0.3, particleAmount: 1 },
+    };
+  }
+}
