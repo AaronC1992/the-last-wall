@@ -2,6 +2,8 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { META_UPGRADES } from './UpgradeDefinitions';
 import type { MetaUpgradeDefinition, MetaUpgradeId } from './UpgradeDefinitions';
 import type { SaveData } from '../systems/SaveSystem';
+import { FEATURE_UNLOCKS } from './FeatureUnlocks';
+import type { FeatureUnlockDefinition, FeatureUnlockId } from './FeatureUnlocks';
 
 export interface PermanentBonuses {
   damageMultiplier: number;
@@ -23,6 +25,23 @@ export class MetaProgression {
 
   get upgrades(): readonly MetaUpgradeDefinition[] {
     return META_UPGRADES;
+  }
+
+  get features(): readonly FeatureUnlockDefinition[] {
+    return FEATURE_UNLOCKS;
+  }
+
+  isUnlocked(id: FeatureUnlockId): boolean {
+    return this.data.unlocks[id] === true;
+  }
+
+  purchaseUnlock(id: FeatureUnlockId): boolean {
+    const definition = FEATURE_UNLOCKS.find((feature) => feature.id === id)!;
+    if (this.isUnlocked(id) || this.data.warTokens < definition.cost) return false;
+    this.data.warTokens -= definition.cost;
+    this.data.unlocks[id] = true;
+    this.persist();
+    return true;
   }
 
   getLevel(id: MetaUpgradeId): number {

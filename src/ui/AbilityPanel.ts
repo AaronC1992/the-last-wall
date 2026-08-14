@@ -11,10 +11,12 @@ const ABILITIES: readonly { id: AbilityIdValue; name: string; key: string }[] = 
 
 export class AbilityPanel {
   private readonly activate: (id: AbilityIdValue) => void;
+  private readonly isUnlocked: (id: AbilityIdValue) => boolean;
   private readonly buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.ability-button'));
 
-  constructor(activate: (id: AbilityIdValue) => void) {
+  constructor(activate: (id: AbilityIdValue) => void, isUnlocked: (id: AbilityIdValue) => boolean) {
     this.activate = activate;
+    this.isUnlocked = isUnlocked;
     for (let index = 0; index < this.buttons.length; index++) this.buttons[index].addEventListener('click', () => this.activate(ABILITIES[index].id));
     window.addEventListener('keydown', (event) => {
       const ability = ABILITIES.find((candidate) => candidate.key === event.key);
@@ -28,8 +30,9 @@ export class AbilityPanel {
     for (let index = 0; index < this.buttons.length; index++) {
       const cooldown = getCooldown(ABILITIES[index].id);
       const button = this.buttons[index];
-      button.disabled = cooldown > 0;
-      button.querySelector<HTMLElement>('small')!.textContent = cooldown > 0 ? `${Math.ceil(cooldown)}s` : ABILITIES[index].key;
+      const unlocked = this.isUnlocked(ABILITIES[index].id);
+      button.disabled = cooldown > 0 || !unlocked;
+      button.querySelector<HTMLElement>('small')!.textContent = !unlocked ? 'Locked' : cooldown > 0 ? `${Math.ceil(cooldown)}s` : ABILITIES[index].key;
     }
   }
 }

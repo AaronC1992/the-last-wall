@@ -12,6 +12,7 @@ button { font: inherit; }
 .kill-stat strong { color: #f2c46d; }
 .battlefield { position: relative; min-height: 500px; overflow: hidden; display: grid; place-items: center; background: #0b1113; border: 1px solid #52655d; }
 #game-canvas { display: block; max-width: 100%; max-height: 100%; }
+.horde-announcement { position: absolute; top: 16%; left: 50%; transform: translateX(-50%); color: #f2c46d; font-size: 27px; font-weight: bold; text-shadow: 0 2px 0 #0b1113; }
 .game-over { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; background: rgba(9, 13, 15, .78); text-align: center; }
 .game-over[hidden] { display: none; }
 .game-over h1 { margin: 0; color: #f06c61; font-size: 42px; }

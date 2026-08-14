@@ -58,6 +58,9 @@ export class MenuViews {
   }
 
   private showArmory(): void {
+    document.querySelector<HTMLElement>('#armory-cannon')!.textContent = this.progression.isUnlocked('cannon') ? 'Available' : 'Locked, 15 Tokens';
+    document.querySelector<HTMLElement>('#armory-fire')!.textContent = this.progression.isUnlocked('fireTower') ? 'Available' : 'Locked, 30 Tokens';
+    document.querySelector<HTMLElement>('#armory-lightning')!.textContent = this.progression.isUnlocked('lightningTower') ? 'Available' : 'Locked, 55 Tokens';
     this.main.hidden = true;
     this.armory.hidden = false;
   }

@@ -1,7 +1,8 @@
-import { UPGRADE_DEFINITIONS } from './UpgradeDefinitions';
+import { RARITY_WEIGHTS, UPGRADE_DEFINITIONS } from './UpgradeDefinitions';
 import type { UpgradeDefinition } from './UpgradeDefinitions';
 
 export class UpgradeSystem {
+  private targetAvailable: (target: UpgradeDefinition['target']) => boolean = () => true;
   private level = 0;
   private nextLevelKills = 10;
   private pendingChoices: UpgradeDefinition[] | null = null;
@@ -35,8 +36,16 @@ export class UpgradeSystem {
     return this.level;
   }
 
+  setTargetAvailability(targetAvailable: (target: UpgradeDefinition['target']) => boolean): void {
+    this.targetAvailable = targetAvailable;
+  }
+
   private createChoices(): UpgradeDefinition[] {
-    const pool = UPGRADE_DEFINITIONS.slice();
+    const pool: UpgradeDefinition[] = [];
+    for (let index = 0; index < UPGRADE_DEFINITIONS.length; index++) {
+      const upgrade = UPGRADE_DEFINITIONS[index];
+      if (this.targetAvailable(upgrade.target)) pool.push(upgrade);
+    }
     const choices: UpgradeDefinition[] = [];
     while (choices.length < 3 && pool.length > 0) {
       let totalWeight = 0;
@@ -57,8 +66,6 @@ export class UpgradeSystem {
   }
 
   private weightFor(upgrade: UpgradeDefinition): number {
-    if (upgrade.rarity === 'Common') return 70;
-    if (upgrade.rarity === 'Uncommon') return 24;
-    return 6;
+    return RARITY_WEIGHTS[upgrade.rarity];
   }
 }

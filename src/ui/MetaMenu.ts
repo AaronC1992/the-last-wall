@@ -1,5 +1,6 @@
 import { MetaProgression } from '../progression/MetaProgression';
 import type { MetaUpgradeId } from '../progression/UpgradeDefinitions';
+import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 
 export class MetaMenu {
   private readonly progression: MetaProgression;
@@ -16,7 +17,8 @@ export class MetaMenu {
     this.list.addEventListener('click', (event) => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-upgrade]');
       if (!button) return;
-      this.progression.purchase(button.dataset.upgrade as MetaUpgradeId);
+      if (button.dataset.unlock) this.progression.purchaseUnlock(button.dataset.unlock as FeatureUnlockId);
+      else this.progression.purchase(button.dataset.upgrade as MetaUpgradeId);
       this.render();
     });
   }
@@ -41,6 +43,11 @@ export class MetaMenu {
       const capped = level >= upgrade.maxLevel;
       const disabled = capped || this.progression.warTokens < cost ? ' disabled' : '';
       markup += `<button type="button" class="meta-upgrade" data-upgrade="${upgrade.id}"${disabled}><span>${upgrade.category}</span><strong>${upgrade.title}</strong><small>${upgrade.description}</small><em>Level ${level} of ${upgrade.maxLevel}</em><b>${capped ? 'Complete' : `${cost} Tokens`}</b></button>`;
+    }
+    for (const feature of this.progression.features) {
+      const unlocked = this.progression.isUnlocked(feature.id);
+      const disabled = unlocked || this.progression.warTokens < feature.cost ? ' disabled' : '';
+      markup += `<button type="button" class="meta-upgrade" data-unlock="${feature.id}"${disabled}><span>${feature.category}</span><strong>${feature.title}</strong><small>${feature.description}</small><em>${unlocked ? 'Unlocked' : 'Permanent unlock'}</em><b>${unlocked ? 'Online' : `${feature.cost} Tokens`}</b></button>`;
     }
     this.list.innerHTML = markup;
   }

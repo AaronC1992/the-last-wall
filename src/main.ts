@@ -20,11 +20,13 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <div class="stat"><small>Gold</small><strong id="gold-value">0</strong></div>
       <div class="stat kill-stat"><small>Kills</small><strong id="kills-value">0</strong></div>
       <div class="stat"><small>Level</small><strong id="level-value">0</strong></div>
+      <div class="stat"><small>Wave</small><strong id="wave-value">Ready</strong></div>
       <button id="meta-button" type="button" class="stat meta-button"><small>War Tokens</small><strong id="tokens-value">0</strong></button>
       <div class="stat"><small>FPS</small><strong id="fps-value">60</strong></div>
     </header>
     <section class="battlefield">
       <canvas id="game-canvas" aria-label="The Last Wall battlefield"></canvas>
+      <div id="horde-announcement" class="horde-announcement" hidden></div>
       <div id="game-over" class="game-over" hidden>
         <h1>${GAME_TEXT.gameOver}</h1>
         <p>Your defenses held for as long as they could.</p>
@@ -46,7 +48,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </section>
       <section id="settings-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Settings</strong><button id="settings-close" type="button">Close</button></div><label>Master Volume <input id="setting-master" type="range" min="0" max="1" step="0.05"></label><label>SFX Volume <input id="setting-sfx" type="range" min="0" max="1" step="0.05"></label><label><input id="setting-shake" type="checkbox"> Screen Shake</label><label><input id="setting-damage-numbers" type="checkbox"> Damage Numbers</label></section>
       <section id="statistics-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Lifetime Statistics</strong><button id="statistics-close" type="button">Close</button></div><div class="statistics-grid"><span>Runs <b id="stats-runs">0</b></span><span>Total Kills <b id="stats-kills">0</b></span><span>Total Gold <b id="stats-gold">0</b></span><span>Best Run <b id="stats-best-kills">0</b></span></div></section>
-      <section id="armory-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Armory</strong><button id="armory-close" type="button">Close</button></div><div class="statistics-grid"><span>Ballista <b>Online</b></span><span>Cannon <b>Online</b></span><span>Fire Tower <b>Online</b></span><span>Lightning Tower <b>Online</b></span></div></section>
+      <section id="armory-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Armory</strong><button id="armory-close" type="button">Close</button></div><div class="statistics-grid"><span>Ballista <b>Online</b></span><span>Cannon <b id="armory-cannon">Locked, 15 Tokens</b></span><span>Fire Tower <b id="armory-fire">Locked, 30 Tokens</b></span><span>Lightning Tower <b id="armory-lightning">Locked, 55 Tokens</b></span></div></section>
     </section>
     <section id="meta-menu" class="meta-menu" hidden>
       <div class="meta-header"><div><span>Permanent Progression</span><strong>War Tokens <b id="meta-tokens">0</b></strong></div><button id="meta-close" type="button" aria-label="Close permanent upgrades">Close</button></div>
@@ -65,7 +67,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <button type="button" class="ability-button"><strong>Death Beam</strong><small>4</small></button>
       <button type="button" class="ability-button"><strong>Apocalypse</strong><small>5</small></button>
     </section>
-    <footer><span>Ballista, Cannon, Fire Tower, Lightning Tower</span><span>Automatic defense online</span><div class="shop"><button id="buy-damage" type="button">Bolt Damage <small>15 Gold</small></button><button id="buy-speed" type="button">Winch Speed <small>20 Gold</small></button></div></footer>
+    <footer><span>Ballista online</span><div class="shop"><button id="buy-damage" type="button">Bolt Damage <small>15 Gold</small></button><button id="buy-speed" type="button">Winch Speed <small>20 Gold</small></button><button id="build-cannon" type="button">Build Cannon <small>150 Gold</small></button><button id="build-fire" type="button">Build Fire <small>240 Gold</small></button><button id="build-lightning" type="button">Build Lightning <small>360 Gold</small></button><button id="repair-wall" type="button">Repair Wall <small>40 Gold</small></button></div></footer>
   </main>`;
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas')!;
@@ -76,7 +78,7 @@ audio.setSettings(progression.settings);
 const hud = new HUD(() => game.restart());
 const upgradeMenu = new UpgradeMenu((index) => game.chooseUpgrade(index), () => game.buyDamageUpgrade(), () => game.buySpeedUpgrade());
 game = new Game(canvas, hud, progression, (choices) => upgradeMenu.show(choices));
-const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); });
+const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); }, (id) => game.isAbilityUnlocked(id));
 const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible));
 new MenuViews(progression, audio, () => game.start(), () => metaMenu.show());
 const debugPanel = new DebugPanel({
@@ -90,8 +92,14 @@ const debugPanel = new DebugPanel({
   spawnElite: () => game.spawnElite(),
   endRun: () => game.forceEndRun(),
 });
-new GameLoop((deltaTime, fps) => {
-  game.update(deltaTime, fps);
+document.querySelector<HTMLButtonElement>('#build-cannon')!.addEventListener('click', () => game.buildWeapon('cannon'));
+document.querySelector<HTMLButtonElement>('#build-fire')!.addEventListener('click', () => game.buildWeapon('fireTower'));
+document.querySelector<HTMLButtonElement>('#build-lightning')!.addEventListener('click', () => game.buildWeapon('lightningTower'));
+document.querySelector<HTMLButtonElement>('#repair-wall')!.addEventListener('click', () => game.repairWall());
+new GameLoop((deltaTime) => {
+  game.updateSimulation(deltaTime);
+}, (fps) => {
+  game.render(fps);
   debugPanel.update(game.debugState);
   upgradeMenu.updateShop(game.shopState);
   abilityPanel.update((id) => game.getAbilityCooldown(id));

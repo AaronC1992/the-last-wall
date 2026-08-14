@@ -12,6 +12,8 @@ import { EnemyType } from '../enemies/EnemyTypes';
 import { MetaProgression } from '../progression/MetaProgression';
 import { ChaosSystem } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
+import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
+import { FeedbackSystem } from '../systems/FeedbackSystem';
 
 export class Game {
   private readonly canvas: HTMLCanvasElement;
@@ -25,12 +27,12 @@ export class Game {
   private readonly waveDirector = new WaveDirector();
   private readonly progression: MetaProgression;
   private readonly chaos: ChaosSystem;
+  private readonly feedback = new FeedbackSystem();
   private readonly onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void;
   private wallHp: number = TUNING.wallMaxHp;
   private gold = 0;
   private kills = 0;
   private elapsed = 0;
-  private spawnTimer = 0;
   private gameOver = false;
   private fps = 60;
   private invincible = false;
@@ -51,32 +53,34 @@ export class Game {
     this.progression = progression;
     this.renderer = new Renderer(canvas.getContext('2d')!);
     this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth);
+    this.upgrades.setTargetAvailability((target) => this.weapons.isTargetBuilt(target));
     this.chaos = new ChaosSystem(TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight);
     this.applyPermanentBonuses();
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
 
-  update(deltaTime: number, fps: number): void {
-    this.fps = fps;
+  updateSimulation(deltaTime: number): void {
     if (this.started && !this.gameOver && !this.progressionOpen && !this.upgrades.takePendingChoices()) {
       const simulationDelta = deltaTime * this.gameSpeed;
       this.elapsed += simulationDelta;
-      this.spawnTimer -= simulationDelta;
-      const spawnInterval = Math.max(0.08, 0.85 - this.elapsed * 0.008);
-      while (this.spawnTimer <= 0) {
-        const nextEnemy = this.waveDirector.chooseEnemy(this.elapsed);
-        this.enemies.spawn(18 + Math.random() * (TUNING.logicalWidth - 36), 1 + this.elapsed * 0.004, 1 + this.elapsed * 0.002, nextEnemy.type, nextEnemy.elite);
-        this.spawnTimer += spawnInterval;
-      }
+      this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
+        this.enemies.spawn(18 + Math.random() * (TUNING.logicalWidth - 36), 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite);
+      });
       this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward) => this.registerKill(reward));
       this.grid.rebuild(this.enemies);
       this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, (reward) => this.registerKill(reward));
       this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
       this.chaos.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
       this.enemies.compact();
+      this.feedback.update(simulationDelta);
     }
-    this.render();
+  }
+
+  render(fps: number): void {
+    this.fps = fps;
+    this.renderer.render(TUNING.logicalWidth, TUNING.logicalHeight, this.enemies, this.projectiles, this.weapons, this.chaos, this.feedback, this.wallHp, this.wallMaxHp, this.progression.settings.damageNumbers, this.progression.settings.screenShake);
+    this.hud.update({ wallHp: this.wallHp, maxWallHp: this.wallMaxHp, gold: this.gold, kills: this.kills, enemyCount: this.enemies.count, fps: this.fps, level: this.upgrades.currentLevel, wave: this.waveDirector.currentWave, waveBudget: this.waveDirector.currentBudget, announcement: this.waveDirector.announcement, warTokens: this.progression.warTokens, earnedTokens: this.earnedTokens, gameOver: this.gameOver });
   }
 
   restart(): void {
@@ -88,7 +92,6 @@ export class Game {
     this.gold = this.progression.bonuses.startingGold;
     this.kills = 0;
     this.elapsed = 0;
-    this.spawnTimer = 0;
     this.gameOver = false;
     this.damageShopLevel = 0;
     this.speedShopLevel = 0;
@@ -96,6 +99,7 @@ export class Game {
     this.upgrades.reset();
     this.waveDirector.reset();
     this.chaos.reset();
+    this.feedback.reset();
     this.earnedTokens = 0;
     this.onUpgradeChoices(null);
   }
@@ -117,7 +121,26 @@ export class Game {
 
   activateAbility(id: AbilityIdValue): void {
     if (this.gameOver || this.progressionOpen || this.upgrades.takePendingChoices()) return;
-    this.chaos.activate(id, this.enemies, this.grid, (reward) => this.registerKill(reward));
+    if (!this.isAbilityUnlocked(id)) return;
+    if (this.chaos.activate(id, this.enemies, this.grid, (reward) => this.registerKill(reward))) this.feedback.triggerShake(id === 4 ? 14 : 7);
+  }
+
+  isAbilityUnlocked(id: AbilityIdValue): boolean {
+    const unlocks: readonly FeatureUnlockId[] = ['meteor', 'artillery', 'dragon', 'deathBeam', 'apocalypse'];
+    return this.progression.isUnlocked(unlocks[id]);
+  }
+
+  buildWeapon(id: 'cannon' | 'fireTower' | 'lightningTower'): void {
+    const cost = id === 'cannon' ? 150 : id === 'fireTower' ? 240 : 360;
+    if (!this.progression.isUnlocked(id) || this.gold < cost || !this.weapons.build(id)) return;
+    this.gold -= cost;
+  }
+
+  repairWall(): void {
+    const cost = 40;
+    if (this.gold < cost || this.wallHp >= this.wallMaxHp) return;
+    this.gold -= cost;
+    this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 25);
   }
 
   getAbilityCooldown(id: AbilityIdValue): number {
@@ -174,7 +197,7 @@ export class Game {
   }
 
   healWall(): void {
-    this.wallHp = TUNING.wallMaxHp;
+    this.wallHp = this.wallMaxHp;
     this.gameOver = false;
   }
 
@@ -208,12 +231,8 @@ export class Game {
   private registerKill(reward: number): void {
     this.kills++;
     this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier));
+    this.feedback.registerKill(TUNING.logicalWidth / 2, TUNING.logicalHeight * 0.45, reward, this.kills, this.progression.settings.damageNumbers);
     if (this.upgrades.registerKill(this.kills)) this.onUpgradeChoices(this.upgrades.takePendingChoices());
-  }
-
-  private render(): void {
-    this.renderer.render(TUNING.logicalWidth, TUNING.logicalHeight, this.enemies, this.projectiles, this.weapons, this.chaos, this.wallHp);
-    this.hud.update({ wallHp: this.wallHp, maxWallHp: this.wallMaxHp, gold: this.gold, kills: this.kills, enemyCount: this.enemies.count, fps: this.fps, level: this.upgrades.currentLevel, warTokens: this.progression.warTokens, earnedTokens: this.earnedTokens, gameOver: this.gameOver });
   }
 
   private resize(): void {

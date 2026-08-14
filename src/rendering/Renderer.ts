@@ -6,6 +6,7 @@ import { EnemyType } from '../enemies/EnemyTypes';
 import { ENEMY_DATA } from '../enemies/EnemyData';
 import type { EnemyTypeId } from '../enemies/EnemyTypes';
 import { ChaosSystem } from '../systems/ChaosSystem';
+import { FeedbackSystem } from '../systems/FeedbackSystem';
 
 export class Renderer {
   private readonly context: CanvasRenderingContext2D;
@@ -14,9 +15,11 @@ export class Renderer {
     this.context = context;
   }
 
-  render(width: number, height: number, enemies: EnemyManager, projectiles: ProjectileManager, weapons: WeaponManager, chaos: ChaosSystem, wallHp: number): void {
+  render(width: number, height: number, enemies: EnemyManager, projectiles: ProjectileManager, weapons: WeaponManager, chaos: ChaosSystem, feedback: FeedbackSystem, wallHp: number, wallMaxHp: number, damageNumbers: boolean, screenShake: boolean): void {
     const context = this.context;
     context.clearRect(0, 0, width, height);
+    context.save();
+    if (screenShake && feedback.shakeAmount > 0) context.translate((Math.random() - 0.5) * feedback.shakeAmount, (Math.random() - 0.5) * feedback.shakeAmount);
     context.fillStyle = '#121a20';
     context.fillRect(0, 0, width, height);
     context.strokeStyle = 'rgba(255,255,255,0.045)';
@@ -53,6 +56,7 @@ export class Renderer {
     }
     context.fill();
     chaos.render(context);
+    feedback.render(context, damageNumbers);
 
     const wallY = height - TUNING.wallHeight;
     context.fillStyle = '#586f78';
@@ -70,10 +74,11 @@ export class Renderer {
     context.fillStyle = '#79b8e8';
     context.fillRect(weapons.lightningTower.x - 10, weapons.lightningTower.y - 10, 20, 20);
 
-    const healthWidth = Math.max(0, (wallHp / TUNING.wallMaxHp) * 180);
+    const healthWidth = Math.max(0, (wallHp / wallMaxHp) * 180);
     context.fillStyle = '#181f22';
     context.fillRect(20, wallY - 22, 180, 10);
     context.fillStyle = wallHp > 35 ? '#6fcf97' : '#ef6b5e';
     context.fillRect(20, wallY - 22, healthWidth, 10);
+    context.restore();
   }
 }

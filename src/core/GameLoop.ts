@@ -1,15 +1,17 @@
 import { TUNING } from './Constants';
 
 export class GameLoop {
-  private readonly update: (deltaTime: number, fps: number) => void;
+  private readonly simulate: (deltaTime: number) => void;
+  private readonly render: (fps: number) => void;
   private previousTime = 0;
   private accumulator = 0;
   private frames = 0;
   private fpsTimer = 0;
   private fps = 60;
 
-  constructor(update: (deltaTime: number, fps: number) => void) {
-    this.update = update;
+  constructor(simulate: (deltaTime: number) => void, render: (fps: number) => void) {
+    this.simulate = simulate;
+    this.render = render;
   }
 
   start(): void {
@@ -29,9 +31,10 @@ export class GameLoop {
       this.fpsTimer = 0;
     }
     while (this.accumulator >= TUNING.fixedStep) {
-      this.update(TUNING.fixedStep, this.fps);
+      this.simulate(TUNING.fixedStep);
       this.accumulator -= TUNING.fixedStep;
     }
+    this.render(this.fps);
     requestAnimationFrame((nextTime) => this.frame(nextTime));
   }
 }

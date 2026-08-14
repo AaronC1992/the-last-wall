@@ -6,6 +6,9 @@ export interface HudState {
   enemyCount: number;
   fps: number;
   level: number;
+  wave: number;
+  waveBudget: number;
+  announcement: string;
   warTokens: number;
   earnedTokens: number;
   gameOver: boolean;
@@ -21,6 +24,8 @@ export class HUD {
   private readonly gameOver: HTMLDivElement;
   private readonly tokens: HTMLElement;
   private readonly earnedTokens: HTMLElement;
+  private readonly wave: HTMLElement;
+  private readonly announcement: HTMLElement;
 
   constructor(onRestart: () => void) {
     this.wall = this.element('wall-value');
@@ -32,6 +37,8 @@ export class HUD {
     this.gameOver = document.querySelector<HTMLDivElement>('#game-over')!;
     this.tokens = this.element('tokens-value');
     this.earnedTokens = this.element('earned-tokens');
+    this.wave = this.element('wave-value');
+    this.announcement = this.element('horde-announcement');
     document.querySelector<HTMLButtonElement>('#restart-button')!.addEventListener('click', onRestart);
   }
 
@@ -44,6 +51,9 @@ export class HUD {
     this.level.textContent = state.level.toString();
     this.tokens.textContent = state.warTokens.toLocaleString();
     this.earnedTokens.textContent = state.earnedTokens.toLocaleString();
+    this.wave.textContent = state.wave > 0 ? `${state.wave} / ${state.waveBudget}` : 'Ready';
+    this.announcement.textContent = state.announcement;
+    this.announcement.hidden = state.announcement.length === 0;
     this.gameOver.hidden = !state.gameOver;
   }
 
