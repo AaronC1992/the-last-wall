@@ -4,7 +4,7 @@
 
 The Last Wall is a browser defense game about holding a fortified frontier against an ever growing horde. Build your defenses, choose powerful upgrades, unlock new weapons, and survive as long as you can.
 
-The play link above is ready for GitHub Pages when deployment is enabled. To play immediately on your computer, follow the local setup below.
+The game deploys to GitHub Pages automatically when changes are pushed to `master`. To play immediately on your computer, follow the local setup below.
 
 ## Features
 
