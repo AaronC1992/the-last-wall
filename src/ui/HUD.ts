@@ -15,8 +15,6 @@ export interface HudState {
   kills: number;
   enemyCount: number;
   fps: number;
-  level: number;
-  wave: number;
   announcement: string;
   mapIntro: boolean;
   warTokens: number;
@@ -31,8 +29,6 @@ export class HUD {
   private readonly kills = this.element('kills-value');
   private readonly enemies = this.element('enemy-value');
   private readonly fps = this.element('fps-value');
-  private readonly level = this.element('level-value');
-  private readonly wave = this.element('wave-value');
   private readonly announcement = this.element('horde-announcement');
   private readonly mapIntro = this.element('map-intro');
   private readonly buildBanner = this.element('build-banner');
@@ -54,7 +50,7 @@ export class HUD {
   }
 
   update(state: HudState): void {
-    const showBuildControls = state.buildPhase && state.wave === 0;
+    const showBuildControls = state.buildPhase;
     const ratio = state.maxWallHp > 0 ? Math.max(0, state.wallHp / state.maxWallHp) : 0;
     this.healthFill.style.width = `${ratio * 100}%`;
     this.healthFill.classList.toggle('critical', ratio <= 0.35);
@@ -63,8 +59,6 @@ export class HUD {
     this.kills.textContent = this.compact(state.kills);
     this.enemies.textContent = this.compact(state.enemyCount);
     this.fps.textContent = Math.round(state.fps).toString();
-    this.level.textContent = state.level.toString();
-    this.wave.textContent = state.wave > 0 ? state.wave.toString() : 'Ready';
     this.announcement.textContent = state.announcement;
     this.announcement.hidden = state.announcement.length === 0 || showBuildControls;
     this.mapIntro.hidden = !state.mapIntro;

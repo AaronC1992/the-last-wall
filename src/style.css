@@ -16,6 +16,7 @@ button { font: inherit; }
 .health-bar i.critical { background: #b3272f; }
 .health-bar span { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: bold 11px Verdana, sans-serif; text-shadow: 0 1px 2px #000; }
 .resource-row { display: flex; gap: 18px; }
+.resource-row .resource i { display: none; }
 .resource { display: inline-flex; align-items: center; gap: 5px; color: #fff; font: bold 12px Verdana, sans-serif; text-shadow: 0 1px 2px #000; }
 .resource small { color: #cfd8d2; font: 10px Verdana, sans-serif; }
 .resource i { width: 13px; height: 13px; border-radius: 2px; }

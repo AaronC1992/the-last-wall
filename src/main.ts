@@ -91,8 +91,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <canvas id="skill-tree-canvas"></canvas>
         <div class="skill-currency">
           <span class="resource token"><i></i><strong>War Tokens</strong><b id="tokens-value">0</b></span>
-          <span class="resource level"><i></i><b id="level-value">0</b></span>
-          <span class="resource wave"><i></i><b id="wave-value">Ready</b></span>
         </div>
         <div class="skill-legend" aria-label="Tech Tree legend">
           <strong>TECH TREE LEGEND</strong>

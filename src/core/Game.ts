@@ -153,8 +153,6 @@ export class Game implements BattlefieldActions {
       kills: this.kills,
       enemyCount: this.enemies.count,
       fps: this.fps,
-      level: 0,
-      wave: this.waveDirector.currentWave,
       announcement: this.waveDirector.announcement,
       mapIntro: this.mapIntroTimer > 0,
       warTokens: this.progression.warTokens,
