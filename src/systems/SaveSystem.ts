@@ -41,6 +41,10 @@ export class SaveSystem {
     }
   }
 
+  reset(): void {
+    try { localStorage.removeItem(SAVE_KEY); } catch { /* Saving is optional when browser storage is unavailable. */ }
+  }
+
   private createDefault(): SaveData {
     return {
       version: SAVE_VERSION,

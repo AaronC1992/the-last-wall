@@ -122,6 +122,11 @@ button { font: inherit; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; color: #f2c46d; font-size: 22px; }
 .panel-heading button { padding: 6px 10px; border: 1px solid #52655d; background: #22302e; color: #e9efe8; cursor: pointer; }
 .menu-panel label { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #d4ddd5; font: 13px Verdana, sans-serif; }
+.settings-danger { display: grid; gap: 6px; margin-top: 12px; padding-top: 14px; border-top: 1px solid #543c3c; }
+.settings-danger strong { color: #e68178; font-size: 15px; }
+.settings-danger span { color: #a99a96; font: 11px Verdana, sans-serif; }
+.settings-danger button { justify-self: start; padding: 8px 11px; border: 1px solid #a34f4a; background: #351d1d; color: #f0b1aa; cursor: pointer; font: 12px Verdana, sans-serif; }
+.settings-danger button:hover { background: #512626; }
 .map-builder { width: min(1100px, 94vw); }
 .builder-layout { display: grid; grid-template-columns: 120px minmax(420px, 800px) 190px; gap: 12px; align-items: start; }
 .builder-tools, .builder-side { display: grid; gap: 7px; }

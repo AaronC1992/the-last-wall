@@ -19,7 +19,7 @@ export class MenuViews {
   private readonly customMaps = document.querySelector<HTMLElement>('#custom-maps-menu')!;
   private readonly storage = new CustomMapStorage();
 
-  constructor(progression: MetaProgression, audio: AudioSystem, onPlay: () => void, onUpgrades: () => void, onMapBuilder: () => void, onPlayMap: (map: MapDefinition) => void, onEditMap: (map: MapDefinition) => void) {
+  constructor(progression: MetaProgression, audio: AudioSystem, onPlay: () => void, onUpgrades: () => void, onMapBuilder: () => void, onPlayMap: (map: MapDefinition) => void, onEditMap: (map: MapDefinition) => void, onReset: () => void) {
     this.progression = progression;
     this.audio = audio;
     document.querySelector<HTMLButtonElement>('#menu-play')!.addEventListener('click', () => {
@@ -45,6 +45,9 @@ export class MenuViews {
     this.sfx.addEventListener('input', () => this.saveSettings());
     this.shake.addEventListener('change', () => this.saveSettings());
     this.damageNumbers.addEventListener('change', () => this.saveSettings());
+    document.querySelector<HTMLButtonElement>('#settings-reset')!.addEventListener('click', () => {
+      if (window.confirm('Reset all progress and start over? This cannot be undone.')) onReset();
+    });
   }
 
   showCampaign(onSelect: (map: MapDefinition) => void): void {

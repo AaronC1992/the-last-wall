@@ -171,6 +171,10 @@ export class MetaProgression {
     this.persist();
   }
 
+  reset(): void {
+    this.saveSystem.reset();
+  }
+
   private persist(): void {
     this.saveSystem.save(this.data);
   }
