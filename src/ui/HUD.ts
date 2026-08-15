@@ -32,7 +32,6 @@ export class HUD {
   private readonly enemies = this.element('enemy-value');
   private readonly fps = this.element('fps-value');
   private readonly level = this.element('level-value');
-  private readonly tokens = this.element('tokens-value');
   private readonly wave = this.element('wave-value');
   private readonly announcement = this.element('horde-announcement');
   private readonly mapIntro = this.element('map-intro');
@@ -65,7 +64,6 @@ export class HUD {
     this.enemies.textContent = this.compact(state.enemyCount);
     this.fps.textContent = Math.round(state.fps).toString();
     this.level.textContent = state.level.toString();
-    this.tokens.textContent = state.warTokens.toLocaleString();
     this.wave.textContent = state.wave > 0 ? state.wave.toString() : 'Ready';
     this.announcement.textContent = state.announcement;
     this.announcement.hidden = state.announcement.length === 0 || showBuildControls;
