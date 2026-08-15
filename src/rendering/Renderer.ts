@@ -85,7 +85,6 @@ export class Renderer {
   }
 
   private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager): void {
-    const time = performance.now() * 0.008;
     for (let index = 0; index < enemies.count; index++) {
       if (enemies.active[index] === 0) continue;
       const x = enemies.x[index];
@@ -93,36 +92,47 @@ export class Renderer {
       const radius = enemies.radius[index];
       const enemyType = enemies.type[index] as EnemyTypeId;
       const isElite = enemies.elite[index] !== 0;
+      const color = enemyType === EnemyType.Grunt ? '#d84b48' : enemyType === EnemyType.Runner ? '#ee9a4d' : enemyType === EnemyType.Brute ? '#a6465d' : enemyType === EnemyType.Armored ? '#8a97a5' : enemyType === EnemyType.Exploder ? '#e5c553' : '#8753b4';
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
 
-      context.save();
-      context.translate(x, y);
+      context.fillStyle = 'rgba(255, 255, 255, 0.28)';
+      context.beginPath();
+      context.arc(x - radius * 0.3, y - radius * 0.3, Math.max(1, radius * 0.28), 0, Math.PI * 2);
+      context.fill();
 
-      switch (enemyType) {
-        case EnemyType.Grunt:
-          this.drawPixelGrunt(context, radius, time, index, isElite);
-          break;
-        case EnemyType.Runner:
-          this.drawPixelRunner(context, radius, time, index, isElite);
-          break;
-        case EnemyType.Brute:
-          this.drawPixelBrute(context, radius, time, index, isElite);
-          break;
-        case EnemyType.Armored:
-          this.drawPixelArmored(context, radius, time, index, isElite);
-          break;
-        case EnemyType.Exploder:
-          this.drawPixelExploder(context, radius, time, index, isElite);
-          break;
-        case EnemyType.Boss:
-          this.drawPixelBoss(context, radius, time, index, isElite, enemies.hp[index], enemies.maxHp[index]);
-          break;
+      if (enemyType === EnemyType.Armored) {
+        context.strokeStyle = '#d7e1eb';
+        context.lineWidth = 2;
+        context.stroke();
+      } else if (enemyType === EnemyType.Exploder) {
+        context.strokeStyle = '#fff1a8';
+        context.lineWidth = 2;
+        context.setLineDash([2, 2]);
+        context.stroke();
+        context.setLineDash([]);
+      } else if (enemyType === EnemyType.Boss) {
+        context.strokeStyle = '#f2c46d';
+        context.lineWidth = 3;
+        context.stroke();
+        const healthRatio = Math.max(0, enemies.hp[index] / enemies.maxHp[index]);
+        context.fillStyle = '#1a1d25';
+        context.fillRect(x - radius, y - radius - 8, radius * 2, 4);
+        context.fillStyle = '#e86278';
+        context.fillRect(x - radius, y - radius - 8, radius * 2 * healthRatio, 4);
       }
 
-      context.restore();
+      if (isElite) {
+        context.strokeStyle = '#f2c46d';
+        context.lineWidth = 2;
+        context.strokeRect(x - radius - 3, y - radius - 3, radius * 2 + 6, radius * 2 + 6);
+      }
     }
   }
 
-  private drawPixelGrunt(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
+  drawPixelGrunt(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
     const bob = Math.sin(time * 10 + index) * 1.5;
 
     context.fillStyle = 'rgba(0, 0, 0, 0.35)';
@@ -157,7 +167,7 @@ export class Renderer {
     if (isElite) this.drawEliteAura(context, r, time);
   }
 
-  private drawPixelRunner(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
+  drawPixelRunner(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
     const stride = Math.sin(time * 18 + index) * 2;
 
     context.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -186,7 +196,7 @@ export class Renderer {
     if (isElite) this.drawEliteAura(context, r, time);
   }
 
-  private drawPixelBrute(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
+  drawPixelBrute(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
     const stomp = Math.sin(time * 6 + index) * 1.2;
 
     context.fillStyle = 'rgba(0, 0, 0, 0.45)';
@@ -227,7 +237,7 @@ export class Renderer {
     if (isElite) this.drawEliteAura(context, r, time);
   }
 
-  private drawPixelArmored(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
+  drawPixelArmored(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
     const march = Math.sin(time * 8 + index) * 1;
 
     context.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -265,7 +275,7 @@ export class Renderer {
     if (isElite) this.drawEliteAura(context, r, time);
   }
 
-  private drawPixelExploder(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
+  drawPixelExploder(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
     const pulse = 1 + Math.sin(time * 16 + index) * 0.12;
     const pr = r * pulse;
 
@@ -300,7 +310,7 @@ export class Renderer {
     if (isElite) this.drawEliteAura(context, r, time);
   }
 
-  private drawPixelBoss(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean, hp: number, maxHp: number): void {
+  drawPixelBoss(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean, hp: number, maxHp: number): void {
     const march = Math.sin(time * 5 + index) * 1.5;
 
     const auraGlow = context.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 1.5);
