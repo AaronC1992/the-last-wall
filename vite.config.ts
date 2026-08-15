@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
-  base: '/the-last-wall/',
-});
+export default defineConfig(({ command }) => ({
+  base: command === 'serve' ? '/' : '/the-last-wall/',
+}));

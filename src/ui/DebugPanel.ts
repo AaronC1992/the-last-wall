@@ -6,6 +6,9 @@ export interface DebugState {
   gridCells: number;
   totalSpawned: number;
   activeEffects: number;
+  stuckRecoveries: number;
+  minimumEnemyY: number;
+  maximumEnemyY: number;
   invincible: boolean;
   gameSpeed: number;
 }
@@ -31,6 +34,7 @@ export class DebugPanel {
   private readonly cells = this.element('debug-cells');
   private readonly spawned = this.element('debug-spawned');
   private readonly effects = this.element('debug-effects');
+  private readonly stuck = this.element('debug-stuck');
   private readonly mode = this.element('debug-mode');
 
   constructor(actions: DebugActions) {
@@ -63,7 +67,8 @@ export class DebugPanel {
     this.cells.textContent = state.gridCells.toString();
     this.spawned.textContent = state.totalSpawned.toLocaleString();
     this.effects.textContent = state.activeEffects.toString();
-    this.mode.textContent = `Speed ${state.gameSpeed}x  Invincible ${state.invincible ? 'On' : 'Off'}`;
+    this.stuck.textContent = state.stuckRecoveries.toString();
+    this.mode.textContent = `Speed ${state.gameSpeed}x  Invincible ${state.invincible ? 'On' : 'Off'}  Enemy Y ${Math.round(state.minimumEnemyY)} to ${Math.round(state.maximumEnemyY)}`;
   }
 
   private bind(id: string, action: () => void): void {

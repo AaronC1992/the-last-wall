@@ -16,7 +16,7 @@ export interface PermanentBonuses {
   tokenMultiplier: number;
   ballistaSpeedMultiplier: number;
   flatTokenBonus: number;
-  towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number };
+  towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
 }
 
 export interface TokenBreakdown {
@@ -84,12 +84,12 @@ export class MetaProgression {
     return true;
   }
 
-  awardTokens(kills: number, elapsed: number, gold: number, highestCombo: number): TokenBreakdown {
+  awardTokens(kills: number, elapsed: number, gold: number, highestCombo: number, awardCurrency = true): TokenBreakdown {
     const bonuses = this.bonuses;
     const base = Math.max(1, Math.floor(kills / 20 + elapsed / 90));
-    const percentBonus = Math.floor(base * (bonuses.tokenMultiplier - 1));
-    const flatBonus = bonuses.flatTokenBonus;
-    const total = base + percentBonus + flatBonus;
+    const percentBonus = awardCurrency ? Math.floor(base * (bonuses.tokenMultiplier - 1)) : 0;
+    const flatBonus = awardCurrency ? bonuses.flatTokenBonus : 0;
+    const total = awardCurrency ? base + percentBonus + flatBonus : 0;
     this.data.warTokens += total;
     this.data.statistics.totalKills += kills;
     this.data.statistics.totalRuns++;
@@ -115,6 +115,7 @@ export class MetaProgression {
         cannon: this.getLevel('cannonSlots'),
         fireTower: this.getLevel('fireSlots'),
         lightningTower: this.getLevel('lightningSlots'),
+        mortar: this.getLevel('mortarSlots'),
       },
     };
   }
@@ -151,6 +152,18 @@ export class MetaProgression {
 
   get statistics(): SaveData['statistics'] {
     return this.data.statistics;
+  }
+
+  isCampaignUnlocked(index: number): boolean {
+    if (index === 0) return true;
+    return this.data.completedCampaign.includes(`campaign-${String(index).padStart(2, '0')}`);
+  }
+
+  completeCampaign(id: string): void {
+    if (!this.data.completedCampaign.includes(id)) {
+      this.data.completedCampaign.push(id);
+      this.persist();
+    }
   }
 
   updateSettings(settings: Partial<SaveData['settings']>): void {

@@ -46,8 +46,8 @@ export class WaveDirector {
     return this.announcementTimer > 0 ? this.announcementText : '';
   }
 
-  startWave(): void {
-    this.beginWave();
+  startWave(enemyCount?: number): void {
+    this.beginWave(enemyCount);
   }
 
   isWaveCleared(activeEnemies: number): boolean {
@@ -58,7 +58,7 @@ export class WaveDirector {
     return Math.max(0, this.queueTail - this.queueHead);
   }
 
-  private beginWave(): void {
+  private beginWave(enemyCount?: number): void {
     this.wave++;
     this.waveBudget = Math.min(5200, Math.floor(40 + 17 * Math.pow(this.wave, 1.5)));
     this.queueHead = 0;
@@ -73,6 +73,15 @@ export class WaveDirector {
     if (style === 0) this.announcementText = 'BOSS APPROACHING';
     this.announcementTimer = 2.5;
     let budget = this.waveBudget;
+    if (enemyCount !== undefined) {
+      const count = Math.min(this.queueType.length, Math.max(1, Math.floor(enemyCount)));
+      for (let index = 0; index < count; index++) {
+        const next = this.pickEnemy(style, Math.max(8, budget));
+        this.enqueue(next.type, next.elite);
+        budget = Math.max(0, budget - next.cost);
+      }
+      return;
+    }
     if (style === 0) {
       this.enqueue(EnemyType.Boss, false);
       budget = Math.max(0, budget - 90);

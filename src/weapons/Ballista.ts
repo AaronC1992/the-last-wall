@@ -18,19 +18,22 @@ export class Ballista extends TowerBase {
   private permanentDamageMultiplier = 1;
   private permanentSpeedMultiplier = 1;
 
+  constructor(x: number, y: number) {
+    super(x, y, 'line', TUNING.ballistaRange);
+  }
+
   get range(): number {
     return this.rangeValue;
   }
 
-  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, projectiles: ProjectileManager): void {
+  update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
-    const target = this.acquire(enemies, grid);
-    if (target < 0) return;
+    if (!this.hasAim) return;
     for (let index = 0; index < this.projectileCount; index++) {
-      const spread = (index - (this.projectileCount - 1) / 2) * 13;
+      const spread = (index - (this.projectileCount - 1) / 2) * 0.035;
       const critical = Math.random() < this.criticalChance;
-      projectiles.fire(this.x, this.y, enemies.x[target] + spread, enemies.y[target], critical ? this.damage * this.criticalDamage : this.damage, this.projectileSpeed, this.penetration);
+      projectiles.fireDirection(this.x, this.y, Math.cos(this.targeting.angle + spread), Math.sin(this.targeting.angle + spread), critical ? this.damage * this.criticalDamage : this.damage, this.projectileSpeed, this.penetration, this.targeting.distance);
     }
     this.cooldown = this.cooldownDuration;
   }
@@ -38,7 +41,7 @@ export class Ballista extends TowerBase {
   applyUpgrade(kind: UpgradeKind): void {
     if (kind === 'damage') this.damage *= 1.25;
     if (kind === 'attackSpeed') this.cooldownDuration *= 0.8;
-    if (kind === 'range') this.rangeValue *= 1.2;
+    if (kind === 'range') { this.rangeValue *= 1.2; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; }
     if (kind === 'projectiles') this.projectileCount++;
     if (kind === 'criticalChance') this.criticalChance = Math.min(0.9, this.criticalChance + 0.12);
     if (kind === 'criticalDamage') this.criticalDamage += 0.5;
@@ -52,6 +55,8 @@ export class Ballista extends TowerBase {
     this.damage = TUNING.ballistaDamage * this.permanentDamageMultiplier;
     this.cooldownDuration = TUNING.ballistaCooldown / this.permanentSpeedMultiplier;
     this.rangeValue = TUNING.ballistaRange;
+    this.targeting.maxDistance = this.rangeValue;
+    this.targeting.distance = this.rangeValue;
     this.projectileSpeed = TUNING.projectileSpeed;
     this.projectileCount = 1;
     this.criticalChance = 0;

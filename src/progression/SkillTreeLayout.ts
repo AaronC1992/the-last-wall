@@ -58,6 +58,8 @@ const PLACEMENTS: readonly Placement[] = [
   { id: 'fireSlots', branch: 'arcane', angle: 22, ring: 2.4, parent: 'fireTower' },
   { id: 'lightningTower', branch: 'arcane', angle: 62, ring: 2.4, parent: 'fireTower' },
   { id: 'lightningSlots', branch: 'arcane', angle: 76, ring: 3.6, parent: 'lightningTower' },
+  { id: 'mortar', branch: 'arcane', angle: 92, ring: 3.2, parent: 'fireTower' },
+  { id: 'mortarSlots', branch: 'arcane', angle: 108, ring: 4.2, parent: 'mortar' },
   { id: 'evolutions', branch: 'arcane', angle: 40, ring: 3.8, parent: 'fireSlots' },
 
   { id: 'meteor', branch: 'abilities', angle: 104, ring: 1.2, parent: 'core' },

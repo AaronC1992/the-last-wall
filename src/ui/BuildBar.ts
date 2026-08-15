@@ -45,7 +45,8 @@ export class BuildBar {
     this.onArm(this.armed);
   }
 
-  update(states: readonly BuildSlotState[], visible: boolean): void {
+  update(states: readonly BuildSlotState[], visible: boolean, armedKind: TowerKind | null = this.armed): void {
+    this.armed = armedKind;
     this.root.hidden = !visible;
     for (const state of states) {
       const button = this.buttons.get(state.kind)!;
@@ -56,5 +57,6 @@ export class BuildBar {
       button.classList.toggle('full', state.count >= state.limit);
     }
     if (this.armed && this.buttons.get(this.armed)!.disabled) this.arm(null);
+    for (const [slotKind, slotButton] of this.buttons) slotButton.classList.toggle('armed', slotKind === this.armed);
   }
 }

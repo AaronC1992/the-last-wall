@@ -1,34 +1,24 @@
-import { KING_APPROACH } from './MapConfig';
 import { SeededRandom } from './SeededRandom';
+import type { MapDefinition } from './TerrainTypes';
+import { TerrainGrid } from './TerrainGrid';
 
 export class MapSpawnSystem {
-  private readonly random = new SeededRandom(KING_APPROACH.seed + 19);
-  private readonly burstZones: number[] = [];
+  private readonly random: SeededRandom;
+  private readonly grid: TerrainGrid;
   private burstRemaining = 0;
 
+  constructor(private readonly definition: MapDefinition) {
+    this.random = new SeededRandom(definition.seed + 19);
+    this.grid = new TerrainGrid(definition);
+  }
+
   nextSpawn(): { x: number; y: number; targetX: number } {
-    if (this.burstRemaining <= 0) this.beginBurst();
-    const zone = KING_APPROACH.spawnZones[this.burstZones[Math.floor(this.random.next() * this.burstZones.length)]];
+    if (this.burstRemaining <= 0) this.burstRemaining = 8 + Math.floor(this.random.next() * 10);
     this.burstRemaining--;
-    return {
-      x: zone.x + this.random.range(-zone.width / 2, zone.width / 2),
-      y: zone.y + this.random.range(-zone.height / 2, zone.height / 2),
-      targetX: zone.targetX + this.random.range(-95, 95),
-    };
+    const source = this.definition.spawnCells[Math.floor(this.random.next() * this.definition.spawnCells.length)];
+    const point = this.grid.cellToWorld(source.x, source.y);
+    return { x: point.x + this.random.range(-8, 8), y: point.y + this.random.range(-8, 8), targetX: point.x };
   }
 
-  reset(): void {
-    this.burstZones.length = 0;
-    this.burstRemaining = 0;
-  }
-
-  private beginBurst(): void {
-    this.burstZones.length = 0;
-    const zoneCount = 1 + Math.floor(this.random.next() * 3);
-    while (this.burstZones.length < zoneCount) {
-      const zoneIndex = Math.floor(this.random.next() * KING_APPROACH.spawnZones.length);
-      if (!this.burstZones.includes(zoneIndex)) this.burstZones.push(zoneIndex);
-    }
-    this.burstRemaining = 8 + Math.floor(this.random.next() * 10);
-  }
+  reset(): void { this.burstRemaining = 0; }
 }

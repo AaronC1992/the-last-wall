@@ -5,10 +5,12 @@ import { Ballista } from './Ballista';
 import { Cannon } from './Cannon';
 import { FireTower } from './FireTower';
 import { LightningTower } from './LightningTower';
+import { Mortar } from './Mortar';
 import { ProjectileManager } from './ProjectileManager';
 import { TowerBase } from './TowerBase';
 import { towerConfig } from './TowerConfig';
 import type { TowerKind } from './TowerConfig';
+import type { TerrainGrid } from '../map/TerrainGrid';
 
 export interface PlacedTower {
   id: number;
@@ -16,36 +18,63 @@ export interface PlacedTower {
   instance: TowerBase;
 }
 
+export interface TowerLayoutEntry {
+  kind: TowerKind;
+  x: number;
+  y: number;
+  aimed: boolean;
+  targetX: number;
+  targetY: number;
+}
+
 export const TOWER_FOOTPRINT = 20;
 
 export class WeaponManager {
   private readonly placed: PlacedTower[] = [];
   private readonly appliedUpgrades: UpgradeKind[] = [];
-  private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0 };
+  private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0, mortar: 0 };
   private readonly buildTop: number;
   private readonly buildBottom: number;
   private readonly buildRight: number;
+  private readonly terrain: TerrainGrid;
   private nextId = 1;
   private permanentDamageMultiplier = 1;
   private permanentSpeedMultiplier = 1;
 
-  constructor(wallY: number, width: number) {
-    this.buildTop = 132;
+  constructor(wallY: number, width: number, terrain: TerrainGrid) {
+    this.buildTop = TOWER_FOOTPRINT;
     this.buildBottom = wallY - 8;
     this.buildRight = width;
+    this.terrain = terrain;
   }
 
   get towers(): readonly PlacedTower[] {
     return this.placed;
   }
 
+  allAimed(): boolean {
+    return this.placed.every((tower) => tower.instance.hasAim);
+  }
+
+  exportLayout(): TowerLayoutEntry[] {
+    return this.placed.map((tower) => ({ kind: tower.kind, x: tower.instance.x, y: tower.instance.y, aimed: tower.instance.hasAim, targetX: tower.instance.aimX, targetY: tower.instance.aimY }));
+  }
+
+  importLayout(layout: readonly TowerLayoutEntry[]): void {
+    for (const entry of layout) {
+      const tower = this.place(entry.kind, entry.x, entry.y);
+      if (tower && entry.aimed) tower.instance.setAim(entry.targetX, entry.targetY);
+    }
+  }
+
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, projectiles: ProjectileManager, onKill: (reward: number) => void): void {
     for (let index = 0; index < this.placed.length; index++) {
       const tower = this.placed[index].instance;
       if (tower instanceof Ballista) tower.update(deltaTime, enemies, grid, projectiles);
-      else if (tower instanceof Cannon) tower.update(deltaTime, enemies, grid, onKill);
+      else if (tower instanceof Cannon) tower.update(deltaTime, enemies, grid, onKill, projectiles);
       else if (tower instanceof FireTower) tower.update(deltaTime, enemies, grid);
       else if (tower instanceof LightningTower) tower.update(deltaTime, enemies, grid, onKill);
+      else if (tower instanceof Mortar) tower.update(deltaTime, enemies, grid, projectiles);
     }
   }
 
@@ -134,11 +163,12 @@ export class WeaponManager {
     return this.countOf(id) > 0;
   }
 
-  isTargetBuilt(target: 'ballista' | 'cannon' | 'fire' | 'lightning' | 'general'): boolean {
+  isTargetBuilt(target: 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar' | 'general'): boolean {
     if (target === 'general') return true;
     if (target === 'ballista') return this.countOf('ballista') > 0;
     if (target === 'cannon') return this.countOf('cannon') > 0;
     if (target === 'fire') return this.countOf('fireTower') > 0;
+    if (target === 'mortar') return this.countOf('mortar') > 0;
     return this.countOf('lightningTower') > 0;
   }
 
@@ -169,6 +199,7 @@ export class WeaponManager {
 
   private isFreeSpot(x: number, y: number, ignoreId: number): boolean {
     if (!this.isInBuildZone(x, y)) return false;
+    if (!this.terrain.isBuildableFootprint(x, y, TOWER_FOOTPRINT)) return false;
     const minimum = TOWER_FOOTPRINT * 1.6;
     for (const tower of this.placed) {
       if (tower.id === ignoreId) continue;
@@ -181,6 +212,7 @@ export class WeaponManager {
     if (kind === 'cannon') return new Cannon(x, y);
     if (kind === 'fireTower') return new FireTower(x, y);
     if (kind === 'lightningTower') return new LightningTower(x, y);
+    if (kind === 'mortar') return new Mortar(x, y);
     const ballista = new Ballista(x, y);
     ballista.setPermanentBonuses(this.permanentDamageMultiplier, this.permanentSpeedMultiplier);
     return ballista;
@@ -197,6 +229,10 @@ export class WeaponManager {
     }
     if (upgrade.startsWith('lightning') || upgrade === 'thunderstorm') {
       if (kind === 'lightningTower') (instance as LightningTower).applyUpgrade(upgrade);
+      return;
+    }
+    if (upgrade.startsWith('mortar') || upgrade === 'doubleShot') {
+      if (kind === 'mortar') (instance as Mortar).applyUpgrade(upgrade);
       return;
     }
     if (kind === 'ballista') (instance as Ballista).applyUpgrade(upgrade);

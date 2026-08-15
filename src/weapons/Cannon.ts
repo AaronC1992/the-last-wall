@@ -1,6 +1,7 @@
 import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
 import { TowerBase } from './TowerBase';
+import { ProjectileManager } from './ProjectileManager';
 
 export class Cannon extends TowerBase {
   private cooldown = 1.8;
@@ -11,22 +12,22 @@ export class Cannon extends TowerBase {
   private doubleBarrel = false;
   private carpetBombardment = false;
 
+  constructor(x: number, y: number) {
+    super(x, y, 'line', 620);
+  }
+
   get range(): number {
     return 620;
   }
 
-  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
+  update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, _onKill: (reward: number) => void, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
-    const target = this.acquire(enemies, grid);
-    if (target < 0) return;
-    this.impact(enemies.x[target], enemies.y[target], this.damage, this.radius, enemies, grid, onKill);
-    if (this.clusterShells || this.carpetBombardment) {
-      this.impact(enemies.x[target] + 42, enemies.y[target] - 28, this.damage * 0.6, this.radius * 0.62, enemies, grid, onKill);
-      this.impact(enemies.x[target] - 38, enemies.y[target] + 26, this.damage * 0.6, this.radius * 0.62, enemies, grid, onKill);
-    }
-    if (this.doubleBarrel) this.impact(enemies.x[target] + 26, enemies.y[target] + 18, this.damage, this.radius, enemies, grid, onKill);
-    if (this.carpetBombardment) this.impact(enemies.x[target] - 70, enemies.y[target] - 45, this.damage * 0.7, this.radius * 0.8, enemies, grid, onKill);
+    if (!this.hasAim) return;
+    const direction = this.direction();
+    projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, this.targeting.distance, this.radius);
+    if (this.clusterShells || this.carpetBombardment) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.6, 340, Math.max(30, this.targeting.distance - 42), this.radius * 0.62);
+    if (this.doubleBarrel) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, Math.min(620, this.targeting.distance + 26), this.radius);
     this.cooldown = this.cooldownDuration;
   }
 
@@ -38,22 +39,18 @@ export class Cannon extends TowerBase {
     this.clusterShells = false;
     this.doubleBarrel = false;
     this.carpetBombardment = false;
+    this.targeting.maxDistance = 620;
+    this.targeting.distance = 620;
   }
 
   applyUpgrade(id: string): void {
     if (id === 'cannonDamage') this.damage *= 1.25;
     else if (id === 'cannonRadius') this.radius *= 1.25;
+    else if (id === 'cannonRange') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; }
     else if (id === 'cannonSpeed') this.cooldownDuration *= 0.8;
     else if (id === 'clusterShells') this.clusterShells = true;
     else if (id === 'doubleBarrel') this.doubleBarrel = true;
     else if (id === 'carpetBombardment') this.carpetBombardment = true;
   }
 
-  private impact(x: number, y: number, damage: number, radius: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
-    const count = grid.collectInRange(x, y, radius, enemies, 96);
-    for (let index = 0; index < count; index++) {
-      const reward = enemies.damage(grid.resultAt(index), damage);
-      if (reward > 0) onKill(reward);
-    }
-  }
 }

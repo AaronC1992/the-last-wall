@@ -22,6 +22,13 @@ import { MapSpawnSystem } from '../map/MapSpawnSystem';
 import { TOWER_CONFIG, towerConfig } from '../weapons/TowerConfig';
 import type { TowerKind } from '../weapons/TowerConfig';
 import type { BuildSlotState } from '../ui/BuildBar';
+import type { TowerLayoutEntry } from '../weapons/WeaponManager';
+import { DEFAULT_CAMPAIGN_MAP } from '../map/CampaignMaps';
+import type { MapDefinition } from '../map/TerrainTypes';
+import { TerrainGrid } from '../map/TerrainGrid';
+import { FlowField } from '../map/FlowField';
+import { CongestionGrid } from '../systems/CongestionGrid';
+import { ThreatMap } from '../systems/ThreatMap';
 
 export type GamePhase = 'idle' | 'build' | 'battle';
 
@@ -31,13 +38,18 @@ export class Game implements BattlefieldActions {
   private readonly enemies = new EnemyManager();
   private readonly projectiles = new ProjectileManager();
   private readonly grid = new SpatialGrid(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.spatialCellSize, TUNING.maxEnemies);
-  private readonly renderer: Renderer;
-  private readonly weapons: WeaponManager;
+  private renderer: Renderer;
+  private weapons: WeaponManager;
   private readonly waveDirector = new WaveDirector();
   private readonly progression: MetaProgression;
   private readonly chaos: ChaosSystem;
   private readonly feedback = new FeedbackSystem();
-  private readonly mapSpawns = new MapSpawnSystem();
+  private map: MapDefinition;
+  private terrain: TerrainGrid;
+  private flowField: FlowField;
+  private mapSpawns: MapSpawnSystem;
+  private congestion: CongestionGrid;
+  private threatMap: ThreatMap;
   private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.logicalWidth, TUNING.logicalHeight);
   private readonly onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void;
   private wallHp: number = TUNING.wallMaxHp;
@@ -61,6 +73,7 @@ export class Game implements BattlefieldActions {
   private pointerX = 0;
   private pointerY = 0;
   private pointerOverCanvas = false;
+  private showThreatMap = false;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -72,8 +85,14 @@ export class Game implements BattlefieldActions {
     this.hud = hud;
     this.onRunEnd = onRunEnd;
     this.progression = progression;
-    this.renderer = new Renderer(canvas.getContext('2d')!);
-    this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth);
+    this.map = DEFAULT_CAMPAIGN_MAP;
+    this.terrain = new TerrainGrid(this.map);
+    this.flowField = new FlowField(this.terrain, this.map.goalCell);
+    this.congestion = new CongestionGrid(this.terrain);
+    this.threatMap = new ThreatMap(this.terrain);
+    this.mapSpawns = new MapSpawnSystem(this.map);
+    this.renderer = new Renderer(canvas.getContext('2d')!, this.map);
+    this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth, this.terrain);
     this.chaos = new ChaosSystem(TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight);
     this.applyPermanentBonuses();
     this.resize();
@@ -91,17 +110,18 @@ export class Game implements BattlefieldActions {
       const spawn = this.mapSpawns.nextSpawn();
       this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
     });
+    this.congestion.rebuild(this.enemies);
     this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
       this.registerKill(reward);
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
-    });
+    }, this.flowField, this.terrain, this.congestion, this.threatMap);
     this.grid.rebuild(this.enemies);
     this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, (reward) => this.registerKill(reward));
-    this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers));
+    this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => this.damageArea(x, y, damage, radius), this.terrain);
     this.chaos.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
     this.enemies.compact();
     this.feedback.update(simulationDelta);
-    if (this.waveDirector.isWaveCleared(this.enemies.count)) this.enterBuildPhase();
+    if (this.waveDirector.isWaveCleared(this.enemies.count)) this.endRun();
   }
 
   render(fps: number): void {
@@ -123,6 +143,8 @@ export class Game implements BattlefieldActions {
       selectedTowerId: this.selectedId,
       hoveredTowerId: this.hoveredId,
       ghost: this.ghostTower(),
+      threatMap: this.threatMap,
+      showThreatMap: this.showThreatMap,
     });
     this.hud.update({
       wallHp: this.wallHp,
@@ -142,11 +164,15 @@ export class Game implements BattlefieldActions {
   }
 
   restart(): void {
+    const existingLayout = this.weapons.exportLayout();
     this.enemies.clear();
     this.projectiles.count = 0;
     this.projectiles.droppedProjectiles = 0;
     this.weapons.reset();
     this.applyPermanentBonuses();
+    const savedLayout = existingLayout.length > 0 ? existingLayout : this.readLayout();
+    this.weapons.importLayout(savedLayout);
+    this.threatMap.rebuild(this.weapons.towers);
     this.wallHp = this.wallMaxHp;
     this.gold = this.progression.bonuses.startingGold;
     this.kills = 0;
@@ -169,11 +195,28 @@ export class Game implements BattlefieldActions {
     this.restart();
   }
 
+  loadMap(map: MapDefinition): void {
+    this.map = map;
+    this.terrain = new TerrainGrid(map);
+    this.flowField = new FlowField(this.terrain, map.goalCell);
+    this.congestion = new CongestionGrid(this.terrain);
+    this.threatMap = new ThreatMap(this.terrain);
+    this.mapSpawns = new MapSpawnSystem(map);
+    this.renderer = new Renderer(this.canvas.getContext('2d')!, map);
+    this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth, this.terrain);
+    this.restart();
+  }
+
+  get activeMap(): MapDefinition {
+    return this.map;
+  }
+
   startBattle(): void {
     if (this.phase !== 'build' || this.gameOver) return;
+    if (!this.weapons.allAimed()) return;
     this.phase = 'battle';
     this.selectedId = 0;
-    this.waveDirector.startWave();
+    this.waveDirector.startWave(this.map.enemySettings.enemyCount);
   }
 
   get currentPhase(): GamePhase {
@@ -243,8 +286,13 @@ export class Game implements BattlefieldActions {
     const config = towerConfig(this.armed);
     if (this.gold < config.cost) return;
     const spot = this.weapons.clampToBuildZone(x, y);
-    if (!this.weapons.place(this.armed, spot.x, spot.y)) return;
+    const placed = this.weapons.place(this.armed, spot.x, spot.y);
+    if (!placed) return;
     this.gold -= config.cost;
+    this.selectedId = placed.id;
+    this.armed = null;
+    this.saveLayout();
+    this.threatMap.rebuild(this.weapons.towers);
   }
 
   towerIdAt(x: number, y: number): number {
@@ -265,10 +313,14 @@ export class Game implements BattlefieldActions {
     const spot = this.weapons.clampToBuildZone(x, y);
     this.weapons.moveTower(id, spot.x, spot.y);
     this.selectedId = id;
+    this.saveLayout();
+    this.threatMap.rebuild(this.weapons.towers);
   }
 
   aimTower(id: number, x: number, y: number): void {
-    this.weapons.aimTower(id, x, y);
+    if (this.phase === 'build') this.weapons.aimTower(id, x, y);
+    this.saveLayout();
+    this.threatMap.rebuild(this.weapons.towers);
   }
 
   removeTower(id: number): void {
@@ -277,12 +329,16 @@ export class Game implements BattlefieldActions {
     if (!kind) return;
     this.gold += Math.floor(towerConfig(kind).cost * 0.75);
     if (this.selectedId === id) this.selectedId = 0;
+    this.saveLayout();
+    this.threatMap.rebuild(this.weapons.towers);
   }
 
   removeAllTowers(): void {
     if (this.phase !== 'build') return;
     for (const kind of this.weapons.removeAll()) this.gold += Math.floor(towerConfig(kind).cost * 0.75);
     this.selectedId = 0;
+    this.saveLayout();
+    this.threatMap.rebuild(this.weapons.towers);
   }
 
   setPointer(x: number, y: number, overCanvas: boolean): void {
@@ -348,6 +404,9 @@ export class Game implements BattlefieldActions {
       gridCells: this.grid.cellCount,
       totalSpawned: this.enemies.totalSpawned,
       activeEffects: this.chaos.activeEffects,
+      stuckRecoveries: this.enemies.stuckRecoveries,
+      minimumEnemyY: this.enemies.minimumY,
+      maximumEnemyY: this.enemies.maximumY,
       invincible: this.invincible,
       gameSpeed: this.gameSpeed,
     };
@@ -359,6 +418,7 @@ export class Game implements BattlefieldActions {
       event.preventDefault();
       this.startBattle();
     }
+    if (event.key === 't' || event.key === 'T') this.showThreatMap = !this.showThreatMap;
   }
 
   private ghostTower(): GhostTower | null {
@@ -381,11 +441,6 @@ export class Game implements BattlefieldActions {
     }));
   }
 
-  private enterBuildPhase(): void {
-    this.phase = 'build';
-    this.armed = null;
-  }
-
   private damageWall(damage: number): void {
     if (this.invincible) return;
     this.wallHp = Math.max(0, this.wallHp - Math.max(1, damage - this.wallArmor));
@@ -398,6 +453,26 @@ export class Game implements BattlefieldActions {
     this.feedback.registerKill(this.kills);
     this.highestCombo = Math.max(this.highestCombo, this.feedback.currentCombo);
     this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier * this.feedback.goldMultiplier));
+  }
+
+  private damageArea(x: number, y: number, damage: number, radius: number): void {
+    const count = this.grid.collectInRange(x, y, radius, this.enemies, 320);
+    for (let index = 0; index < count; index++) {
+      const reward = this.enemies.damage(this.grid.resultAt(index), damage);
+      if (this.enemies.lastDamageDealt > 0) this.feedback.registerDamage(x, y, this.enemies.lastDamageDealt, this.progression.settings.damageNumbers);
+      if (reward > 0) this.registerKill(reward);
+    }
+  }
+
+  private saveLayout(): void {
+    try { localStorage.setItem(`the-last-wall-layout-${this.map.id}`, JSON.stringify(this.weapons.exportLayout())); } catch { /* optional storage */ }
+  }
+
+  private readLayout(): TowerLayoutEntry[] {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(`the-last-wall-layout-${this.map.id}`) ?? '[]') as TowerLayoutEntry[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
   }
 
   private resize(): void {
@@ -418,8 +493,10 @@ export class Game implements BattlefieldActions {
     if (this.gameOver) return;
     this.gameOver = true;
     this.phase = 'idle';
-    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.gold, this.highestCombo);
-    this.onRunEnd(breakdown, this.wallHp > 0);
+    const survived = this.wallHp > 0;
+    if (survived && !this.map.custom) this.progression.completeCampaign(this.map.id);
+    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.gold, this.highestCombo, !this.map.custom);
+    this.onRunEnd(breakdown, survived);
   }
 
   private applyPermanentBonuses(): void {

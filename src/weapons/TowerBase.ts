@@ -1,5 +1,5 @@
-import { EnemyManager } from '../enemies/EnemyManager';
-import { SpatialGrid } from '../systems/SpatialGrid';
+import { createTargeting } from './TowerTargeting';
+import type { TowerTargetMode, TowerTargetingConfig } from './TowerTargeting';
 
 export abstract class TowerBase {
   x: number;
@@ -8,13 +8,13 @@ export abstract class TowerBase {
   aimY = 0;
   hasAim = false;
   facing = -Math.PI / 2;
+  readonly targeting: TowerTargetingConfig;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, mode: TowerTargetMode, distance: number, radius = 0, coneAngle = 0.7) {
     this.x = x;
     this.y = y;
+    this.targeting = createTargeting(mode, distance, radius, coneAngle);
   }
-
-  abstract get range(): number;
 
   moveTo(x: number, y: number): void {
     if (this.hasAim) {
@@ -22,6 +22,10 @@ export abstract class TowerBase {
       const offsetY = this.aimY - this.y;
       this.aimX = x + offsetX;
       this.aimY = y + offsetY;
+      if (this.targeting.mode === 'area' || this.targeting.mode === 'zone') {
+        this.targeting.targetX = this.aimX;
+        this.targeting.targetY = this.aimY;
+      }
     }
     this.x = x;
     this.y = y;
@@ -31,34 +35,39 @@ export abstract class TowerBase {
     const deltaX = x - this.x;
     const deltaY = y - this.y;
     const distance = Math.hypot(deltaX, deltaY) || 1;
-    const clamped = Math.min(distance, this.range);
+    const clamped = Math.min(distance, this.targeting.maxDistance);
     this.aimX = this.x + (deltaX / distance) * clamped;
     this.aimY = this.y + (deltaY / distance) * clamped;
     this.hasAim = true;
     this.facing = Math.atan2(deltaY, deltaX);
+    this.targeting.angle = this.facing;
+    if (this.targeting.mode === 'line' || this.targeting.mode === 'cone') this.targeting.distance = clamped;
+    this.targeting.targetX = this.aimX;
+    this.targeting.targetY = this.aimY;
   }
 
   clearAim(): void {
     this.hasAim = false;
   }
 
-  /** Prefers enemies near the player set aim point, falling back to nearest in range. */
-  protected acquire(enemies: EnemyManager, grid: SpatialGrid): number {
-    const range = this.range;
-    if (this.hasAim) {
-      const preferred = grid.findClosestInRange(this.aimX, this.aimY, range * 0.5, enemies);
-      if (preferred >= 0) {
-        const deltaX = enemies.x[preferred] - this.x;
-        const deltaY = enemies.y[preferred] - this.y;
-        if (deltaX * deltaX + deltaY * deltaY <= range * range) return this.face(enemies, preferred);
-      }
-    }
-    const target = grid.findClosestInRange(this.x, this.y, range, enemies);
-    return target < 0 ? target : this.face(enemies, target);
+  get range(): number {
+    return this.targeting.distance;
   }
 
-  private face(enemies: EnemyManager, index: number): number {
-    this.facing = Math.atan2(enemies.y[index] - this.y, enemies.x[index] - this.x);
-    return index;
+  aimPoint(): { x: number; y: number } {
+    return { x: this.aimX, y: this.aimY };
+  }
+
+  direction(): { x: number; y: number } {
+    return { x: Math.cos(this.targeting.angle), y: Math.sin(this.targeting.angle) };
+  }
+
+  isInFixedCone(x: number, y: number): boolean {
+    const deltaX = x - this.x;
+    const deltaY = y - this.y;
+    const distance = Math.hypot(deltaX, deltaY);
+    if (distance > this.targeting.distance) return false;
+    const difference = Math.atan2(Math.sin(Math.atan2(deltaY, deltaX) - this.targeting.angle), Math.cos(Math.atan2(deltaY, deltaX) - this.targeting.angle));
+    return Math.abs(difference) <= this.targeting.coneAngle * 0.5;
   }
 }

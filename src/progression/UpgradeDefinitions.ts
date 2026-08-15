@@ -1,4 +1,4 @@
-export type MetaUpgradeId = 'globalDamage' | 'wallIntegrity' | 'wallArmor' | 'startingGold' | 'bounty' | 'tokenBonus' | 'ballistaMastery' | 'bonusResources' | 'ballistaSlots' | 'cannonSlots' | 'fireSlots' | 'lightningSlots';
+export type MetaUpgradeId = 'globalDamage' | 'wallIntegrity' | 'wallArmor' | 'startingGold' | 'bounty' | 'tokenBonus' | 'ballistaMastery' | 'bonusResources' | 'ballistaSlots' | 'cannonSlots' | 'fireSlots' | 'lightningSlots' | 'mortarSlots';
 
 export interface MetaUpgradeDefinition {
   id: MetaUpgradeId;
@@ -22,4 +22,5 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'cannonSlots', category: 'Weapons', title: 'Cannon Foundry', description: 'One more Cannon can be placed each level.', maxLevel: 2, baseCost: 12 },
   { id: 'fireSlots', category: 'Weapons', title: 'Pyre Works', description: 'One more Fire Tower can be placed each level.', maxLevel: 4, baseCost: 9 },
   { id: 'lightningSlots', category: 'Weapons', title: 'Storm Spire', description: 'One more Lightning Tower can be placed each level.', maxLevel: 2, baseCost: 16 },
+  { id: 'mortarSlots', category: 'Weapons', title: 'Mortar Yard', description: 'One more Mortar can be placed each level.', maxLevel: 2, baseCost: 14 },
 ] as const;

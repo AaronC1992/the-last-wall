@@ -11,6 +11,8 @@ import { DecalSystem } from '../map/DecalSystem';
 import { Camera } from '../core/Camera';
 import { towerConfig } from '../weapons/TowerConfig';
 import type { TowerKind } from '../weapons/TowerConfig';
+import type { MapDefinition } from '../map/TerrainTypes';
+import type { ThreatMap } from '../systems/ThreatMap';
 
 export interface GhostTower {
   kind: TowerKind;
@@ -36,15 +38,18 @@ export interface RenderState {
   selectedTowerId: number;
   hoveredTowerId: number;
   ghost: GhostTower | null;
+  threatMap: ThreatMap;
+  showThreatMap: boolean;
 }
 
 export class Renderer {
   private readonly context: CanvasRenderingContext2D;
-  private readonly map = new MapRenderer();
+  private readonly map: MapRenderer;
   private readonly decals = new DecalSystem();
 
-  constructor(context: CanvasRenderingContext2D) {
+  constructor(context: CanvasRenderingContext2D, map: MapDefinition) {
     this.context = context;
+    this.map = new MapRenderer(map);
   }
 
   render(state: RenderState): void {
@@ -59,6 +64,7 @@ export class Renderer {
     state.camera.apply(context);
 
     this.map.renderBackground(context);
+    if (state.showThreatMap) state.threatMap.render(context);
     this.decals.render(context);
     this.renderEnemies(context, state.enemies);
     this.renderProjectiles(context, state.projectiles);
@@ -117,30 +123,7 @@ export class Renderer {
     for (const tower of state.weapons.towers) {
       const highlighted = tower.id === state.selectedTowerId || tower.id === state.hoveredTowerId;
       const config = towerConfig(tower.kind);
-      if (state.buildPhase || highlighted) {
-        context.save();
-        context.globalAlpha = highlighted ? 0.5 : 0.22;
-        context.strokeStyle = config.accent;
-        context.lineWidth = highlighted ? 2 : 1;
-        context.beginPath();
-        context.arc(tower.instance.x, tower.instance.y, tower.instance.range, 0, Math.PI * 2);
-        context.stroke();
-        context.restore();
-      }
-      if (tower.instance.hasAim && (state.buildPhase || highlighted)) {
-        context.save();
-        context.globalAlpha = 0.7;
-        context.strokeStyle = config.accent;
-        context.lineWidth = 1.5;
-        context.beginPath();
-        context.moveTo(tower.instance.x, tower.instance.y);
-        context.lineTo(tower.instance.aimX, tower.instance.aimY);
-        context.stroke();
-        context.beginPath();
-        context.arc(tower.instance.aimX, tower.instance.aimY, 5, 0, Math.PI * 2);
-        context.stroke();
-        context.restore();
-      }
+      if (tower.instance.hasAim && (state.buildPhase || highlighted)) this.renderTargetGeometry(context, tower.kind, tower.instance, config.accent);
       this.map.drawTower(context, tower.kind, tower.instance.x, tower.instance.y, false);
       if (tower.id === state.selectedTowerId) {
         context.strokeStyle = '#f2e0b4';
@@ -161,19 +144,32 @@ export class Renderer {
     context.fillStyle = state.ghost.valid ? config.color : '#e06458';
     context.lineWidth = 2;
     context.beginPath();
-    context.arc(state.ghost.x, state.ghost.y, this.rangeOf(state.ghost.kind), 0, Math.PI * 2);
-    context.stroke();
-    context.beginPath();
     context.arc(state.ghost.x, state.ghost.y, 20, 0, Math.PI * 2);
     context.fill();
     context.restore();
     this.map.drawTower(context, state.ghost.kind, state.ghost.x, state.ghost.y, true);
   }
 
-  private rangeOf(kind: TowerKind): number {
-    if (kind === 'cannon') return 620;
-    if (kind === 'fireTower') return 290;
-    if (kind === 'lightningTower') return 510;
-    return 500;
+  private renderTargetGeometry(context: CanvasRenderingContext2D, kind: TowerKind, tower: { x: number; y: number; targeting: { mode: string; angle: number; distance: number; targetX: number; targetY: number; radius: number; coneAngle: number } }, color: string): void {
+    const target = tower.targeting;
+    context.save();
+    context.globalAlpha = 0.28;
+    context.strokeStyle = color;
+    context.fillStyle = color;
+    context.lineWidth = kind === 'ballista' ? 7 : 3;
+    const endX = tower.x + Math.cos(target.angle) * target.distance;
+    const endY = tower.y + Math.sin(target.angle) * target.distance;
+    if (target.mode === 'line') {
+      context.beginPath(); context.moveTo(tower.x, tower.y); context.lineTo(endX, endY); context.stroke();
+      if (kind === 'cannon') { context.beginPath(); context.arc(endX, endY, 10, 0, Math.PI * 2); context.stroke(); }
+    } else if (target.mode === 'cone') {
+      context.beginPath(); context.moveTo(tower.x, tower.y); context.arc(tower.x, tower.y, target.distance, target.angle - target.coneAngle / 2, target.angle + target.coneAngle / 2); context.closePath(); context.fill();
+    } else {
+      context.beginPath(); context.moveTo(tower.x, tower.y); context.lineTo(target.targetX, target.targetY); context.stroke();
+      context.beginPath(); context.arc(target.targetX, target.targetY, target.radius, 0, Math.PI * 2); context.stroke();
+    }
+    context.globalAlpha = 0.8;
+    context.beginPath(); context.arc(target.mode === 'line' ? endX : target.targetX, target.mode === 'line' ? endY : target.targetY, 5, 0, Math.PI * 2); context.stroke();
+    context.restore();
   }
 }

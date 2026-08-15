@@ -80,7 +80,7 @@ export class BattlefieldInput {
 
     this.pressedTowerId = towerId;
     if (towerId > 0) {
-      this.dragMode = 'move';
+      this.dragMode = towerId === this.actions.selectedTowerId() ? 'aim' : 'move';
       this.draggedTowerId = towerId;
       return;
     }

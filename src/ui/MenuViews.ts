@@ -1,5 +1,8 @@
 import { AudioSystem } from '../systems/AudioSystem';
 import { MetaProgression } from '../progression/MetaProgression';
+import { CAMPAIGN_MAPS } from '../map/CampaignMaps';
+import type { MapDefinition } from '../map/TerrainTypes';
+import { CustomMapStorage } from '../map/CustomMapStorage';
 
 export class MenuViews {
   private readonly progression: MetaProgression;
@@ -12,8 +15,11 @@ export class MenuViews {
   private readonly sfx = document.querySelector<HTMLInputElement>('#setting-sfx')!;
   private readonly shake = document.querySelector<HTMLInputElement>('#setting-shake')!;
   private readonly damageNumbers = document.querySelector<HTMLInputElement>('#setting-damage-numbers')!;
+  private readonly campaign = document.querySelector<HTMLElement>('#campaign-menu')!;
+  private readonly customMaps = document.querySelector<HTMLElement>('#custom-maps-menu')!;
+  private readonly storage = new CustomMapStorage();
 
-  constructor(progression: MetaProgression, audio: AudioSystem, onPlay: () => void, onUpgrades: () => void) {
+  constructor(progression: MetaProgression, audio: AudioSystem, onPlay: () => void, onUpgrades: () => void, onMapBuilder: () => void, onPlayMap: (map: MapDefinition) => void, onEditMap: (map: MapDefinition) => void) {
     this.progression = progression;
     this.audio = audio;
     document.querySelector<HTMLButtonElement>('#menu-play')!.addEventListener('click', () => {
@@ -21,20 +27,53 @@ export class MenuViews {
       onPlay();
       this.main.hidden = true;
     });
+    document.querySelector<HTMLButtonElement>('#menu-map-builder')!.addEventListener('click', () => { this.main.hidden = true; onMapBuilder(); });
+    document.querySelector<HTMLButtonElement>('#menu-custom-maps')!.addEventListener('click', () => this.showCustomMaps(onPlayMap, onEditMap));
     document.querySelector<HTMLButtonElement>('#menu-upgrades')!.addEventListener('click', () => {
       this.main.hidden = true;
       onUpgrades();
     });
     document.querySelector<HTMLButtonElement>('#menu-settings')!.addEventListener('click', () => this.showSettings());
-    document.querySelector<HTMLButtonElement>('#menu-statistics')!.addEventListener('click', () => this.showStatistics());
-    document.querySelector<HTMLButtonElement>('#menu-armory')!.addEventListener('click', () => this.showArmory());
+    document.querySelector<HTMLButtonElement>('#menu-statistics')?.addEventListener('click', () => this.showStatistics());
+    document.querySelector<HTMLButtonElement>('#menu-armory')?.addEventListener('click', () => this.showArmory());
     document.querySelector<HTMLButtonElement>('#settings-close')!.addEventListener('click', () => this.closeToMain(this.settings));
     document.querySelector<HTMLButtonElement>('#statistics-close')!.addEventListener('click', () => this.closeToMain(this.statistics));
     document.querySelector<HTMLButtonElement>('#armory-close')!.addEventListener('click', () => this.closeToMain(this.armory));
+    document.querySelector<HTMLButtonElement>('#campaign-close')!.addEventListener('click', () => this.closeToMain(this.campaign));
+    document.querySelector<HTMLButtonElement>('#custom-maps-close')!.addEventListener('click', () => this.closeToMain(this.customMaps));
     this.master.addEventListener('input', () => this.saveSettings());
     this.sfx.addEventListener('input', () => this.saveSettings());
     this.shake.addEventListener('change', () => this.saveSettings());
     this.damageNumbers.addEventListener('change', () => this.saveSettings());
+  }
+
+  showCampaign(onSelect: (map: MapDefinition) => void): void {
+    this.main.hidden = true;
+    const levels = document.querySelector<HTMLElement>('#campaign-levels')!;
+    levels.innerHTML = CAMPAIGN_MAPS.map((map, index) => `<button type="button" data-campaign="${map.id}" ${this.progression.isCampaignUnlocked(index) ? '' : 'disabled'}>${index + 1}. ${map.name}</button>`).join('');
+    CAMPAIGN_MAPS.forEach((map) => levels.querySelector<HTMLButtonElement>(`[data-campaign="${map.id}"]`)!.addEventListener('click', () => onSelect(map)));
+    this.campaign.hidden = false;
+  }
+
+  private showCustomMaps(onPlayMap: (map: MapDefinition) => void, onEditMap: (map: MapDefinition) => void): void {
+    this.main.hidden = true;
+    const list = document.querySelector<HTMLElement>('#custom-map-list')!;
+    const maps = this.storage.list();
+    list.innerHTML = maps.length === 0 ? '<span>No custom maps saved.</span>' : maps.map((map) => `<div><span>${map.name} ${map.width} x ${map.height} ${map.enemySettings.difficulty} ${map.modifiedDate ? new Date(map.modifiedDate).toLocaleDateString() : ''}</span><button type="button" data-play="${map.id}">Play</button><button type="button" data-edit="${map.id}">Edit</button><button type="button" data-delete="${map.id}">Delete</button><button type="button" data-export="${map.id}">Export</button></div>`).join('');
+    for (const map of maps) {
+      list.querySelector<HTMLButtonElement>(`[data-play="${map.id}"]`)!.addEventListener('click', () => onPlayMap(map));
+      list.querySelector<HTMLButtonElement>(`[data-edit="${map.id}"]`)!.addEventListener('click', () => onEditMap(map));
+      list.querySelector<HTMLButtonElement>(`[data-delete="${map.id}"]`)!.addEventListener('click', () => { this.storage.delete(map.id); this.showCustomMaps(onPlayMap, onEditMap); });
+      list.querySelector<HTMLButtonElement>(`[data-export="${map.id}"]`)!.addEventListener('click', () => this.storage.export(map));
+    }
+    document.querySelector<HTMLButtonElement>('#custom-map-import')!.onclick = () => document.querySelector<HTMLInputElement>('#custom-map-file')!.click();
+    document.querySelector<HTMLInputElement>('#custom-map-file')!.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const imported = await this.storage.import(file);
+      if (imported) { this.storage.save(imported); this.showCustomMaps(onPlayMap, onEditMap); }
+    };
+    this.customMaps.hidden = false;
   }
 
   private showSettings(): void {
@@ -61,6 +100,7 @@ export class MenuViews {
     document.querySelector<HTMLElement>('#armory-cannon')!.textContent = this.progression.isUnlocked('cannon') ? 'Available' : 'Locked, 15 Tokens';
     document.querySelector<HTMLElement>('#armory-fire')!.textContent = this.progression.isUnlocked('fireTower') ? 'Available' : 'Locked, 30 Tokens';
     document.querySelector<HTMLElement>('#armory-lightning')!.textContent = this.progression.isUnlocked('lightningTower') ? 'Available' : 'Locked, 55 Tokens';
+    document.querySelector<HTMLElement>('#armory-mortar')!.textContent = this.progression.isUnlocked('mortar') ? 'Available' : 'Locked, 45 Tokens';
     this.main.hidden = true;
     this.armory.hidden = false;
   }

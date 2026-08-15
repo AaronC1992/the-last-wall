@@ -1,6 +1,6 @@
 :root { font-family: Georgia, serif; color: #e9efe8; background: #05080a; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 760px; min-height: 100vh; background: #05080a; overflow: hidden; }
+body { margin: 0; min-width: 0; min-height: 100vh; background: #05080a; overflow: hidden; }
 button { font: inherit; }
 
 .game-shell { display: grid; grid-template-rows: 1fr auto; height: 100vh; }
@@ -39,9 +39,10 @@ button { font: inherit; }
 .map-intro { position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%); display: grid; gap: 6px; text-align: center; text-shadow: 0 2px 0 #17211a; pointer-events: none; }
 .map-intro strong { color: #f0d28d; font-size: 32px; }
 .map-intro span { color: #e8efe0; font: 13px Verdana, sans-serif; }
-.build-banner { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 4px; padding: 10px 22px; background: rgba(10, 14, 17, .82); border: 1px solid #4a5a52; pointer-events: none; }
-.build-banner strong { color: #f5f1df; font-size: 30px; letter-spacing: 1px; }
-.build-banner span { color: #b7c2bb; font: 13px Verdana, sans-serif; }
+.build-banner { position: absolute; top: 74px; right: 14px; display: grid; justify-items: center; gap: 2px; max-width: 190px; padding: 6px 10px; background: rgba(10, 14, 17, .94); border: 1px solid #4a5a52; pointer-events: none; text-align: center; }
+.build-banner[hidden] { display: none; }
+.build-banner strong { color: #f5f1df; font-size: 17px; letter-spacing: .5px; }
+.build-banner span { color: #b7c2bb; font: 11px Verdana, sans-serif; }
 
 /* Controls hint */
 .controls-hint { position: absolute; left: 12px; bottom: 12px; display: grid; gap: 7px; padding: 12px 14px 12px 12px; background: rgba(10, 13, 16, .88); border: 1px solid #3a464f; }
@@ -110,24 +111,53 @@ button { font: inherit; }
 .ability-button:disabled { border-color: #3a444b; background: rgba(20, 26, 30, .8); color: #71817a; cursor: default; }
 
 /* Menus */
-.main-menu, .menu-panel { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 16px; padding: 28px; background: rgba(9, 13, 15, .94); text-align: center; }
+.main-menu, .menu-panel { position: absolute; inset: 0; z-index: 10; display: grid; place-content: center; justify-items: center; gap: 16px; padding: 28px; background: #090d0f; text-align: center; overflow: auto; }
 .main-menu[hidden], .menu-panel[hidden] { display: none; }
-.menu-mark { color: #f2c46d; font-size: 46px; font-weight: bold; }
-.main-menu p { margin: 0; color: #b7c2bb; }
-.main-menu nav { display: grid; width: 250px; gap: 8px; }
+.menu-mark { max-width: 100%; color: #f2c46d; font-size: 46px; font-weight: bold; text-align: center; }
+.main-menu p { max-width: 100%; margin: 0; color: #b7c2bb; text-align: center; }
+.main-menu nav { display: grid; width: min(250px, 100%); gap: 8px; }
 .main-menu nav button { padding: 12px; border: 1px solid #8a6e3e; background: #332b20; color: #f2c46d; cursor: pointer; font-weight: bold; }
 .main-menu nav button:hover { background: #4b3925; }
-.menu-panel { align-content: center; justify-items: stretch; min-width: min(540px, 90%); text-align: left; }
+.menu-panel { align-content: center; justify-items: stretch; width: min(540px, calc(100% - 28px)); min-width: 0; text-align: left; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; color: #f2c46d; font-size: 22px; }
 .panel-heading button { padding: 6px 10px; border: 1px solid #52655d; background: #22302e; color: #e9efe8; cursor: pointer; }
 .menu-panel label { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #d4ddd5; font: 13px Verdana, sans-serif; }
+.map-builder { width: min(1100px, 94vw); }
+.builder-layout { display: grid; grid-template-columns: 120px minmax(420px, 800px) 190px; gap: 12px; align-items: start; }
+.builder-tools, .builder-side { display: grid; gap: 7px; }
+.builder-tools button, .builder-side button { padding: 8px 6px; border: 1px solid #6b5a3c; background: #25251d; color: #efe9dc; cursor: pointer; }
+.builder-side label { display: grid; gap: 5px; }
+.builder-side input { min-width: 0; padding: 7px; background: #161b19; border: 1px solid #6b5a3c; color: #efe9dc; }
+#map-builder-canvas { display: block; width: 100%; aspect-ratio: 5 / 3; border: 1px solid #8b7651; image-rendering: pixelated; cursor: crosshair; touch-action: none; position: relative; z-index: 2; }
+#map-builder-status { min-height: 48px; margin: 0; color: #d4ddd5; font-size: 12px; line-height: 1.4; }
+@media (max-width: 850px) { .builder-layout { grid-template-columns: 1fr; } .builder-tools { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) {
+	.hud-top { top: 6px; }
+	.health-bar { width: 190px; }
+	.resource-row { gap: 9px; }
+	.tower-stock { top: 8px; right: 7px; }
+	.stock-bar { width: 64px; }
+	.build-banner { top: 68px; right: 8px; max-width: 150px; }
+	.build-banner strong { font-size: 14px; }
+	.build-banner span { font-size: 10px; }
+	.controls-hint { left: 8px; bottom: 78px; max-width: 220px; padding: 9px 10px; }
+	.controls-hint span { gap: 6px; font-size: 10px; }
+	.build-bar { left: 8px; right: 8px; transform: none; justify-content: center; overflow-x: auto; }
+	.build-slot { width: 50px; height: 50px; flex: 0 0 50px; }
+	.start-battle { top: 166px; right: 8px; bottom: auto; padding: 8px 12px; font-size: 14px; }
+	.ability-strip { right: 8px; bottom: 8px; }
+	.ability-button { min-width: 108px; padding: 5px 7px; font-size: 10px; }
+	.main-menu { gap: 10px; padding: 16px; }
+	.menu-mark { font-size: 32px; line-height: 1.1; }
+	.main-menu p { font-size: 14px; }
+}
 .menu-panel input[type="range"] { accent-color: #f2c46d; }
 .statistics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .statistics-grid span { display: grid; gap: 4px; padding: 12px; border: 1px solid #43534c; background: #162021; color: #91a49c; font: 11px Verdana, sans-serif; text-transform: uppercase; }
 .statistics-grid b { color: #f5f1df; font-size: 22px; }
 
 /* Skill tree */
-.meta-menu { position: absolute; inset: 0; background: #05070a; }
+.meta-menu { position: absolute; inset: 0; z-index: 11; background: #05070a; }
 .meta-menu[hidden] { display: none; }
 #skill-tree-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
 #skill-tree-canvas:active { cursor: grabbing; }

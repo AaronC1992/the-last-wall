@@ -1,0 +1,43 @@
+import { EnemyManager } from '../enemies/EnemyManager';
+import { SpatialGrid } from '../systems/SpatialGrid';
+import { ProjectileManager } from './ProjectileManager';
+import { TowerBase } from './TowerBase';
+
+export class Mortar extends TowerBase {
+  private cooldown = 0;
+  private cooldownDuration = 2.6;
+  private damage = 42;
+  private blastRadius = 82;
+  private flightTime = 0.72;
+
+  constructor(x: number, y: number) {
+    super(x, y, 'area', 460, 82);
+  }
+
+  update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, projectiles: ProjectileManager): void {
+    this.cooldown -= deltaTime;
+    if (this.cooldown > 0 || !this.hasAim) return;
+    const scatter = this.targeting.radius * 0.18;
+    projectiles.fireMortar(this.x, this.y, this.targeting.targetX + (Math.random() - 0.5) * scatter, this.targeting.targetY + (Math.random() - 0.5) * scatter, this.damage, this.flightTime, this.blastRadius);
+    this.cooldown = this.cooldownDuration;
+  }
+
+  reset(): void {
+    this.cooldown = 0;
+    this.cooldownDuration = 2.6;
+    this.damage = 42;
+    this.blastRadius = 82;
+    this.flightTime = 0.72;
+    this.targeting.maxDistance = 460;
+    this.targeting.distance = 460;
+    this.targeting.radius = 82;
+  }
+
+  applyUpgrade(id: string): void {
+    if (id === 'mortarDamage') this.damage *= 1.25;
+    if (id === 'mortarSpeed') this.cooldownDuration *= 0.8;
+    if (id === 'mortarRadius') { this.blastRadius *= 1.2; this.targeting.radius *= 1.2; }
+    if (id === 'mortarRange') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; }
+    if (id === 'doubleShot') this.cooldownDuration *= 0.65;
+  }
+}

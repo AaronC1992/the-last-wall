@@ -55,6 +55,7 @@ export class HUD {
   }
 
   update(state: HudState): void {
+    const showBuildControls = state.buildPhase && state.wave === 0;
     const ratio = state.maxWallHp > 0 ? Math.max(0, state.wallHp / state.maxWallHp) : 0;
     this.healthFill.style.width = `${ratio * 100}%`;
     this.healthFill.classList.toggle('critical', ratio <= 0.35);
@@ -67,10 +68,10 @@ export class HUD {
     this.tokens.textContent = state.warTokens.toLocaleString();
     this.wave.textContent = state.wave > 0 ? state.wave.toString() : 'Ready';
     this.announcement.textContent = state.announcement;
-    this.announcement.hidden = state.announcement.length === 0 || state.buildPhase;
+    this.announcement.hidden = state.announcement.length === 0 || showBuildControls;
     this.mapIntro.hidden = !state.mapIntro;
-    this.buildBanner.hidden = !state.buildPhase;
-    this.startBattle.hidden = !state.buildPhase;
+    this.buildBanner.hidden = !showBuildControls;
+    this.startBattle.hidden = !showBuildControls;
 
     for (const readout of state.towers) {
       const row = this.stockRows.get(readout.kind)!;
