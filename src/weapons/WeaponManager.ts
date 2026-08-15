@@ -140,6 +140,12 @@ export class WeaponManager {
     return count;
   }
 
+  totalCost(): number {
+    let total = 0;
+    for (const tower of this.placed) total += towerConfig(tower.kind).cost;
+    return total;
+  }
+
   limitOf(kind: TowerKind): number {
     return towerConfig(kind).limit + this.limitBonus[kind];
   }

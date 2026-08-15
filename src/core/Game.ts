@@ -174,7 +174,7 @@ export class Game implements BattlefieldActions {
     this.weapons.importLayout(savedLayout);
     this.threatMap.rebuild(this.weapons.towers);
     this.wallHp = this.wallMaxHp;
-    this.gold = this.progression.bonuses.startingGold;
+    this.gold = Math.max(0, this.progression.bonuses.startingGold - this.weapons.totalCost());
     this.kills = 0;
     this.elapsed = 0;
     this.gameOver = false;
