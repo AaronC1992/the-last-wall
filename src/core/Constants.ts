@@ -12,6 +12,7 @@ export const TUNING = {
   wallMaxHp: 100,
   enemyBaseHp: 10,
   enemyBaseSpeed: 28,
+  enemyMovementSpeedMultiplier: 2,
   enemyRadius: 7,
   enemyWallDamage: 4,
   ballistaDamage: 5,
