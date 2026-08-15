@@ -25,11 +25,12 @@ export class MetaMenu {
     private readonly progression: MetaProgression,
     private readonly onVisibilityChange: (visible: boolean) => void,
     private readonly onPlay: () => void,
+    private readonly onCloseToMenu: () => void = () => undefined,
   ) {
     this.canvas.width = VIEW_WIDTH;
     this.canvas.height = VIEW_HEIGHT;
     document.querySelector<HTMLButtonElement>('#meta-button')!.addEventListener('click', () => this.show());
-    document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => this.hide());
+    document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
     document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => {
       this.hide();
       this.onPlay();

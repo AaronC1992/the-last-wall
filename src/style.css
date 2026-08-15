@@ -145,16 +145,18 @@ button { font: inherit; }
 	.build-banner { top: 68px; right: 8px; max-width: 150px; }
 	.build-banner strong { font-size: 14px; }
 	.build-banner span { font-size: 10px; }
-	.controls-hint { left: 8px; bottom: 78px; max-width: 220px; padding: 9px 10px; }
+	.controls-hint { left: 8px; bottom: 224px; max-width: 210px; max-height: 120px; overflow-y: auto; padding: 9px 10px; }
 	.controls-hint span { gap: 6px; font-size: 10px; }
 	.build-bar { left: 8px; right: 8px; transform: none; justify-content: center; overflow-x: auto; }
 	.build-slot { width: 50px; height: 50px; flex: 0 0 50px; }
 	.start-battle { top: 166px; right: 8px; bottom: auto; padding: 8px 12px; font-size: 14px; }
-	.ability-strip { right: 8px; bottom: 8px; }
-	.ability-button { min-width: 108px; padding: 5px 7px; font-size: 10px; }
+	.ability-strip { left: 8px; right: 8px; bottom: 78px; display: flex; gap: 5px; overflow-x: auto; }
+	.ability-button { min-width: 108px; flex: 0 0 108px; padding: 5px 7px; font-size: 10px; }
 	.main-menu { gap: 10px; padding: 16px; }
 	.menu-mark { font-size: 32px; line-height: 1.1; }
 	.main-menu p { font-size: 14px; }
+	.skill-legend { top: 70px; bottom: auto; left: 8px; max-width: 230px; max-height: 210px; overflow-y: auto; padding: 8px 9px; font-size: 9px; }
+	.skill-legend small { font-size: 9px; }
 }
 .menu-panel input[type="range"] { accent-color: #f2c46d; }
 .statistics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -167,6 +169,16 @@ button { font: inherit; }
 #skill-tree-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
 #skill-tree-canvas:active { cursor: grabbing; }
 .skill-currency { position: absolute; top: 12px; left: 14px; display: grid; gap: 6px; pointer-events: none; }
+.skill-legend { position: absolute; left: 14px; bottom: 14px; z-index: 2; display: grid; gap: 5px; max-width: 285px; padding: 10px 12px; background: rgba(9, 15, 21, .94); border: 1px solid #3a556c; color: #cdd9e3; font: 10px/1.35 Verdana, sans-serif; pointer-events: none; }
+.skill-legend strong { color: #f2c46d; font-size: 11px; letter-spacing: .5px; }
+.skill-legend span { display: flex; align-items: center; gap: 7px; }
+.skill-legend small { margin-top: 3px; color: #91a8ba; font: 10px/1.35 Verdana, sans-serif; }
+.legend-swatch { width: 10px; height: 10px; flex: none; display: inline-block; }
+.legend-swatch.offense { background: #4fa3f0; }
+.legend-swatch.defense { background: #e0803c; }
+.legend-swatch.economy { background: #d8c14a; }
+.legend-swatch.arcane { background: #d45fa8; }
+.legend-swatch.abilities { background: #9b7fe0; }
 .skill-tooltip { position: absolute; min-width: 240px; max-width: 300px; padding: 10px 12px; background: rgba(12, 20, 30, .96); border: 1px solid #3e6c9e; pointer-events: none; }
 .skill-tooltip[hidden] { display: none; }
 .skill-tooltip header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid #33506c; }
@@ -174,7 +186,7 @@ button { font: inherit; }
 .skill-tooltip header span { color: #9fd0ff; font: 12px Verdana, sans-serif; }
 .skill-tooltip p { margin: 8px 0 6px; color: #cfdae4; font: 12px/1.5 Verdana, sans-serif; }
 .skill-tooltip footer { color: #9fb3c6; font: 11px Verdana, sans-serif; }
-.skill-hints { background: rgba(10, 13, 16, .88); }
+.skill-hints { right: 14px; bottom: 70px; left: auto; background: rgba(10, 13, 16, .88); }
 .skill-close { position: absolute; top: 12px; right: 14px; padding: 8px 14px; border: 1px solid #55636d; background: #141b21; color: #dfe7ee; cursor: pointer; }
 .skill-play { position: absolute; right: 18px; bottom: 18px; padding: 12px 30px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 26px; }
 .skill-play:hover { background: #253039; }

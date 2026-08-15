@@ -98,6 +98,9 @@ export class BattlefieldInput {
 
     if (this.dragMode === 'none') {
       this.actions.setHoveredTower(inside ? this.actions.towerIdAt(world.x, world.y) : 0);
+      if (this.actions.selectedTowerId() > 0 && !this.actions.armedKind() && inside) {
+        this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
+      }
       return;
     }
     if (Math.abs(screen.x - this.pressScreenX) > DRAG_THRESHOLD || Math.abs(screen.y - this.pressScreenY) > DRAG_THRESHOLD) this.moved = true;
@@ -106,7 +109,7 @@ export class BattlefieldInput {
       this.camera.panByScreen(screen.x - this.lastScreenX, screen.y - this.lastScreenY);
     } else if (this.dragMode === 'move' && this.moved) {
       this.actions.moveTower(this.draggedTowerId, world.x, world.y);
-    } else if (this.dragMode === 'aim' && this.moved) {
+    } else if (this.dragMode === 'aim') {
       this.actions.aimTower(this.draggedTowerId, world.x, world.y);
     }
     this.lastScreenX = screen.x;
@@ -119,9 +122,20 @@ export class BattlefieldInput {
     const world = this.camera.screenToWorld(screen.x, screen.y);
 
     if (event.button === 0 && !this.moved && this.dragMode !== 'pan') {
-      if (this.pressedTowerId > 0) this.actions.selectTower(this.pressedTowerId);
-      else if (this.actions.armedKind()) this.actions.placeTower(world.x, world.y);
-      else this.actions.selectTower(0);
+      if (this.pressedTowerId > 0) {
+        if (this.pressedTowerId === this.actions.selectedTowerId()) {
+          this.actions.selectTower(0);
+        } else {
+          this.actions.selectTower(this.pressedTowerId);
+        }
+      } else if (this.actions.armedKind()) {
+        this.actions.placeTower(world.x, world.y);
+      } else if (this.actions.selectedTowerId() > 0) {
+        this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
+        this.actions.selectTower(0);
+      } else {
+        this.actions.selectTower(0);
+      }
     }
     this.dragMode = 'none';
     this.draggedTowerId = 0;

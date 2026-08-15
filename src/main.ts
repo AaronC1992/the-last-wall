@@ -94,6 +94,15 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <span class="resource level"><i></i><b id="level-value">0</b></span>
           <span class="resource wave"><i></i><b id="wave-value">Ready</b></span>
         </div>
+        <div class="skill-legend" aria-label="Tech Tree legend">
+          <strong>TECH TREE LEGEND</strong>
+          <span><i class="legend-swatch offense"></i>Offense, Ballista damage and fire rate</span>
+          <span><i class="legend-swatch defense"></i>Defense, wall strength and Cannon plans</span>
+          <span><i class="legend-swatch economy"></i>Economy, Gold and War Token rewards</span>
+          <span><i class="legend-swatch arcane"></i>Arcane, Fire, Lightning and Mortar plans</span>
+          <span><i class="legend-swatch abilities"></i>Abilities, battlefield powers</span>
+          <small>All purchases use blue War Tokens earned from completed runs. Branch colors show what a node improves.</small>
+        </div>
         <div id="skill-tooltip" class="skill-tooltip" hidden></div>
         <div id="skill-hints" class="controls-hint skill-hints">
           <button id="skill-hints-close" type="button" aria-label="Dismiss controls">X</button>
@@ -136,7 +145,9 @@ const results = new ResultsScreen(
 const game = new Game(canvas, hud, progression, (breakdown, survived) => results.show(survived, breakdown));
 const buildBar = new BuildBar((kind) => game.setArmedKind(kind));
 const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); }, (id) => game.isAbilityUnlocked(id));
-const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => game.start());
+const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => game.start(), () => {
+  if (game.currentPhase === 'idle') document.querySelector<HTMLElement>('#main-menu')!.hidden = false;
+});
 const mapBuilder = new MapBuilder((map) => { game.loadMap(map); game.start(); });
 const menuViews = new MenuViews(
   progression,

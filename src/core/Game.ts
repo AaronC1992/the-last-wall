@@ -291,6 +291,9 @@ export class Game implements BattlefieldActions {
     this.gold -= config.cost;
     this.selectedId = placed.id;
     this.armed = null;
+    const aimTargetX = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerX : spot.x;
+    const aimTargetY = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerY : spot.y - 100;
+    this.weapons.aimTower(placed.id, aimTargetX, aimTargetY);
     this.saveLayout();
     this.threatMap.rebuild(this.weapons.towers);
   }

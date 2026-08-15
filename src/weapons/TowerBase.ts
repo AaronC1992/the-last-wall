@@ -32,9 +32,14 @@ export abstract class TowerBase {
   }
 
   setAim(x: number, y: number): void {
-    const deltaX = x - this.x;
-    const deltaY = y - this.y;
-    const distance = Math.hypot(deltaX, deltaY) || 1;
+    let deltaX = x - this.x;
+    let deltaY = y - this.y;
+    let distance = Math.hypot(deltaX, deltaY);
+    if (distance < 0.001) {
+      deltaX = 0;
+      deltaY = -100;
+      distance = 100;
+    }
     const clamped = Math.min(distance, this.targeting.maxDistance);
     this.aimX = this.x + (deltaX / distance) * clamped;
     this.aimY = this.y + (deltaY / distance) * clamped;
