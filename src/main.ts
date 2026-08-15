@@ -24,9 +24,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <div class="health-bar"><i id="health-fill"></i><span id="health-text">100 / 100</span></div>
         </div>
         <div class="resource-row">
-          <span class="resource gold"><i></i><b id="gold-value">0</b></span>
-          <span class="resource kills"><i></i><b id="kills-value">0</b></span>
-          <span class="resource enemies"><i></i><b id="enemy-value">0</b></span>
+          <span class="resource gold"><i></i><small>Gold</small><b id="gold-value">0</b></span>
+          <span class="resource kills"><i></i><small>Kills</small><b id="kills-value">0</b></span>
+          <span class="resource enemies"><i></i><small>Enemies</small><b id="enemy-value">0</b></span>
         </div>
       </div>
 
