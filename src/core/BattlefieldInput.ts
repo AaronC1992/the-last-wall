@@ -114,7 +114,7 @@ export class BattlefieldInput {
   }
 
   private onPointerUp(event: PointerEvent): void {
-    if (this.dragMode === 'none' && event.button === 0 && this.actions.isInteractive()) return;
+    if (this.dragMode === 'none' && event.button !== 0) return;
     const screen = this.toLogical(event);
     const world = this.camera.screenToWorld(screen.x, screen.y);
 
