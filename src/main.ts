@@ -111,7 +111,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <span><i class="mouse wheel"></i>Zoom</span>
         </div>
         <button id="meta-close" type="button" class="skill-close">Close</button>
-        <button id="skill-play" type="button" class="skill-play">Play</button>
+        <button id="skill-play" type="button" class="skill-play">Back</button>
       </section>
 
       <button id="meta-button" type="button" class="corner-button">Upgrades</button>
@@ -135,7 +135,7 @@ const hud = new HUD(() => game.startBattle());
 const results = new ResultsScreen(
   () => {
     results.hide();
-    metaMenu.show();
+    metaMenu.show(() => results.showLast());
   },
   () => {
     results.hide();
@@ -145,7 +145,7 @@ const results = new ResultsScreen(
 const game = new Game(canvas, hud, progression, (breakdown, survived) => results.show(survived, breakdown));
 const buildBar = new BuildBar((kind) => game.setArmedKind(kind));
 const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); }, (id) => game.isAbilityUnlocked(id));
-const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => game.start(), () => {
+const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => {
   if (game.currentPhase === 'idle') document.querySelector<HTMLElement>('#main-menu')!.hidden = false;
 });
 const mapBuilder = new MapBuilder((map) => { game.loadMap(map); game.start(); });

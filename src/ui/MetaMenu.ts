@@ -20,21 +20,19 @@ export class MetaMenu {
   private moved = false;
   private lastX = 0;
   private lastY = 0;
+  private backAction: () => void;
 
   constructor(
     private readonly progression: MetaProgression,
     private readonly onVisibilityChange: (visible: boolean) => void,
-    private readonly onPlay: () => void,
     private readonly onCloseToMenu: () => void = () => undefined,
   ) {
+    this.backAction = onCloseToMenu;
     this.canvas.width = VIEW_WIDTH;
     this.canvas.height = VIEW_HEIGHT;
     document.querySelector<HTMLButtonElement>('#meta-button')!.addEventListener('click', () => this.show());
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
-    document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => {
-      this.hide();
-      this.onPlay();
-    });
+    document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => { this.hide(); this.backAction(); });
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
     });
@@ -46,7 +44,8 @@ export class MetaMenu {
     this.canvas.addEventListener('click', (event) => this.onClick(event));
   }
 
-  show(): void {
+  show(backAction: () => void = this.onCloseToMenu): void {
+    this.backAction = backAction;
     this.panel.hidden = false;
     this.onVisibilityChange(true);
     this.render();
