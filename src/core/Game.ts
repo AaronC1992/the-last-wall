@@ -10,8 +10,6 @@ import type { GhostTower } from '../rendering/Renderer';
 import { HUD } from '../ui/HUD';
 import type { TowerReadout } from '../ui/HUD';
 import { SpatialGrid } from '../systems/SpatialGrid';
-import { UpgradeSystem } from '../systems/UpgradeSystem';
-import type { UpgradeDefinition } from '../systems/UpgradeDefinitions';
 import { WaveDirector } from '../systems/WaveDirector';
 import { EnemyType } from '../enemies/EnemyTypes';
 import { MetaProgression } from '../progression/MetaProgression';
@@ -20,7 +18,6 @@ import { ChaosSystem } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
-import { EVOLUTION_DEFINITIONS } from '../systems/UpgradeDefinitions';
 import { MapSpawnSystem } from '../map/MapSpawnSystem';
 import { TOWER_CONFIG, towerConfig } from '../weapons/TowerConfig';
 import type { TowerKind } from '../weapons/TowerConfig';
@@ -36,14 +33,12 @@ export class Game implements BattlefieldActions {
   private readonly grid = new SpatialGrid(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.spatialCellSize, TUNING.maxEnemies);
   private readonly renderer: Renderer;
   private readonly weapons: WeaponManager;
-  private readonly upgrades = new UpgradeSystem();
   private readonly waveDirector = new WaveDirector();
   private readonly progression: MetaProgression;
   private readonly chaos: ChaosSystem;
   private readonly feedback = new FeedbackSystem();
   private readonly mapSpawns = new MapSpawnSystem();
   private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.logicalWidth, TUNING.logicalHeight);
-  private readonly onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void;
   private readonly onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void;
   private wallHp: number = TUNING.wallMaxHp;
   private gold = 0;
@@ -71,18 +66,14 @@ export class Game implements BattlefieldActions {
     canvas: HTMLCanvasElement,
     hud: HUD,
     progression: MetaProgression,
-    onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void,
     onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void,
   ) {
     this.canvas = canvas;
     this.hud = hud;
-    this.onUpgradeChoices = onUpgradeChoices;
     this.onRunEnd = onRunEnd;
     this.progression = progression;
     this.renderer = new Renderer(canvas.getContext('2d')!);
     this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth);
-    this.upgrades.setTargetAvailability((target) => this.weapons.isTargetBuilt(target));
-    this.upgrades.setRarityAvailability((rarity) => this.progression.isRarityUnlocked(rarity));
     this.chaos = new ChaosSystem(TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight);
     this.applyPermanentBonuses();
     this.resize();
@@ -92,7 +83,7 @@ export class Game implements BattlefieldActions {
   }
 
   updateSimulation(deltaTime: number): void {
-    if (this.phase !== 'battle' || this.gameOver || this.menuOpen || this.upgrades.takePendingChoices()) return;
+    if (this.phase !== 'battle' || this.gameOver || this.menuOpen) return;
     const simulationDelta = deltaTime * this.gameSpeed;
     this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
     this.elapsed += simulationDelta;
@@ -140,7 +131,7 @@ export class Game implements BattlefieldActions {
       kills: this.kills,
       enemyCount: this.enemies.count,
       fps: this.fps,
-      level: this.upgrades.currentLevel,
+      level: 0,
       wave: this.waveDirector.currentWave,
       announcement: this.waveDirector.announcement,
       mapIntro: this.mapIntroTimer > 0,
@@ -161,7 +152,6 @@ export class Game implements BattlefieldActions {
     this.kills = 0;
     this.elapsed = 0;
     this.gameOver = false;
-    this.upgrades.reset();
     this.waveDirector.reset();
     this.mapSpawns.reset();
     this.chaos.reset();
@@ -173,7 +163,6 @@ export class Game implements BattlefieldActions {
     this.mapIntroTimer = 2;
     this.highestCombo = 0;
     this.phase = 'build';
-    this.onUpgradeChoices(null);
   }
 
   start(): void {
@@ -207,21 +196,14 @@ export class Game implements BattlefieldActions {
     if (kind) this.selectedId = 0;
   }
 
-  chooseUpgrade(index: number): void {
-    const choice = this.upgrades.choose(index);
-    if (!choice) return;
-    if (choice.target === 'general') this.applyGeneralUpgrade(choice.id);
-    else this.weapons.applyUpgrade(choice.id);
-    this.onUpgradeChoices(null);
-    this.offerEligibleEvolution();
-  }
+
 
   setProgressionOpen(isOpen: boolean): void {
     this.menuOpen = isOpen;
   }
 
   activateAbility(id: AbilityIdValue): void {
-    if (this.phase !== 'battle' || this.gameOver || this.menuOpen || this.upgrades.takePendingChoices()) return;
+    if (this.phase !== 'battle' || this.gameOver || this.menuOpen) return;
     if (!this.isAbilityUnlocked(id)) return;
     if (this.chaos.activate(id, this.enemies, this.grid, (reward) => this.registerKill(reward))) this.feedback.triggerShake(id === 4 ? 14 : 7);
   }
@@ -416,7 +398,6 @@ export class Game implements BattlefieldActions {
     this.feedback.registerKill(this.kills);
     this.highestCombo = Math.max(this.highestCombo, this.feedback.currentCombo);
     this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier * this.feedback.goldMultiplier));
-    if (this.upgrades.registerKill(this.kills)) this.onUpgradeChoices(this.upgrades.takePendingChoices());
   }
 
   private resize(): void {
@@ -451,30 +432,4 @@ export class Game implements BattlefieldActions {
     this.wallHp = this.wallMaxHp;
   }
 
-  private applyGeneralUpgrade(id: string): void {
-    if (id === 'repair') {
-      this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 20);
-      return;
-    }
-    if (id === 'wallMax') {
-      this.wallMaxHp += 20;
-      this.wallHp += 20;
-      return;
-    }
-    if (id === 'goldBonus') {
-      this.rewardMultiplier *= 1.15;
-      return;
-    }
-    if (id === 'abilityHaste') this.chaos.applyCooldownHaste();
-  }
-
-  private offerEligibleEvolution(): void {
-    if (!this.progression.isUnlocked('evolutions')) return;
-    let evolution: keyof typeof EVOLUTION_DEFINITIONS | null = null;
-    if (!this.upgrades.hasEvolution('boltStorm') && this.upgrades.getLevel('projectiles') >= 3 && this.upgrades.getLevel('penetration') >= 3 && this.upgrades.getLevel('attackSpeed') >= 3) evolution = 'boltStorm';
-    else if (this.weapons.isBuilt('cannon') && !this.upgrades.hasEvolution('carpetBombardment') && this.upgrades.getLevel('cannonDamage') >= 3 && this.upgrades.getLevel('cannonRadius') >= 3 && this.upgrades.getLevel('clusterShells') >= 1) evolution = 'carpetBombardment';
-    else if (this.weapons.isBuilt('fireTower') && !this.upgrades.hasEvolution('hellfire') && this.upgrades.getLevel('fireDamage') >= 3 && this.upgrades.getLevel('fireRadius') >= 3 && this.upgrades.getLevel('fireSpread') >= 1) evolution = 'hellfire';
-    else if (this.weapons.isBuilt('lightningTower') && !this.upgrades.hasEvolution('thunderstorm') && this.upgrades.getLevel('lightningDamage') >= 3 && this.upgrades.getLevel('lightningChains') >= 3 && this.upgrades.getLevel('lightningRange') >= 3) evolution = 'thunderstorm';
-    if (evolution && this.upgrades.offerEvolution(EVOLUTION_DEFINITIONS[evolution])) this.onUpgradeChoices(this.upgrades.takePendingChoices());
-  }
 }

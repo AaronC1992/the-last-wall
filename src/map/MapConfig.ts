@@ -9,19 +9,15 @@ export const KING_APPROACH: MapDefinition = {
   name: "KING'S APPROACH",
   seed: 481516,
   palette: {
-    grass: '#536847', grassLight: '#637a50', dryGrass: '#7d8051', dirt: '#806344', dirtEdge: '#5b4934', forest: '#263d2d', forestLight: '#36513a', stone: '#7b786c', stoneLight: '#aaa391', wall: '#918b7b', wallDark: '#625f57', banner: '#a8453e', city: '#41504e', torch: '#f0ad58', mud: '#46392c', water: '#355b5b', blood: '#632f2d',
+    grass: '#a0875d', grassLight: '#b89a6b', dryGrass: '#9a7f54', dirt: '#8b7d6b', dirtEdge: '#6b6153', forest: '#263d2d', forestLight: '#36513a', stone: '#7b786c', stoneLight: '#aaa391', wall: '#918b7b', wallDark: '#625f57', banner: '#a8453e', city: '#41504e', torch: '#f0ad58', mud: '#46392c', water: '#355b5b', blood: '#632f2d',
   },
   spawnZones: [
-    { x: 92, y: 46, width: 145, height: 78, targetX: 205 }, { x: 292, y: 32, width: 150, height: 82, targetX: 390 }, { x: 515, y: 25, width: 170, height: 88, targetX: 600 }, { x: 760, y: 32, width: 150, height: 82, targetX: 790 }, { x: 1005, y: 46, width: 145, height: 78, targetX: 1000 },
+    { x: 600, y: 40, width: 200, height: 100, targetX: 600 },
   ] as readonly SpawnZone[],
   roadPaths: [
-    { startX: 600, startY: 34, controlX1: 574, controlY1: 190, controlX2: 626, controlY2: 430, endX: 600, endY: 668, width: 118 },
-    { startX: 145, startY: 88, controlX1: 230, controlY1: 180, controlX2: 350, controlY2: 435, endX: 390, endY: 668, width: 62 },
-    { startX: 330, startY: 70, controlX1: 365, controlY1: 190, controlX2: 450, controlY2: 440, endX: 490, endY: 668, width: 54 },
-    { startX: 875, startY: 70, controlX1: 830, controlY1: 190, controlX2: 755, controlY2: 440, endX: 720, endY: 668, width: 54 },
-    { startX: 1055, startY: 88, controlX1: 960, controlY1: 180, controlX2: 850, controlY2: 435, endX: 810, endY: 668, width: 62 },
+    { startX: 600, startY: 30, controlX1: 480, controlY1: 200, controlX2: 720, controlY2: 380, endX: 600, endY: 668, width: 140 },
   ],
   towerPads: [
-    { x: 300, y: 646, kind: 'cannon' }, { x: 505, y: 638, kind: 'fireTower' }, { x: 650, y: 638, kind: 'ballista' }, { x: 780, y: 646, kind: 'lightningTower' },
+    { x: 400, y: 646, kind: 'cannon' }, { x: 550, y: 646, kind: 'fireTower' }, { x: 650, y: 646, kind: 'ballista' }, { x: 800, y: 646, kind: 'lightningTower' },
   ],
 } as const;

@@ -33,64 +33,24 @@ export class MapRenderer {
   private generateStaticTerrain(): void {
     const context = this.cachedContext;
     const palette = KING_APPROACH.palette;
+    // Plain ground fill
     context.fillStyle = palette.grass;
     context.fillRect(0, 0, TUNING.logicalWidth, TUNING.logicalHeight);
-    this.drawHorizon(context);
-    this.drawRoads(context);
+    // Simple subtle texture
     this.drawTerrainTexture(context);
-    this.drawForestEdges(context);
-    this.drawSideStream(context);
-    this.drawBattlefieldHistory(context);
-    this.drawCity(context);
-  }
-
-  private drawHorizon(context: CanvasRenderingContext2D): void {
-    const palette = KING_APPROACH.palette;
-    context.fillStyle = '#344838';
-    context.fillRect(0, 0, TUNING.logicalWidth, 78);
-    context.fillStyle = '#2a3b31';
-    context.beginPath();
-    context.moveTo(0, 74);
-    for (let x = 0; x <= TUNING.logicalWidth; x += 80) context.lineTo(x, 45 + Math.sin(x * 0.018) * 18);
-    context.lineTo(TUNING.logicalWidth, 115);
-    context.lineTo(0, 115);
-    context.closePath();
-    context.fill();
-    for (let index = 0; index < 12; index++) this.drawTree(context, 35 + index * 100 + this.random.range(-24, 24), this.random.range(24, 66), this.random.range(14, 24));
-    for (const zone of KING_APPROACH.spawnZones) {
-      context.fillStyle = '#554437';
-      context.fillRect(zone.x - zone.width * 0.3, zone.y + 20, zone.width * 0.6, 3);
-      context.fillStyle = '#8b5d3b';
-      context.beginPath();
-      context.moveTo(zone.x - 13, zone.y + 20);
-      context.lineTo(zone.x, zone.y - 2);
-      context.lineTo(zone.x + 13, zone.y + 20);
-      context.closePath();
-      context.fill();
-      context.fillStyle = palette.torch;
-      context.beginPath();
-      context.arc(zone.x + zone.width * 0.3, zone.y + 13, 3, 0, Math.PI * 2);
-      context.fill();
-    }
-    context.fillStyle = palette.banner;
-    context.fillRect(454, 21, 3, 42);
-    context.fillRect(457, 24, 22, 12);
-    context.fillStyle = '#6b3d34';
-    context.fillRect(738, 30, 3, 33);
-    context.fillRect(741, 32, 20, 10);
+    // Draw the road path with edge shadow
+    this.drawRoads(context);
+    // Draw castle gate at the bottom
+    this.drawCastleGate(context);
   }
 
   private drawRoads(context: CanvasRenderingContext2D): void {
     const palette = KING_APPROACH.palette;
+    // Draw path shadow/edge
     for (const road of KING_APPROACH.roadPaths) {
-      this.strokeRoad(context, road, road.width + 14, palette.dirtEdge);
+      this.strokeRoad(context, road, road.width + 20, palette.dirtEdge);
       this.strokeRoad(context, road, road.width, palette.dirt);
     }
-    context.save();
-    context.globalAlpha = 0.32;
-    context.setLineDash([22, 18]);
-    this.strokeRoad(context, KING_APPROACH.roadPaths[0], 8, '#403529');
-    context.restore();
   }
 
   private strokeRoad(context: CanvasRenderingContext2D, road: typeof KING_APPROACH.roadPaths[number], width: number, color: string): void {
@@ -106,99 +66,42 @@ export class MapRenderer {
   private drawTerrainTexture(context: CanvasRenderingContext2D): void {
     const palette = KING_APPROACH.palette;
     context.save();
-    for (let index = 0; index < 620; index++) {
-      const x = this.random.range(35, 1165);
-      const y = this.random.range(125, 690);
-      context.strokeStyle = index % 4 === 0 ? palette.dryGrass : palette.grassLight;
-      context.globalAlpha = this.random.range(0.12, 0.28);
+    // Add subtle grass texture variation
+    for (let index = 0; index < 300; index++) {
+      const x = this.random.range(0, TUNING.logicalWidth);
+      const y = this.random.range(0, TUNING.logicalHeight);
+      context.strokeStyle = palette.grassLight;
+      context.globalAlpha = this.random.range(0.06, 0.12);
       context.lineWidth = this.random.range(1, 2);
       context.beginPath();
-      context.moveTo(x, y + 3);
-      context.lineTo(x + this.random.range(-2, 3), y - this.random.range(2, 6));
+      context.moveTo(x, y);
+      context.lineTo(x + this.random.range(-1, 2), y - this.random.range(1, 3));
       context.stroke();
     }
-    for (let index = 0; index < 90; index++) {
-      context.fillStyle = index % 3 === 0 ? palette.mud : palette.stone;
-      context.globalAlpha = 0.28;
-      context.beginPath();
-      context.ellipse(this.random.range(170, 1030), this.random.range(150, 625), this.random.range(2, 6), this.random.range(1, 3), this.random.next(), 0, Math.PI * 2);
-      context.fill();
-    }
     context.restore();
   }
 
-  private drawForestEdges(context: CanvasRenderingContext2D): void {
-    for (let index = 0; index < 62; index++) {
-      const x = index % 2 === 0 ? this.random.range(12, 165) : this.random.range(1035, 1188);
-      this.drawTree(context, x, this.random.range(86, 635), this.random.range(12, 25));
-    }
-    context.fillStyle = KING_APPROACH.palette.stone;
-    for (let index = 0; index < 18; index++) {
-      const x = index % 2 === 0 ? this.random.range(25, 175) : this.random.range(1025, 1175);
-      const y = this.random.range(140, 635);
-      context.beginPath();
-      context.moveTo(x - 8, y + 7);
-      context.lineTo(x - 3, y - 7);
-      context.lineTo(x + 10, y - 4);
-      context.lineTo(x + 13, y + 6);
-      context.closePath();
-      context.fill();
-    }
-  }
-
-  private drawTree(context: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+  private drawCastleGate(context: CanvasRenderingContext2D): void {
     const palette = KING_APPROACH.palette;
-    context.fillStyle = 'rgba(27, 32, 25, .28)';
-    context.beginPath(); context.ellipse(x + 4, y + 6, size, size * 0.55, 0, 0, Math.PI * 2); context.fill();
-    context.fillStyle = '#4b3829';
-    context.fillRect(x - 3, y + size * 0.1, 6, size * 0.7);
-    context.fillStyle = palette.forest;
-    context.beginPath(); context.arc(x, y, size * 0.75, 0, Math.PI * 2); context.fill();
-    context.fillStyle = palette.forestLight;
-    context.beginPath(); context.arc(x - size * 0.35, y - size * 0.28, size * 0.42, 0, Math.PI * 2); context.fill();
-    context.beginPath(); context.arc(x + size * 0.34, y - size * 0.12, size * 0.34, 0, Math.PI * 2); context.fill();
-  }
+    const wallY = TUNING.logicalHeight - TUNING.wallHeight;
 
-  private drawSideStream(context: CanvasRenderingContext2D): void {
-    context.save();
-    context.globalAlpha = 0.32;
-    context.strokeStyle = KING_APPROACH.palette.water;
-    context.lineWidth = 10;
-    context.lineCap = 'round';
-    context.beginPath();
-    context.moveTo(30, 184); context.bezierCurveTo(65, 250, 26, 340, 67, 430); context.bezierCurveTo(105, 515, 55, 588, 88, 675); context.stroke();
-    context.restore();
-  }
+    // Castle gate outline
+    context.fillStyle = palette.wallDark;
+    context.fillRect(450, wallY - 80, 300, 80);
 
-  private drawBattlefieldHistory(context: CanvasRenderingContext2D): void {
-    const palette = KING_APPROACH.palette;
-    context.save();
-    context.globalAlpha = 0.65;
-    context.strokeStyle = '#49382e';
-    context.lineWidth = 4;
-    context.beginPath(); context.moveTo(237, 382); context.lineTo(282, 402); context.lineTo(254, 425); context.stroke();
-    context.beginPath(); context.moveTo(915, 286); context.lineTo(947, 308); context.lineTo(902, 317); context.stroke();
+    // Gate towers
     context.fillStyle = palette.stone;
-    context.fillRect(226, 377, 22, 9); context.fillRect(930, 279, 18, 8);
-    context.fillStyle = palette.mud;
-    context.fillRect(885, 458, 42, 20); context.fillRect(891, 478, 7, 13); context.fillRect(916, 478, 7, 13);
-    context.fillStyle = palette.blood;
-    for (let index = 0; index < 8; index++) { context.beginPath(); context.arc(320 + index * 7, 520 + (index % 2) * 5, 2, 0, Math.PI * 2); context.fill(); }
-    context.restore();
-  }
+    context.fillRect(450, wallY - 90, 40, 90);
+    context.fillRect(710, wallY - 90, 40, 90);
 
-  private drawCity(context: CanvasRenderingContext2D): void {
-    const palette = KING_APPROACH.palette;
-    context.fillStyle = palette.city;
-    context.fillRect(35, 687, 120, 73); context.fillRect(1005, 684, 155, 76); context.fillRect(505, 670, 190, 90);
-    context.fillStyle = '#2e393a';
-    context.beginPath(); context.moveTo(35, 687); context.lineTo(95, 650); context.lineTo(155, 687); context.fill();
-    context.beginPath(); context.moveTo(1005, 684); context.lineTo(1080, 644); context.lineTo(1160, 684); context.fill();
-    context.fillStyle = '#242e30';
-    context.fillRect(555, 630, 74, 92);
-    context.beginPath(); context.moveTo(548, 630); context.lineTo(592, 594); context.lineTo(636, 630); context.fill();
-    context.fillStyle = palette.torch;
-    context.fillRect(80, 677, 5, 7); context.fillRect(1090, 674, 5, 7); context.fillRect(582, 649, 7, 9); context.fillRect(615, 649, 7, 9);
+    // Gate door
+    context.fillStyle = '#3d3d3d';
+    context.fillRect(500, wallY - 70, 200, 70);
+
+    // Gate door detail
+    context.strokeStyle = '#5a5a5a';
+    context.lineWidth = 2;
+    context.strokeRect(520, wallY - 60, 160, 50);
   }
 
   drawTower(context: CanvasRenderingContext2D, kind: TowerKind, x: number, y: number, ghost: boolean): void {

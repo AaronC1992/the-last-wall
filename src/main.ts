@@ -4,7 +4,6 @@ import { GameLoop } from './core/GameLoop';
 import { GAME_TEXT } from './core/Constants';
 import { HUD } from './ui/HUD';
 import { DebugPanel } from './ui/DebugPanel';
-import { UpgradeMenu } from './ui/UpgradeMenu';
 import { MetaProgression } from './progression/MetaProgression';
 import { MetaMenu } from './ui/MetaMenu';
 import { AbilityPanel } from './ui/AbilityPanel';
@@ -120,7 +119,6 @@ const audio = new AudioSystem();
 audio.setSettings(progression.settings);
 
 const hud = new HUD(() => game.startBattle());
-const upgradeMenu = new UpgradeMenu((index) => game.chooseUpgrade(index));
 const results = new ResultsScreen(
   () => {
     results.hide();
@@ -131,7 +129,7 @@ const results = new ResultsScreen(
     game.restart();
   },
 );
-const game = new Game(canvas, hud, progression, (choices) => upgradeMenu.show(choices), (breakdown, survived) => results.show(survived, breakdown));
+const game = new Game(canvas, hud, progression, (breakdown, survived) => results.show(survived, breakdown));
 const buildBar = new BuildBar((kind) => game.setArmedKind(kind));
 const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); }, (id) => game.isAbilityUnlocked(id));
 const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => game.start());
