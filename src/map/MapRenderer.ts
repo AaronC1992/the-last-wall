@@ -1,8 +1,7 @@
 import { TUNING } from '../core/Constants';
 import { SeededRandom } from './SeededRandom';
 import { KING_APPROACH } from './MapConfig';
-import type { TowerPad } from './MapConfig';
-import type { WeaponManager } from '../weapons/WeaponManager';
+import type { TowerKind } from '../weapons/TowerConfig';
 
 export class MapRenderer {
   private readonly cache: HTMLCanvasElement;
@@ -21,10 +20,8 @@ export class MapRenderer {
     context.drawImage(this.cache, 0, 0);
   }
 
-  renderDefenseLine(context: CanvasRenderingContext2D, weapons: WeaponManager, wallHp: number, wallMaxHp: number): void {
-    this.renderTowerPads(context, weapons);
+  renderDefenseLine(context: CanvasRenderingContext2D, wallHp: number, wallMaxHp: number): void {
     this.renderWall(context);
-    this.renderTowerStructures(context, weapons);
     const wallY = TUNING.logicalHeight - TUNING.wallHeight;
     const healthWidth = Math.max(0, wallHp / wallMaxHp * 180);
     context.fillStyle = '#242b28';
@@ -204,24 +201,21 @@ export class MapRenderer {
     context.fillRect(80, 677, 5, 7); context.fillRect(1090, 674, 5, 7); context.fillRect(582, 649, 7, 9); context.fillRect(615, 649, 7, 9);
   }
 
-  private renderTowerPads(context: CanvasRenderingContext2D, weapons: WeaponManager): void {
-    for (const pad of KING_APPROACH.towerPads) {
-      const built = pad.kind === 'ballista' || weapons.isBuilt(this.weaponId(pad.kind));
-      context.fillStyle = '#514d43';
-      context.beginPath(); context.arc(pad.x, pad.y + 5, 30, 0, Math.PI * 2); context.fill();
-      context.fillStyle = built ? '#827b68' : '#68685d';
-      context.beginPath(); context.arc(pad.x, pad.y, 24, 0, Math.PI * 2); context.fill();
-      context.strokeStyle = built ? '#b7a889' : '#858170';
-      context.lineWidth = 2;
-      context.stroke();
-    }
-  }
-
-  private renderTowerStructures(context: CanvasRenderingContext2D, weapons: WeaponManager): void {
-    this.drawBallista(context, weapons.ballista.x, weapons.ballista.y);
-    if (weapons.isBuilt('cannon')) this.drawCannon(context, weapons.cannon.x, weapons.cannon.y);
-    if (weapons.isBuilt('fireTower')) this.drawFireTower(context, weapons.fireTower.x, weapons.fireTower.y);
-    if (weapons.isBuilt('lightningTower')) this.drawLightningTower(context, weapons.lightningTower.x, weapons.lightningTower.y);
+  drawTower(context: CanvasRenderingContext2D, kind: TowerKind, x: number, y: number, ghost: boolean): void {
+    context.save();
+    if (ghost) context.globalAlpha = 0.55;
+    context.fillStyle = '#514d43';
+    context.beginPath(); context.arc(x, y + 5, 24, 0, Math.PI * 2); context.fill();
+    context.fillStyle = '#827b68';
+    context.beginPath(); context.arc(x, y, 19, 0, Math.PI * 2); context.fill();
+    context.strokeStyle = '#b7a889';
+    context.lineWidth = 2;
+    context.stroke();
+    if (kind === 'ballista') this.drawBallista(context, x, y);
+    else if (kind === 'cannon') this.drawCannon(context, x, y);
+    else if (kind === 'fireTower') this.drawFireTower(context, x, y);
+    else this.drawLightningTower(context, x, y);
+    context.restore();
   }
 
   private drawBallista(context: CanvasRenderingContext2D, x: number, y: number): void {
@@ -272,11 +266,5 @@ export class MapRenderer {
     context.fillRect(1090, wallY - 45, 4, 32); context.fillRect(1094, wallY - 43, 27, 14);
     context.fillStyle = '#47382b';
     for (let x = 8; x < TUNING.logicalWidth; x += 66) context.fillRect(x, wallY + 55, 6, 13);
-  }
-
-  private weaponId(kind: TowerPad['kind']): 'cannon' | 'fireTower' | 'lightningTower' {
-    if (kind === 'cannon') return 'cannon';
-    if (kind === 'fireTower') return 'fireTower';
-    return 'lightningTower';
   }
 }

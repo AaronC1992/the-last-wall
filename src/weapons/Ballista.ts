@@ -3,14 +3,13 @@ import { EnemyManager } from '../enemies/EnemyManager';
 import { ProjectileManager } from './ProjectileManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
 import type { UpgradeKind } from '../systems/UpgradeDefinitions';
+import { TowerBase } from './TowerBase';
 
-export class Ballista {
-  readonly x: number;
-  readonly y: number;
+export class Ballista extends TowerBase {
   private cooldown = 0;
   private damage: number = TUNING.ballistaDamage;
   private cooldownDuration: number = TUNING.ballistaCooldown;
-  private range = TUNING.ballistaRange;
+  private rangeValue = TUNING.ballistaRange;
   private projectileSpeed = TUNING.projectileSpeed;
   private projectileCount = 1;
   private criticalChance = 0;
@@ -19,15 +18,14 @@ export class Ballista {
   private permanentDamageMultiplier = 1;
   private permanentSpeedMultiplier = 1;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  get range(): number {
+    return this.rangeValue;
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
-    const target = grid.findClosestInRange(this.x, this.y, this.range, enemies);
+    const target = this.acquire(enemies, grid);
     if (target < 0) return;
     for (let index = 0; index < this.projectileCount; index++) {
       const spread = (index - (this.projectileCount - 1) / 2) * 13;
@@ -40,7 +38,7 @@ export class Ballista {
   applyUpgrade(kind: UpgradeKind): void {
     if (kind === 'damage') this.damage *= 1.25;
     if (kind === 'attackSpeed') this.cooldownDuration *= 0.8;
-    if (kind === 'range') this.range *= 1.2;
+    if (kind === 'range') this.rangeValue *= 1.2;
     if (kind === 'projectiles') this.projectileCount++;
     if (kind === 'criticalChance') this.criticalChance = Math.min(0.9, this.criticalChance + 0.12);
     if (kind === 'criticalDamage') this.criticalDamage += 0.5;
@@ -53,7 +51,7 @@ export class Ballista {
     this.cooldown = 0;
     this.damage = TUNING.ballistaDamage * this.permanentDamageMultiplier;
     this.cooldownDuration = TUNING.ballistaCooldown / this.permanentSpeedMultiplier;
-    this.range = TUNING.ballistaRange;
+    this.rangeValue = TUNING.ballistaRange;
     this.projectileSpeed = TUNING.projectileSpeed;
     this.projectileCount = 1;
     this.criticalChance = 0;

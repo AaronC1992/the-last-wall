@@ -2,11 +2,11 @@ import { AbilityId } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
 
 const ABILITIES: readonly { id: AbilityIdValue; name: string; key: string }[] = [
-  { id: AbilityId.Meteor, name: 'Meteor', key: '1' },
-  { id: AbilityId.Artillery, name: 'Artillery', key: '2' },
-  { id: AbilityId.Dragon, name: 'Dragon', key: '3' },
-  { id: AbilityId.DeathBeam, name: 'Death Beam', key: '4' },
-  { id: AbilityId.Apocalypse, name: 'Apocalypse', key: '5' },
+  { id: AbilityId.Meteor, name: 'Meteor', key: 'q' },
+  { id: AbilityId.Artillery, name: 'Artillery', key: 'w' },
+  { id: AbilityId.Dragon, name: 'Dragon', key: 'e' },
+  { id: AbilityId.DeathBeam, name: 'Death Beam', key: 'f' },
+  { id: AbilityId.Apocalypse, name: 'Apocalypse', key: 'g' },
 ];
 
 export class AbilityPanel {
@@ -19,7 +19,7 @@ export class AbilityPanel {
     this.isUnlocked = isUnlocked;
     for (let index = 0; index < this.buttons.length; index++) this.buttons[index].addEventListener('click', () => this.activate(ABILITIES[index].id));
     window.addEventListener('keydown', (event) => {
-      const ability = ABILITIES.find((candidate) => candidate.key === event.key);
+      const ability = ABILITIES.find((candidate) => candidate.key === event.key.toLowerCase());
       if (!ability) return;
       event.preventDefault();
       this.activate(ability.id);
@@ -32,7 +32,7 @@ export class AbilityPanel {
       const button = this.buttons[index];
       const unlocked = this.isUnlocked(ABILITIES[index].id);
       button.disabled = cooldown > 0 || !unlocked;
-      button.querySelector<HTMLElement>('small')!.textContent = !unlocked ? 'Locked' : cooldown > 0 ? `${Math.ceil(cooldown)}s` : ABILITIES[index].key;
+      button.querySelector<HTMLElement>('small')!.textContent = !unlocked ? 'Locked' : cooldown > 0 ? `${Math.ceil(cooldown)}s` : ABILITIES[index].key.toUpperCase();
     }
   }
 }

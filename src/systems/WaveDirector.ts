@@ -12,9 +12,8 @@ export class WaveDirector {
   private wave = 0;
   private waveBudget = 0;
 
-  update(deltaTime: number, activeEnemies: number, spawn: (type: EnemyTypeId, elite: boolean) => void): void {
+  update(deltaTime: number, _activeEnemies: number, spawn: (type: EnemyTypeId, elite: boolean) => void): void {
     this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
-    if (this.queueHead >= this.queueTail && activeEnemies <= Math.max(8, this.wave * 4)) this.beginWave();
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer > 0) return;
     const burst = Math.min(this.queueTail - this.queueHead, Math.min(70, 8 + this.wave * 3));
@@ -45,6 +44,18 @@ export class WaveDirector {
 
   get announcement(): string {
     return this.announcementTimer > 0 ? this.announcementText : '';
+  }
+
+  startWave(): void {
+    this.beginWave();
+  }
+
+  isWaveCleared(activeEnemies: number): boolean {
+    return this.wave > 0 && this.queueHead >= this.queueTail && activeEnemies === 0;
+  }
+
+  get remainingInQueue(): number {
+    return Math.max(0, this.queueTail - this.queueHead);
   }
 
   private beginWave(): void {

@@ -1,24 +1,22 @@
 import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
+import { TowerBase } from './TowerBase';
 
-export class FireTower {
-  readonly x: number;
-  readonly y: number;
+export class FireTower extends TowerBase {
   private cooldown = 0;
   private radius = 58;
   private burnDamage = 11;
   private burnDuration = 3;
   private wildfire = false;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  get range(): number {
+    return 290;
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
-    const target = grid.findClosestInRange(this.x, this.y, 290, enemies);
+    const target = this.acquire(enemies, grid);
     if (target < 0) return;
     const count = grid.collectInRange(enemies.x[target], enemies.y[target], this.radius, enemies, 40);
     for (let index = 0; index < count; index++) enemies.applyBurn(grid.resultAt(index), this.burnDuration, this.burnDamage);

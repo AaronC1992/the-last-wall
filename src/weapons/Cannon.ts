@@ -1,9 +1,8 @@
 import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
+import { TowerBase } from './TowerBase';
 
-export class Cannon {
-  readonly x: number;
-  readonly y: number;
+export class Cannon extends TowerBase {
   private cooldown = 1.8;
   private cooldownDuration = 1.8;
   private damage = 32;
@@ -12,15 +11,14 @@ export class Cannon {
   private doubleBarrel = false;
   private carpetBombardment = false;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  get range(): number {
+    return 620;
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
-    const target = grid.findClosestInRange(this.x, this.y, 620, enemies);
+    const target = this.acquire(enemies, grid);
     if (target < 0) return;
     this.impact(enemies.x[target], enemies.y[target], this.damage, this.radius, enemies, grid, onKill);
     if (this.clusterShells || this.carpetBombardment) {

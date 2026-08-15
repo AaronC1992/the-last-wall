@@ -4,6 +4,7 @@ import type { MetaUpgradeDefinition, MetaUpgradeId } from './UpgradeDefinitions'
 import type { SaveData } from '../systems/SaveSystem';
 import { FEATURE_UNLOCKS } from './FeatureUnlocks';
 import type { FeatureUnlockDefinition, FeatureUnlockId } from './FeatureUnlocks';
+import { SKILL_NODES } from './SkillTreeLayout';
 import type { UpgradeRarity } from '../systems/UpgradeDefinitions';
 
 export interface PermanentBonuses {
@@ -14,6 +15,17 @@ export interface PermanentBonuses {
   rewardMultiplier: number;
   tokenMultiplier: number;
   ballistaSpeedMultiplier: number;
+  flatTokenBonus: number;
+  towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number };
+}
+
+export interface TokenBreakdown {
+  kills: number;
+  base: number;
+  percentBonus: number;
+  percentLabel: string;
+  flatBonus: number;
+  total: number;
 }
 
 export class MetaProgression {
@@ -72,8 +84,12 @@ export class MetaProgression {
     return true;
   }
 
-  awardTokens(amount: number, kills: number, gold: number, highestCombo: number): number {
-    const total = Math.max(1, Math.floor(amount * this.bonuses.tokenMultiplier));
+  awardTokens(kills: number, elapsed: number, gold: number, highestCombo: number): TokenBreakdown {
+    const bonuses = this.bonuses;
+    const base = Math.max(1, Math.floor(kills / 20 + elapsed / 90));
+    const percentBonus = Math.floor(base * (bonuses.tokenMultiplier - 1));
+    const flatBonus = bonuses.flatTokenBonus;
+    const total = base + percentBonus + flatBonus;
     this.data.warTokens += total;
     this.data.statistics.totalKills += kills;
     this.data.statistics.totalRuns++;
@@ -81,7 +97,7 @@ export class MetaProgression {
     this.data.statistics.highestKills = Math.max(this.data.statistics.highestKills, kills);
     this.data.statistics.highestLifetimeCombo = Math.max(this.data.statistics.highestLifetimeCombo, highestCombo);
     this.persist();
-    return total;
+    return { kills, base, percentBonus, percentLabel: `${((bonuses.tokenMultiplier - 1) * 100).toFixed(1)}%`, flatBonus, total };
   }
 
   get bonuses(): PermanentBonuses {
@@ -89,15 +105,48 @@ export class MetaProgression {
       damageMultiplier: 1 + this.getLevel('globalDamage') * 0.1,
       wallMaxHp: 100 + this.getLevel('wallIntegrity') * 20,
       wallArmor: this.getLevel('wallArmor'),
-      startingGold: this.getLevel('startingGold') * 10,
+      startingGold: 400 + this.getLevel('startingGold') * 10,
       rewardMultiplier: 1 + this.getLevel('bounty') * 0.1,
       tokenMultiplier: 1 + this.getLevel('tokenBonus') * 0.15,
       ballistaSpeedMultiplier: 1 + this.getLevel('ballistaMastery') * 0.08,
+      flatTokenBonus: this.getLevel('bonusResources') * 3,
+      towerSlots: {
+        ballista: this.getLevel('ballistaSlots'),
+        cannon: this.getLevel('cannonSlots'),
+        fireTower: this.getLevel('fireSlots'),
+        lightningTower: this.getLevel('lightningSlots'),
+      },
     };
   }
 
   get settings(): SaveData['settings'] {
     return this.data.settings;
+  }
+
+  nodeLevel(id: string): number {
+    const node = SKILL_NODES.find((entry) => entry.id === id)!;
+    if (node.kind === 'core') return 1;
+    if (node.kind === 'unlock') return this.isUnlocked(id as FeatureUnlockId) ? 1 : 0;
+    return this.getLevel(id as MetaUpgradeId);
+  }
+
+  nodeCost(id: string): number {
+    const node = SKILL_NODES.find((entry) => entry.id === id)!;
+    if (node.kind === 'unlock') return FEATURE_UNLOCKS.find((entry) => entry.id === id)!.cost;
+    return this.getCost(id as MetaUpgradeId);
+  }
+
+  isNodeUnlocked(id: string): boolean {
+    const node = SKILL_NODES.find((entry) => entry.id === id)!;
+    if (!node.parent) return true;
+    return this.nodeLevel(node.parent) > 0;
+  }
+
+  purchaseNode(id: string): boolean {
+    if (!this.isNodeUnlocked(id)) return false;
+    const node = SKILL_NODES.find((entry) => entry.id === id)!;
+    if (node.kind === 'core') return false;
+    return node.kind === 'unlock' ? this.purchaseUnlock(id as FeatureUnlockId) : this.purchase(id as MetaUpgradeId);
   }
 
   get statistics(): SaveData['statistics'] {

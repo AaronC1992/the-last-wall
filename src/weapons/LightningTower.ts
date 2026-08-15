@@ -1,24 +1,22 @@
 import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
+import { TowerBase } from './TowerBase';
 
-export class LightningTower {
-  readonly x: number;
-  readonly y: number;
+export class LightningTower extends TowerBase {
   private cooldown = 0;
   private damage = 18;
   private chains = 5;
   private chainRange = 110;
   private staticLock = false;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  get range(): number {
+    return 510;
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
-    const target = grid.findClosestInRange(this.x, this.y, 510, enemies);
+    const target = this.acquire(enemies, grid);
     if (target < 0) return;
     const count = grid.collectInRange(enemies.x[target], enemies.y[target], this.chainRange, enemies, this.chains);
     for (let index = 0; index < count; index++) {

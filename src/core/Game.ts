@@ -1,23 +1,34 @@
 import { TUNING } from './Constants';
+import { Camera } from './Camera';
+import { BattlefieldInput } from './BattlefieldInput';
+import type { BattlefieldActions } from './BattlefieldInput';
 import { EnemyManager } from '../enemies/EnemyManager';
 import { ProjectileManager } from '../weapons/ProjectileManager';
 import { WeaponManager } from '../weapons/WeaponManager';
 import { Renderer } from '../rendering/Renderer';
+import type { GhostTower } from '../rendering/Renderer';
 import { HUD } from '../ui/HUD';
+import type { TowerReadout } from '../ui/HUD';
 import { SpatialGrid } from '../systems/SpatialGrid';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
 import type { UpgradeDefinition } from '../systems/UpgradeDefinitions';
 import { WaveDirector } from '../systems/WaveDirector';
 import { EnemyType } from '../enemies/EnemyTypes';
 import { MetaProgression } from '../progression/MetaProgression';
+import type { TokenBreakdown } from '../progression/MetaProgression';
 import { ChaosSystem } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { EVOLUTION_DEFINITIONS } from '../systems/UpgradeDefinitions';
 import { MapSpawnSystem } from '../map/MapSpawnSystem';
+import { TOWER_CONFIG, towerConfig } from '../weapons/TowerConfig';
+import type { TowerKind } from '../weapons/TowerConfig';
+import type { BuildSlotState } from '../ui/BuildBar';
 
-export class Game {
+export type GamePhase = 'idle' | 'build' | 'battle';
+
+export class Game implements BattlefieldActions {
   private readonly canvas: HTMLCanvasElement;
   private readonly hud: HUD;
   private readonly enemies = new EnemyManager();
@@ -31,31 +42,42 @@ export class Game {
   private readonly chaos: ChaosSystem;
   private readonly feedback = new FeedbackSystem();
   private readonly mapSpawns = new MapSpawnSystem();
+  private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.logicalWidth, TUNING.logicalHeight);
   private readonly onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void;
+  private readonly onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void;
   private wallHp: number = TUNING.wallMaxHp;
   private gold = 0;
   private kills = 0;
   private elapsed = 0;
+  private phase: GamePhase = 'idle';
   private gameOver = false;
   private fps = 60;
   private invincible = false;
   private gameSpeed = 1;
-  private damageShopLevel = 0;
-  private speedShopLevel = 0;
   private wallMaxHp: number = TUNING.wallMaxHp;
   private wallArmor = 0;
   private rewardMultiplier = 1;
-  private runWallBonus = 0;
-  private earnedTokens = 0;
   private highestCombo = 0;
-  private progressionOpen = false;
-  private started = false;
+  private menuOpen = false;
   private mapIntroTimer = 0;
+  private armed: TowerKind | null = null;
+  private selectedId = 0;
+  private hoveredId = 0;
+  private pointerX = 0;
+  private pointerY = 0;
+  private pointerOverCanvas = false;
 
-  constructor(canvas: HTMLCanvasElement, hud: HUD, progression: MetaProgression, onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    hud: HUD,
+    progression: MetaProgression,
+    onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void,
+    onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void,
+  ) {
     this.canvas = canvas;
     this.hud = hud;
     this.onUpgradeChoices = onUpgradeChoices;
+    this.onRunEnd = onRunEnd;
     this.progression = progression;
     this.renderer = new Renderer(canvas.getContext('2d')!);
     this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth);
@@ -65,65 +87,124 @@ export class Game {
     this.applyPermanentBonuses();
     this.resize();
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('keydown', (event) => this.onKeyDown(event));
+    new BattlefieldInput(canvas, this.camera, TUNING.logicalWidth, TUNING.logicalHeight, this);
   }
 
   updateSimulation(deltaTime: number): void {
-    if (this.started && !this.gameOver && !this.progressionOpen && !this.upgrades.takePendingChoices()) {
-      const simulationDelta = deltaTime * this.gameSpeed;
-      this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
-      this.elapsed += simulationDelta;
-      this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
-        const spawn = this.mapSpawns.nextSpawn();
-        this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
-      });
-      this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
-        this.registerKill(reward);
-        if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
-      });
-      this.grid.rebuild(this.enemies);
-      this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, (reward) => this.registerKill(reward));
-      this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers));
-      this.chaos.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
-      this.enemies.compact();
-      this.feedback.update(simulationDelta);
-    }
+    if (this.phase !== 'battle' || this.gameOver || this.menuOpen || this.upgrades.takePendingChoices()) return;
+    const simulationDelta = deltaTime * this.gameSpeed;
+    this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
+    this.elapsed += simulationDelta;
+    this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
+      const spawn = this.mapSpawns.nextSpawn();
+      this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
+    });
+    this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
+      this.registerKill(reward);
+      if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
+    });
+    this.grid.rebuild(this.enemies);
+    this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, (reward) => this.registerKill(reward));
+    this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers));
+    this.chaos.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
+    this.enemies.compact();
+    this.feedback.update(simulationDelta);
+    if (this.waveDirector.isWaveCleared(this.enemies.count)) this.enterBuildPhase();
   }
 
   render(fps: number): void {
     this.fps = fps;
-    this.renderer.render(TUNING.logicalWidth, TUNING.logicalHeight, this.enemies, this.projectiles, this.weapons, this.chaos, this.feedback, this.wallHp, this.wallMaxHp, this.progression.settings.damageNumbers, this.progression.settings.screenShake);
-    this.hud.update({ wallHp: this.wallHp, maxWallHp: this.wallMaxHp, gold: this.gold, kills: this.kills, enemyCount: this.enemies.count, fps: this.fps, level: this.upgrades.currentLevel, wave: this.waveDirector.currentWave, waveBudget: this.waveDirector.currentBudget, announcement: this.waveDirector.announcement, mapIntro: this.mapIntroTimer > 0, warTokens: this.progression.warTokens, earnedTokens: this.earnedTokens, gameOver: this.gameOver });
+    this.renderer.render({
+      width: TUNING.logicalWidth,
+      height: TUNING.logicalHeight,
+      enemies: this.enemies,
+      projectiles: this.projectiles,
+      weapons: this.weapons,
+      chaos: this.chaos,
+      feedback: this.feedback,
+      wallHp: this.wallHp,
+      wallMaxHp: this.wallMaxHp,
+      damageNumbers: this.progression.settings.damageNumbers,
+      screenShake: this.progression.settings.screenShake,
+      camera: this.camera,
+      buildPhase: this.phase === 'build',
+      selectedTowerId: this.selectedId,
+      hoveredTowerId: this.hoveredId,
+      ghost: this.ghostTower(),
+    });
+    this.hud.update({
+      wallHp: this.wallHp,
+      maxWallHp: this.wallMaxHp,
+      gold: this.gold,
+      kills: this.kills,
+      enemyCount: this.enemies.count,
+      fps: this.fps,
+      level: this.upgrades.currentLevel,
+      wave: this.waveDirector.currentWave,
+      announcement: this.waveDirector.announcement,
+      mapIntro: this.mapIntroTimer > 0,
+      warTokens: this.progression.warTokens,
+      buildPhase: this.phase === 'build',
+      towers: this.towerReadouts(),
+    });
   }
 
   restart(): void {
-    this.started = true;
     this.enemies.clear();
     this.projectiles.count = 0;
     this.projectiles.droppedProjectiles = 0;
+    this.weapons.reset();
     this.applyPermanentBonuses();
     this.wallHp = this.wallMaxHp;
     this.gold = this.progression.bonuses.startingGold;
     this.kills = 0;
     this.elapsed = 0;
     this.gameOver = false;
-    this.damageShopLevel = 0;
-    this.speedShopLevel = 0;
-    this.weapons.reset();
     this.upgrades.reset();
     this.waveDirector.reset();
     this.mapSpawns.reset();
     this.chaos.reset();
     this.feedback.reset();
     this.renderer.clearDecals();
-    this.runWallBonus = 0;
-    this.earnedTokens = 0;
+    this.camera.reset();
+    this.selectedId = 0;
+    this.hoveredId = 0;
     this.mapIntroTimer = 2;
     this.highestCombo = 0;
+    this.phase = 'build';
     this.onUpgradeChoices(null);
   }
 
   start(): void {
     this.restart();
+  }
+
+  startBattle(): void {
+    if (this.phase !== 'build' || this.gameOver) return;
+    this.phase = 'battle';
+    this.selectedId = 0;
+    this.waveDirector.startWave();
+  }
+
+  get currentPhase(): GamePhase {
+    return this.phase;
+  }
+
+  buildSlotStates(): readonly BuildSlotState[] {
+    return TOWER_CONFIG.map((config) => ({
+      kind: config.kind,
+      unlocked: config.unlock === null || this.progression.isUnlocked(config.unlock),
+      count: this.weapons.countOf(config.kind),
+      limit: this.weapons.limitOf(config.kind),
+      cost: config.cost,
+      affordable: this.gold >= config.cost,
+    }));
+  }
+
+  setArmedKind(kind: TowerKind | null): void {
+    this.armed = kind;
+    if (kind) this.selectedId = 0;
   }
 
   chooseUpgrade(index: number): void {
@@ -136,11 +217,11 @@ export class Game {
   }
 
   setProgressionOpen(isOpen: boolean): void {
-    this.progressionOpen = isOpen;
+    this.menuOpen = isOpen;
   }
 
   activateAbility(id: AbilityIdValue): void {
-    if (this.gameOver || this.progressionOpen || this.upgrades.takePendingChoices()) return;
+    if (this.phase !== 'battle' || this.gameOver || this.menuOpen || this.upgrades.takePendingChoices()) return;
     if (!this.isAbilityUnlocked(id)) return;
     if (this.chaos.activate(id, this.enemies, this.grid, (reward) => this.registerKill(reward))) this.feedback.triggerShake(id === 4 ? 14 : 7);
   }
@@ -148,12 +229,6 @@ export class Game {
   isAbilityUnlocked(id: AbilityIdValue): boolean {
     const unlocks: readonly FeatureUnlockId[] = ['meteor', 'artillery', 'dragon', 'deathBeam', 'apocalypse'];
     return this.progression.isUnlocked(unlocks[id]);
-  }
-
-  buildWeapon(id: 'cannon' | 'fireTower' | 'lightningTower'): void {
-    const cost = id === 'cannon' ? 150 : id === 'fireTower' ? 240 : 360;
-    if (!this.progression.isUnlocked(id) || this.gold < cost || !this.weapons.build(id)) return;
-    this.gold -= cost;
   }
 
   repairWall(): void {
@@ -167,35 +242,78 @@ export class Game {
     return this.chaos.getCooldown(id);
   }
 
-  buyDamageUpgrade(): void {
-    const cost = this.damageUpgradeCost;
-    if (this.gold < cost) return;
-    this.gold -= cost;
-    this.damageShopLevel++;
-    this.weapons.applyUpgrade('damage');
-  }
-
-  buySpeedUpgrade(): void {
-    const cost = this.speedUpgradeCost;
-    if (this.gold < cost) return;
-    this.gold -= cost;
-    this.speedShopLevel++;
-    this.weapons.applyUpgrade('attackSpeed');
-  }
-
-  get shopState() {
-    return { gold: this.gold, damageCost: this.damageUpgradeCost, speedCost: this.speedUpgradeCost };
-  }
-
   get economyState() {
-    return {
-      gold: this.gold,
-      wallFull: this.wallHp >= this.wallMaxHp,
-      cannonUnlocked: this.progression.isUnlocked('cannon'), cannonBuilt: this.weapons.isBuilt('cannon'),
-      fireUnlocked: this.progression.isUnlocked('fireTower'), fireBuilt: this.weapons.isBuilt('fireTower'),
-      lightningUnlocked: this.progression.isUnlocked('lightningTower'), lightningBuilt: this.weapons.isBuilt('lightningTower'),
-    };
+    return { gold: this.gold, wallFull: this.wallHp >= this.wallMaxHp };
   }
+
+  // BattlefieldActions
+
+  isInteractive(): boolean {
+    return this.phase !== 'idle' && !this.gameOver && !this.menuOpen;
+  }
+
+  armedKind(): TowerKind | null {
+    return this.phase === 'build' ? this.armed : null;
+  }
+
+  placeTower(x: number, y: number): void {
+    if (this.phase !== 'build' || !this.armed) return;
+    const config = towerConfig(this.armed);
+    if (this.gold < config.cost) return;
+    const spot = this.weapons.clampToBuildZone(x, y);
+    if (!this.weapons.place(this.armed, spot.x, spot.y)) return;
+    this.gold -= config.cost;
+  }
+
+  towerIdAt(x: number, y: number): number {
+    return this.weapons.findAt(x, y)?.id ?? 0;
+  }
+
+  selectTower(id: number): void {
+    this.selectedId = id;
+    if (id > 0) this.armed = null;
+  }
+
+  selectedTowerId(): number {
+    return this.selectedId;
+  }
+
+  moveTower(id: number, x: number, y: number): void {
+    if (this.phase !== 'build') return;
+    const spot = this.weapons.clampToBuildZone(x, y);
+    this.weapons.moveTower(id, spot.x, spot.y);
+    this.selectedId = id;
+  }
+
+  aimTower(id: number, x: number, y: number): void {
+    this.weapons.aimTower(id, x, y);
+  }
+
+  removeTower(id: number): void {
+    if (this.phase !== 'build') return;
+    const kind = this.weapons.remove(id);
+    if (!kind) return;
+    this.gold += Math.floor(towerConfig(kind).cost * 0.75);
+    if (this.selectedId === id) this.selectedId = 0;
+  }
+
+  removeAllTowers(): void {
+    if (this.phase !== 'build') return;
+    for (const kind of this.weapons.removeAll()) this.gold += Math.floor(towerConfig(kind).cost * 0.75);
+    this.selectedId = 0;
+  }
+
+  setPointer(x: number, y: number, overCanvas: boolean): void {
+    this.pointerX = x;
+    this.pointerY = y;
+    this.pointerOverCanvas = overCanvas;
+  }
+
+  setHoveredTower(id: number): void {
+    this.hoveredId = id;
+  }
+
+  // Debug helpers
 
   spawnHorde(count: number): void {
     const wallY = TUNING.logicalHeight - TUNING.wallHeight - TUNING.enemyRadius * 2;
@@ -253,6 +371,39 @@ export class Game {
     };
   }
 
+  private onKeyDown(event: KeyboardEvent): void {
+    if (event.target instanceof HTMLInputElement) return;
+    if (event.code === 'Space' && this.phase === 'build') {
+      event.preventDefault();
+      this.startBattle();
+    }
+  }
+
+  private ghostTower(): GhostTower | null {
+    if (this.phase !== 'build' || !this.armed || !this.pointerOverCanvas) return null;
+    const spot = this.weapons.clampToBuildZone(this.pointerX, this.pointerY);
+    return {
+      kind: this.armed,
+      x: spot.x,
+      y: spot.y,
+      valid: this.weapons.canPlaceAt(this.armed, spot.x, spot.y) && this.gold >= towerConfig(this.armed).cost,
+    };
+  }
+
+  private towerReadouts(): readonly TowerReadout[] {
+    return TOWER_CONFIG.map((config) => ({
+      kind: config.kind,
+      count: this.weapons.countOf(config.kind),
+      limit: this.weapons.limitOf(config.kind),
+      unlocked: config.unlock === null || this.progression.isUnlocked(config.unlock),
+    }));
+  }
+
+  private enterBuildPhase(): void {
+    this.phase = 'build';
+    this.armed = null;
+  }
+
   private damageWall(damage: number): void {
     if (this.invincible) return;
     this.wallHp = Math.max(0, this.wallHp - Math.max(1, damage - this.wallArmor));
@@ -282,19 +433,12 @@ export class Game {
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   }
 
-  private get damageUpgradeCost(): number {
-    return 15 + this.damageShopLevel * 10;
-  }
-
-  private get speedUpgradeCost(): number {
-    return 20 + this.speedShopLevel * 15;
-  }
-
   private endRun(): void {
     if (this.gameOver) return;
     this.gameOver = true;
-    const baseTokens = Math.floor(this.kills / 20 + this.elapsed / 90);
-    this.earnedTokens = this.progression.awardTokens(baseTokens, this.kills, this.gold, this.highestCombo);
+    this.phase = 'idle';
+    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.gold, this.highestCombo);
+    this.onRunEnd(breakdown, this.wallHp > 0);
   }
 
   private applyPermanentBonuses(): void {
@@ -303,6 +447,7 @@ export class Game {
     this.wallArmor = bonuses.wallArmor;
     this.rewardMultiplier = bonuses.rewardMultiplier;
     this.weapons.setPermanentBonuses(bonuses.damageMultiplier, bonuses.ballistaSpeedMultiplier);
+    for (const config of TOWER_CONFIG) this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
     this.wallHp = this.wallMaxHp;
   }
 
@@ -312,7 +457,6 @@ export class Game {
       return;
     }
     if (id === 'wallMax') {
-      this.runWallBonus += 20;
       this.wallMaxHp += 20;
       this.wallHp += 20;
       return;

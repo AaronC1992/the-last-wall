@@ -1,4 +1,4 @@
-export type MetaUpgradeId = 'globalDamage' | 'wallIntegrity' | 'wallArmor' | 'startingGold' | 'bounty' | 'tokenBonus' | 'ballistaMastery';
+export type MetaUpgradeId = 'globalDamage' | 'wallIntegrity' | 'wallArmor' | 'startingGold' | 'bounty' | 'tokenBonus' | 'ballistaMastery' | 'bonusResources' | 'ballistaSlots' | 'cannonSlots' | 'fireSlots' | 'lightningSlots';
 
 export interface MetaUpgradeDefinition {
   id: MetaUpgradeId;
@@ -17,4 +17,9 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'bounty', category: 'Economy', title: 'Bounty Orders', description: 'Enemy rewards gain 10 percent each level.', maxLevel: 8, baseCost: 4 },
   { id: 'tokenBonus', category: 'Economy', title: 'Victory Ledger', description: 'War Token rewards gain 15 percent each level.', maxLevel: 6, baseCost: 6 },
   { id: 'ballistaMastery', category: 'Weapons', title: 'Ballista Mastery', description: 'Ballista attack speed gains 8 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'bonusResources', category: 'Economy', title: 'Bonus Resources', description: 'Gain 3 more War Tokens at the end of a battle.', maxLevel: 3, baseCost: 3 },
+  { id: 'ballistaSlots', category: 'Weapons', title: 'Ballista Yard', description: 'One more Ballista can be placed each level.', maxLevel: 10, baseCost: 4 },
+  { id: 'cannonSlots', category: 'Weapons', title: 'Cannon Foundry', description: 'One more Cannon can be placed each level.', maxLevel: 2, baseCost: 12 },
+  { id: 'fireSlots', category: 'Weapons', title: 'Pyre Works', description: 'One more Fire Tower can be placed each level.', maxLevel: 4, baseCost: 9 },
+  { id: 'lightningSlots', category: 'Weapons', title: 'Storm Spire', description: 'One more Lightning Tower can be placed each level.', maxLevel: 2, baseCost: 16 },
 ] as const;

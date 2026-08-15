@@ -1,54 +1,228 @@
 import { MetaProgression } from '../progression/MetaProgression';
-import type { MetaUpgradeId } from '../progression/UpgradeDefinitions';
-import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
+import { SKILL_NODES, BRANCH_COLORS } from '../progression/SkillTreeLayout';
+import type { SkillNode } from '../progression/SkillTreeLayout';
+
+const NODE_SIZE = 30;
+const VIEW_WIDTH = 1280;
+const VIEW_HEIGHT = 760;
 
 export class MetaMenu {
-  private readonly progression: MetaProgression;
-  private readonly onVisibilityChange: (visible: boolean) => void;
   private readonly panel = document.querySelector<HTMLElement>('#meta-menu')!;
-  private readonly tokenValue = document.querySelector<HTMLElement>('#meta-tokens')!;
-  private readonly list = document.querySelector<HTMLElement>('#meta-upgrades')!;
+  private readonly canvas = document.querySelector<HTMLCanvasElement>('#skill-tree-canvas')!;
+  private readonly context = this.canvas.getContext('2d')!;
+  private readonly tooltip = document.querySelector<HTMLElement>('#skill-tooltip')!;
+  private readonly tokenValue = document.querySelector<HTMLElement>('#tokens-value')!;
+  private offsetX = VIEW_WIDTH / 2;
+  private offsetY = VIEW_HEIGHT / 2;
+  private zoom = 1;
+  private hovered: SkillNode | null = null;
+  private dragging = false;
+  private moved = false;
+  private lastX = 0;
+  private lastY = 0;
 
-  constructor(progression: MetaProgression, onVisibilityChange: (visible: boolean) => void) {
-    this.progression = progression;
-    this.onVisibilityChange = onVisibilityChange;
+  constructor(
+    private readonly progression: MetaProgression,
+    private readonly onVisibilityChange: (visible: boolean) => void,
+    private readonly onPlay: () => void,
+  ) {
+    this.canvas.width = VIEW_WIDTH;
+    this.canvas.height = VIEW_HEIGHT;
     document.querySelector<HTMLButtonElement>('#meta-button')!.addEventListener('click', () => this.show());
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => this.hide());
-    this.list.addEventListener('click', (event) => {
-      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-upgrade], [data-unlock]');
-      if (!button) return;
-      if (button.dataset.unlock) this.progression.purchaseUnlock(button.dataset.unlock as FeatureUnlockId);
-      else this.progression.purchase(button.dataset.upgrade as MetaUpgradeId);
-      this.render();
+    document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => {
+      this.hide();
+      this.onPlay();
     });
+    document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
+      document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
+    });
+    this.canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event));
+    this.canvas.addEventListener('pointermove', (event) => this.onPointerMove(event));
+    window.addEventListener('pointerup', () => this.onPointerUp());
+    this.canvas.addEventListener('pointerleave', () => this.hideTooltip());
+    this.canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false });
+    this.canvas.addEventListener('click', (event) => this.onClick(event));
   }
 
   show(): void {
-    this.render();
     this.panel.hidden = false;
     this.onVisibilityChange(true);
+    this.render();
   }
 
   hide(): void {
     this.panel.hidden = true;
+    this.hideTooltip();
     this.onVisibilityChange(false);
+  }
+
+  private toCanvas(event: PointerEvent | MouseEvent | WheelEvent): { x: number; y: number } {
+    const bounds = this.canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - bounds.left) / bounds.width) * VIEW_WIDTH,
+      y: ((event.clientY - bounds.top) / bounds.height) * VIEW_HEIGHT,
+    };
+  }
+
+  private toTree(event: PointerEvent | MouseEvent | WheelEvent): { x: number; y: number } {
+    const point = this.toCanvas(event);
+    return { x: (point.x - this.offsetX) / this.zoom, y: (point.y - this.offsetY) / this.zoom };
+  }
+
+  private nodeAt(x: number, y: number): SkillNode | null {
+    const half = NODE_SIZE / 2 + 4;
+    for (const node of SKILL_NODES) {
+      if (Math.abs(node.x - x) <= half && Math.abs(node.y - y) <= half) return node;
+    }
+    return null;
+  }
+
+  private onPointerDown(event: PointerEvent): void {
+    this.dragging = true;
+    this.moved = false;
+    const point = this.toCanvas(event);
+    this.lastX = point.x;
+    this.lastY = point.y;
+  }
+
+  private onPointerMove(event: PointerEvent): void {
+    const point = this.toCanvas(event);
+    if (this.dragging) {
+      if (Math.abs(point.x - this.lastX) > 2 || Math.abs(point.y - this.lastY) > 2) this.moved = true;
+      this.offsetX += point.x - this.lastX;
+      this.offsetY += point.y - this.lastY;
+      this.lastX = point.x;
+      this.lastY = point.y;
+      this.render();
+      return;
+    }
+    const tree = this.toTree(event);
+    const node = this.nodeAt(tree.x, tree.y);
+    if (node !== this.hovered) {
+      this.hovered = node;
+      this.render();
+    }
+    if (node) this.showTooltip(node, point.x, point.y);
+    else this.hideTooltip();
+  }
+
+  private onPointerUp(): void {
+    this.dragging = false;
+  }
+
+  private onWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const before = this.toTree(event);
+    this.zoom = Math.min(2.2, Math.max(0.45, this.zoom * (event.deltaY > 0 ? 0.9 : 1.1)));
+    const point = this.toCanvas(event);
+    this.offsetX = point.x - before.x * this.zoom;
+    this.offsetY = point.y - before.y * this.zoom;
+    this.render();
+  }
+
+  private onClick(event: MouseEvent): void {
+    if (this.moved) return;
+    const tree = this.toTree(event);
+    const node = this.nodeAt(tree.x, tree.y);
+    if (!node || node.kind === 'core') return;
+    if (this.progression.purchaseNode(node.id)) {
+      this.render();
+      this.showTooltip(node, this.toCanvas(event).x, this.toCanvas(event).y);
+    }
+  }
+
+  private showTooltip(node: SkillNode, screenX: number, screenY: number): void {
+    const level = this.progression.nodeLevel(node.id);
+    const cost = node.kind === 'core' ? 0 : this.progression.nodeCost(node.id);
+    const locked = !this.progression.isNodeUnlocked(node.id);
+    const capped = level >= node.maxLevel;
+    const bounds = this.canvas.getBoundingClientRect();
+    const scale = bounds.width / VIEW_WIDTH;
+    this.tooltip.innerHTML = `<header><strong>${node.title}</strong><span>${node.kind === 'core' ? '' : `${level}/${node.maxLevel}`}</span></header><p>${node.description}</p><footer>${locked ? 'Locked, unlock the previous node' : capped ? 'Complete' : `${cost} War Tokens`}</footer>`;
+    this.tooltip.hidden = false;
+    this.tooltip.style.left = `${screenX * scale + 20}px`;
+    this.tooltip.style.top = `${screenY * scale - 10}px`;
+  }
+
+  private hideTooltip(): void {
+    this.tooltip.hidden = true;
+    if (this.hovered) {
+      this.hovered = null;
+      this.render();
+    }
   }
 
   private render(): void {
     this.tokenValue.textContent = this.progression.warTokens.toLocaleString();
-    let markup = '';
-    for (const upgrade of this.progression.upgrades) {
-      const level = this.progression.getLevel(upgrade.id);
-      const cost = this.progression.getCost(upgrade.id);
-      const capped = level >= upgrade.maxLevel;
-      const disabled = capped || this.progression.warTokens < cost ? ' disabled' : '';
-      markup += `<button type="button" class="meta-upgrade" data-upgrade="${upgrade.id}"${disabled}><span>${upgrade.category}</span><strong>${upgrade.title}</strong><small>${upgrade.description}</small><em>Level ${level} of ${upgrade.maxLevel}</em><b>${capped ? 'Complete' : `${cost} Tokens`}</b></button>`;
+    const context = this.context;
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.fillStyle = '#05070a';
+    context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+    const glow = context.createRadialGradient(VIEW_WIDTH / 2, VIEW_HEIGHT / 2, 20, VIEW_WIDTH / 2, VIEW_HEIGHT / 2, VIEW_HEIGHT);
+    glow.addColorStop(0, 'rgba(90, 30, 40, .35)');
+    glow.addColorStop(1, 'rgba(5, 7, 10, 0)');
+    context.fillStyle = glow;
+    context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+    context.setTransform(this.zoom, 0, 0, this.zoom, this.offsetX, this.offsetY);
+    this.renderEdges(context);
+    for (const node of SKILL_NODES) this.renderNode(context, node);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  private renderEdges(context: CanvasRenderingContext2D): void {
+    for (const node of SKILL_NODES) {
+      if (!node.parent) continue;
+      const parent = SKILL_NODES.find((entry) => entry.id === node.parent)!;
+      const owned = this.progression.nodeLevel(node.id) > 0;
+      const reachable = this.progression.isNodeUnlocked(node.id);
+      context.strokeStyle = BRANCH_COLORS[node.branch];
+      context.globalAlpha = owned ? 0.95 : reachable ? 0.45 : 0.16;
+      context.lineWidth = owned ? 2.5 : 1.5;
+      context.beginPath();
+      context.moveTo(parent.x, parent.y);
+      context.lineTo(node.x, node.y);
+      context.stroke();
     }
-    for (const feature of this.progression.features) {
-      const unlocked = this.progression.isUnlocked(feature.id);
-      const disabled = unlocked || this.progression.warTokens < feature.cost ? ' disabled' : '';
-      markup += `<button type="button" class="meta-upgrade" data-unlock="${feature.id}"${disabled}><span>${feature.category}</span><strong>${feature.title}</strong><small>${feature.description}</small><em>${unlocked ? 'Unlocked' : 'Permanent unlock'}</em><b>${unlocked ? 'Online' : `${feature.cost} Tokens`}</b></button>`;
+    context.globalAlpha = 1;
+  }
+
+  private renderNode(context: CanvasRenderingContext2D, node: SkillNode): void {
+    const level = this.progression.nodeLevel(node.id);
+    const owned = level > 0;
+    const reachable = this.progression.isNodeUnlocked(node.id);
+    const color = BRANCH_COLORS[node.branch];
+    const half = NODE_SIZE / 2;
+    const hovered = this.hovered === node;
+
+    context.globalAlpha = owned ? 1 : reachable ? 0.75 : 0.3;
+    if (owned) {
+      context.save();
+      context.shadowColor = color;
+      context.shadowBlur = hovered ? 26 : 14;
+      context.fillStyle = color;
+      context.fillRect(node.x - half, node.y - half, NODE_SIZE, NODE_SIZE);
+      context.restore();
+    } else {
+      context.fillStyle = '#101720';
+      context.fillRect(node.x - half, node.y - half, NODE_SIZE, NODE_SIZE);
     }
-    this.list.innerHTML = markup;
+    context.strokeStyle = hovered ? '#ffffff' : color;
+    context.lineWidth = hovered ? 2.5 : 1.5;
+    context.strokeRect(node.x - half, node.y - half, NODE_SIZE, NODE_SIZE);
+
+    context.fillStyle = owned ? '#0b1016' : color;
+    context.font = 'bold 15px Verdana, sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(node.title.charAt(0), node.x, node.y - 1);
+
+    if (node.kind !== 'core') {
+      context.fillStyle = owned ? color : '#7d8894';
+      context.font = '10px Verdana, sans-serif';
+      context.fillText(`${level}/${node.maxLevel}`, node.x, node.y + half + 9);
+    }
+    context.globalAlpha = 1;
   }
 }
