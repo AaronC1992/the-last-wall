@@ -639,27 +639,86 @@ export class Renderer {
     if (state.buildPhase) return;
     const time = Date.now() * 0.012;
     for (const tower of state.weapons.towers) {
-      if (tower.kind !== 'lightningTower' && tower.kind !== 'teslaCoil') continue;
-      const laserInstance = tower.instance as unknown as { isFiring?: boolean; primaryTarget?: { x: number; y: number } | null; chainedTargets?: Array<{ x: number; y: number }> };
-      if (!laserInstance.isFiring || !laserInstance.primaryTarget) continue;
+      if (tower.kind === 'lightningTower') {
+        const laserInstance = tower.instance as unknown as { isFiring?: boolean; primaryTarget?: { x: number; y: number } | null };
+        if (!laserInstance.isFiring || !laserInstance.primaryTarget) continue;
 
-      const originX = tower.instance.x;
-      const originY = tower.instance.y;
-      const primary = laserInstance.primaryTarget;
+        context.save();
+        context.globalCompositeOperation = 'screen';
+        this.drawLaserBeam(context, tower.instance.x, tower.instance.y, laserInstance.primaryTarget.x, laserInstance.primaryTarget.y, '#ffffff', '#3b82f6', 6, time);
+        context.restore();
+      } else if (tower.kind === 'teslaCoil') {
+        const teslaInstance = tower.instance as unknown as { isFiring?: boolean; primaryTarget?: { x: number; y: number } | null; chainedTargets?: Array<{ x: number; y: number }> };
+        if (!teslaInstance.isFiring || !teslaInstance.primaryTarget) continue;
 
-      context.save();
-      context.globalCompositeOperation = 'screen';
+        const originX = tower.instance.x;
+        const originY = tower.instance.y - 22;
+        const primary = teslaInstance.primaryTarget;
 
-      this.drawLaserBeam(context, originX, originY, primary.x, primary.y, '#9bc4ff', '#3b82f6', 6, time);
+        context.save();
+        context.globalCompositeOperation = 'screen';
 
-      if (laserInstance.chainedTargets && laserInstance.chainedTargets.length > 0) {
-        for (const chainTarget of laserInstance.chainedTargets) {
-          this.drawLaserBeam(context, primary.x, primary.y, chainTarget.x, chainTarget.y, '#cce0ff', '#60a5fa', 3.5, time + chainTarget.x * 0.01);
+        this.drawPlasmaArc(context, originX, originY, primary.x, primary.y, '#ffffff', '#e046d8', 5, time);
+
+        if (teslaInstance.chainedTargets && teslaInstance.chainedTargets.length > 0) {
+          for (const chainTarget of teslaInstance.chainedTargets) {
+            this.drawPlasmaArc(context, primary.x, primary.y, chainTarget.x, chainTarget.y, '#f0f9ff', '#38bdf8', 3.5, time + chainTarget.x * 0.01);
+          }
         }
-      }
 
-      context.restore();
+        context.restore();
+      }
     }
+  }
+
+  private drawPlasmaArc(context: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, coreColor: string, outerColor: string, baseWidth: number, time: number): void {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    if (dist < 1) return;
+
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const normalX = -Math.sin(angle);
+    const normalY = Math.cos(angle);
+
+    const segments = Math.max(3, Math.floor(dist / 14));
+    const points: Array<{ x: number; y: number }> = [{ x: x1, y: y1 }];
+
+    for (let i = 1; i < segments; i++) {
+      const frac = i / segments;
+      const interpX = x1 + (x2 - x1) * frac;
+      const interpY = y1 + (y2 - y1) * frac;
+
+      const jitter = (Math.sin(time * 35 + i * 11 + x1 * 0.1) * 0.6 + Math.cos(time * 22 + i * 17) * 0.4) * Math.min(16, dist * 0.18);
+      points.push({
+        x: interpX + normalX * jitter,
+        y: interpY + normalY * jitter,
+      });
+    }
+    points.push({ x: x2, y: y2 });
+
+    context.save();
+    context.shadowColor = outerColor;
+    context.shadowBlur = 10;
+
+    context.strokeStyle = outerColor;
+    context.lineWidth = baseWidth + Math.sin(time * 12) * 1.2;
+    context.beginPath();
+    context.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) context.lineTo(points[i].x, points[i].y);
+    context.stroke();
+
+    context.strokeStyle = coreColor;
+    context.lineWidth = Math.max(1, baseWidth * 0.45);
+    context.beginPath();
+    context.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) context.lineTo(points[i].x, points[i].y);
+    context.stroke();
+
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.arc(x2, y2, 2.5 + Math.sin(time * 18) * 1.5, 0, Math.PI * 2);
+    context.fill();
+
+    context.restore();
   }
 
   private drawLaserBeam(context: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, coreColor: string, outerColor: string, baseWidth: number, time: number): void {

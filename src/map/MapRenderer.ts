@@ -508,14 +508,16 @@ export class MapRenderer {
     this.drawPixelTowerBase(context, kind, x, y);
 
     context.translate(x, y);
-    context.rotate(angle + Math.PI / 2);
+    if (kind !== 'teslaCoil') {
+      context.rotate(angle + Math.PI / 2);
+    }
 
     if (kind === 'ballista') this.drawPixelBallista(context);
     else if (kind === 'cannon') this.drawPixelCannon(context);
     else if (kind === 'fireTower') this.drawPixelFireTower(context);
-    else if (kind === 'lightningTower') this.drawPixelTeslaCoil(context);
+    else if (kind === 'lightningTower') this.drawPixelLaserTower(context);
     else if (kind === 'mortar') this.drawPixelMortar(context);
-    else if (kind === 'teslaCoil') this.drawPixelLightningTower(context);
+    else if (kind === 'teslaCoil') this.drawPixelPlasmaGlobe(context);
     else if (kind === 'sniperTower') this.drawPixelSniperTower(context);
 
     context.restore();
@@ -788,7 +790,7 @@ export class MapRenderer {
     context.fillRect(-1, -37, 2, 2);
   }
 
-  private drawPixelLightningTower(context: CanvasRenderingContext2D): void {
+  private drawPixelLaserTower(context: CanvasRenderingContext2D): void {
     context.fillStyle = '#1e272e';
     context.fillRect(-12, -4, 24, 12);
 
@@ -841,25 +843,79 @@ export class MapRenderer {
     context.stroke();
   }
 
-  private drawPixelTeslaCoil(context: CanvasRenderingContext2D): void {
-    context.fillStyle = '#162432';
-    context.fillRect(-13, -9, 26, 18);
-    context.fillStyle = '#31526b';
-    context.fillRect(-11, -8, 22, 3);
-    context.fillStyle = '#1e3a4d';
-    context.fillRect(-5, -24, 10, 18);
-    context.fillStyle = '#7dd3fc';
-    context.fillRect(-3, -29, 6, 8);
-    context.fillStyle = '#e0f2fe';
-    context.fillRect(-1, -33, 2, 6);
-    context.fillStyle = '#38bdf8';
-    context.fillRect(-18, -22, 8, 2);
-    context.fillRect(10, -22, 8, 2);
-    context.fillRect(-20, -20, 2, 8);
-    context.fillRect(18, -20, 2, 8);
-    context.fillStyle = '#bae6fd';
-    context.fillRect(-21, -21, 3, 3);
-    context.fillRect(18, -21, 3, 3);
+  private drawPixelPlasmaGlobe(context: CanvasRenderingContext2D): void {
+    const time = Date.now() * 0.005;
+
+    // Dark pedestal column
+    context.fillStyle = '#0f172a';
+    context.fillRect(-10, -8, 20, 12);
+    context.fillStyle = '#1e293b';
+    context.fillRect(-8, -7, 16, 2);
+    context.fillStyle = '#334155';
+    context.fillRect(-6, -16, 12, 10);
+    context.fillStyle = '#0284c7';
+    context.fillRect(-7, -10, 14, 2);
+
+    // Inner electrode stem inside globe
+    context.fillStyle = '#0f172a';
+    context.fillRect(-2, -22, 4, 8);
+    context.fillStyle = '#0284c7';
+    context.fillRect(-3, -24, 6, 3);
+    context.fillStyle = '#ffffff';
+    context.fillRect(-1, -23, 2, 2);
+
+    const orbX = 0;
+    const orbY = -22;
+    const orbR = 15;
+
+    // Glass globe radial background atmosphere
+    const bgGrad = context.createRadialGradient(orbX, orbY, 1, orbX, orbY, orbR);
+    bgGrad.addColorStop(0, 'rgba(192, 38, 211, 0.5)');
+    bgGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.25)');
+    bgGrad.addColorStop(1, 'rgba(15, 23, 42, 0.85)');
+    context.fillStyle = bgGrad;
+    context.beginPath();
+    context.arc(orbX, orbY, orbR, 0, Math.PI * 2);
+    context.fill();
+
+    // Animated Plasma Filaments reaching from center node to inner glass wall
+    const numFilaments = 5;
+    context.lineWidth = 1.5;
+    for (let i = 0; i < numFilaments; i++) {
+      const baseAngle = (i * (Math.PI * 2 / numFilaments)) + Math.sin(time * 2 + i * 1.7) * 0.45;
+      const targetR = orbR - 1.5;
+      const wallX = Math.cos(baseAngle) * targetR;
+      const wallY = orbY + Math.sin(baseAngle) * targetR;
+
+      const midX = (0 + wallX) * 0.5 + Math.sin(time * 9 + i * 3) * 3;
+      const midY = (orbY + wallY) * 0.5 + Math.cos(time * 8 + i * 2) * 3;
+
+      context.strokeStyle = i % 2 === 0 ? 'rgba(232, 121, 249, 0.9)' : 'rgba(56, 189, 248, 0.9)';
+      context.beginPath();
+      context.moveTo(0, orbY);
+      context.lineTo(midX, midY);
+      context.lineTo(wallX, wallY);
+      context.stroke();
+
+      context.fillStyle = '#ffffff';
+      context.beginPath();
+      context.arc(wallX, wallY, 1.2 + Math.sin(time * 12 + i) * 0.5, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    // Glass sphere outline
+    context.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.arc(orbX, orbY, orbR, 0, Math.PI * 2);
+    context.stroke();
+
+    // Curved specular glare on top-left of glass
+    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.arc(orbX, orbY, orbR - 2, -Math.PI * 0.8, -Math.PI * 0.3);
+    context.stroke();
   }
 
   private drawPixelSniperTower(context: CanvasRenderingContext2D): void {
