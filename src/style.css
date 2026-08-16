@@ -159,6 +159,10 @@ button { font: inherit; }
 .map-builder { width: min(1100px, 94vw); }
 .builder-layout { display: grid; grid-template-columns: 120px minmax(420px, 800px) 190px; gap: 12px; align-items: start; }
 .builder-tools, .builder-side { display: grid; gap: 7px; }
+.builder-config { display: grid; gap: 7px; padding: 9px; border: 1px solid #4f8179; background: #13201e; }
+.builder-config[hidden] { display: none; }
+.builder-config label { display: grid; gap: 4px; color: #c8d8d2; font: 11px Verdana, sans-serif; }
+.builder-config input, .builder-config select { min-width: 0; padding: 6px; border: 1px solid #52655d; background: #101716; color: #e9efe8; font: 11px Verdana, sans-serif; }
 .builder-tools button, .builder-side button { padding: 8px 6px; border: 1px solid #6b5a3c; background: #25251d; color: #efe9dc; cursor: pointer; }
 .builder-side label { display: grid; gap: 5px; }
 .builder-side input { min-width: 0; padding: 7px; background: #161b19; border: 1px solid #6b5a3c; color: #efe9dc; }

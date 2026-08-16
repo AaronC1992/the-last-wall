@@ -4,8 +4,8 @@ import { DEFAULT_MAP_CELL_SIZE, DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH } from './
 
 const WIDTH = DEFAULT_MAP_WIDTH;
 const HEIGHT = DEFAULT_MAP_HEIGHT;
-const SOURCE_WIDTH = 40;
-const SOURCE_HEIGHT = 25;
+const SOURCE_WIDTH = 80;
+const SOURCE_HEIGHT = 48;
 
 export function createMapDefinition(id: string, name: string, routes: readonly (readonly MapPoint[])[], spawns: readonly MapPoint[], goal: MapPoint, settings: MapEnemySettings, seed: number): MapDefinition {
   const terrain = new Uint8Array(WIDTH * HEIGHT);

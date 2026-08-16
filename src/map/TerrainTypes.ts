@@ -15,6 +15,8 @@ export interface MapEnemySettings {
   difficulty: 'easy' | 'normal' | 'hard' | 'insane';
   enemyCount: number;
   variety: 'basic' | 'mixed' | 'elite';
+  spawnBurst?: number;
+  spawnInterval?: number;
 }
 
 export interface MapDefinition {
@@ -34,9 +36,9 @@ export interface MapDefinition {
   modifiedDate?: string;
 }
 
-export const DEFAULT_MAP_WIDTH = 120;
-export const DEFAULT_MAP_HEIGHT = 72;
-export const MAX_CUSTOM_MAP_CELLS = 80 * 60;
+export const DEFAULT_MAP_WIDTH = 240;
+export const DEFAULT_MAP_HEIGHT = 144;
+export const MAX_CUSTOM_MAP_CELLS = 240 * 144;
 export const DEFAULT_MAP_CELL_SIZE = 20;
 
 export function isWalkable(cell: TerrainCell): boolean {

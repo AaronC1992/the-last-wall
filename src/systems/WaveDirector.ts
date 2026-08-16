@@ -1,9 +1,10 @@
 import { EnemyType } from '../enemies/EnemyTypes';
 import type { EnemyTypeId } from '../enemies/EnemyTypes';
+import type { MapEnemySettings } from '../map/TerrainTypes';
 
 export class WaveDirector {
-  private readonly queueType = new Uint8Array(100000);
-  private readonly queueElite = new Uint8Array(100000);
+  private readonly queueType = new Uint8Array(200000);
+  private readonly queueElite = new Uint8Array(200000);
   private queueHead = 0;
   private queueTail = 0;
   private spawnTimer = 0;
@@ -11,17 +12,18 @@ export class WaveDirector {
   private announcementText = '';
   private wave = 0;
   private waveBudget = 0;
+  private mapSettings: MapEnemySettings | null = null;
 
   update(deltaTime: number, _activeEnemies: number, spawn: (type: EnemyTypeId, elite: boolean) => void): void {
     this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer > 0) return;
-    const burst = Math.min(this.queueTail - this.queueHead, Math.min(400, 60 + this.wave * 10));
+    const burst = Math.min(this.queueTail - this.queueHead, Math.min(this.mapSettings?.spawnBurst ?? 400, 60 + this.wave * 10));
     for (let index = 0; index < burst; index++) {
       spawn(this.queueType[this.queueHead] as EnemyTypeId, this.queueElite[this.queueHead] !== 0);
       this.queueHead++;
     }
-    this.spawnTimer = Math.max(0.035, 0.14 - this.wave * 0.003);
+    this.spawnTimer = Math.max(0.025, (this.mapSettings?.spawnInterval ?? 0.14) - this.wave * 0.003);
   }
 
   reset(): void {
@@ -32,6 +34,7 @@ export class WaveDirector {
     this.waveBudget = 0;
     this.announcementTimer = 0;
     this.announcementText = '';
+    this.mapSettings = null;
   }
 
   get currentWave(): number {
@@ -46,7 +49,8 @@ export class WaveDirector {
     return this.announcementTimer > 0 ? this.announcementText : '';
   }
 
-  startWave(enemyCount?: number): void {
+  startWave(enemyCount?: number, mapSettings?: MapEnemySettings): void {
+    this.mapSettings = mapSettings ?? null;
     this.beginWave(enemyCount);
   }
 
@@ -94,7 +98,9 @@ export class WaveDirector {
   }
 
   private pickEnemy(style: number, budget: number): { type: EnemyTypeId; elite: boolean; cost: number } {
-    const elite = style === 8 ? Math.random() < 0.28 : this.wave > 8 && Math.random() < Math.min(0.12, this.wave * 0.004);
+    const eliteChance = this.mapSettings?.variety === 'basic' ? 0 : this.mapSettings?.variety === 'elite' ? 0.35 : 0.08;
+    const elite = this.mapSettings?.difficulty === 'easy' ? false : style === 8 ? Math.random() < Math.max(0.28, eliteChance) : this.wave > 8 && Math.random() < Math.min(0.2, eliteChance + this.wave * 0.004);
+    if (this.mapSettings?.variety === 'basic') return { type: style === 4 ? EnemyType.Runner : EnemyType.Grunt, elite: false, cost: style === 4 ? 2 : 1 };
     if (style === 2) return { type: EnemyType.Grunt, elite: false, cost: 1 };
     if (style === 4) return { type: EnemyType.Runner, elite, cost: 2 };
     if (style === 6 && budget >= 5) return Math.random() < 0.72 ? { type: EnemyType.Armored, elite, cost: 5 } : { type: EnemyType.Brute, elite, cost: 8 };

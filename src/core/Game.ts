@@ -234,7 +234,7 @@ export class Game implements BattlefieldActions {
     if (!this.weapons.allAimed()) return;
     this.phase = 'battle';
     this.selectedId = 0;
-    this.waveDirector.startWave(this.map.enemySettings.enemyCount);
+    this.waveDirector.startWave(this.map.enemySettings.enemyCount, this.map.enemySettings);
   }
 
   returnToMainMenu(): void {
