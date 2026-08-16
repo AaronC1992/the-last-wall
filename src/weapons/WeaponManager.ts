@@ -33,6 +33,9 @@ export class WeaponManager {
   private readonly placed: PlacedTower[] = [];
   private readonly appliedUpgrades: UpgradeKind[] = [];
   private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0, mortar: 0 };
+  private readonly towerDamageBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1 };
+  private readonly towerSpeedBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1 };
+  private readonly towerCostMultiplier: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1 };
   private readonly buildTop: number;
   private readonly buildBottom: number;
   private readonly buildRight: number;
@@ -145,8 +148,12 @@ export class WeaponManager {
 
   totalCost(): number {
     let total = 0;
-    for (const tower of this.placed) total += towerConfig(tower.kind).cost;
+    for (const tower of this.placed) total += this.costOf(tower.kind);
     return total;
+  }
+
+  costOf(kind: TowerKind): number {
+    return Math.max(1, Math.ceil(towerConfig(kind).cost * this.towerCostMultiplier[kind]));
   }
 
   limitOf(kind: TowerKind): number {
@@ -155,6 +162,18 @@ export class WeaponManager {
 
   setLimitBonus(kind: TowerKind, bonus: number): void {
     this.limitBonus[kind] = bonus;
+  }
+
+  setTowerBonuses(kind: TowerKind, damageMultiplier: number, speedMultiplier: number): void {
+    this.towerDamageBonus[kind] = damageMultiplier;
+    this.towerSpeedBonus[kind] = speedMultiplier;
+    for (const tower of this.placed) {
+      if (tower.kind === kind) tower.instance.setTowerBonuses(damageMultiplier, speedMultiplier);
+    }
+  }
+
+  setTowerCostMultiplier(kind: TowerKind, multiplier: number): void {
+    this.towerCostMultiplier[kind] = multiplier;
   }
 
   applyUpgrade(kind: UpgradeKind): void {
@@ -219,13 +238,21 @@ export class WeaponManager {
   }
 
   private createInstance(kind: TowerKind, x: number, y: number): TowerBase {
-    if (kind === 'cannon') return new Cannon(x, y);
-    if (kind === 'fireTower') return new FireTower(x, y);
-    if (kind === 'lightningTower') return new LightningTower(x, y);
-    if (kind === 'mortar') return new Mortar(x, y);
-    const ballista = new Ballista(x, y);
-    ballista.setPermanentBonuses(this.permanentDamageMultiplier, this.permanentSpeedMultiplier);
-    return ballista;
+    let instance: TowerBase;
+    if (kind === 'cannon') instance = new Cannon(x, y);
+    else if (kind === 'fireTower') instance = new FireTower(x, y);
+    else if (kind === 'lightningTower') instance = new LightningTower(x, y);
+    else if (kind === 'mortar') instance = new Mortar(x, y);
+    else instance = new Ballista(x, y);
+    instance.setTowerBonuses(this.towerDamageBonus[kind], this.towerSpeedBonus[kind]);
+    instance.reset();
+    if (instance instanceof Ballista) {
+      const ballista = instance;
+      ballista.setPermanentBonuses(this.permanentDamageMultiplier, this.permanentSpeedMultiplier);
+      ballista.reset();
+      return ballista;
+    }
+    return instance;
   }
 
   private applyToInstance(kind: TowerKind, instance: TowerBase, upgrade: UpgradeKind): void {

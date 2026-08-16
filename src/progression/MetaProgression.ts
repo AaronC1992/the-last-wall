@@ -16,6 +16,15 @@ export interface PermanentBonuses {
   ballistaSpeedMultiplier: number;
   flatTokenBonus: number;
   abilityHaste: number;
+  abilityPower: number;
+  repairBonus: number;
+  repairCostReduction: number;
+  enemySpeedMultiplier: number;
+  towerSpeedMultiplier: number;
+  commandSlots: number;
+  towerDamage: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
+  towerSpeed: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
+  towerCost: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
   towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
 }
 
@@ -105,17 +114,44 @@ export class MetaProgression {
       damageMultiplier: 1 + this.getLevel('globalDamage') * 0.1 + this.getLevel('globalDamageII') * 0.15,
       wallMaxHp: 100 + this.getLevel('wallIntegrity') * 20 + this.getLevel('wallIntegrityII') * 35,
       wallArmor: this.getLevel('wallArmor') + this.getLevel('wallArmorII'),
-      startingBuildPoints: 400 + this.getLevel('startingGold') * 10 + this.getLevel('startingGoldII') * 15,
+      startingBuildPoints: 400 + this.getLevel('startingGold') * 10 + this.getLevel('startingGoldII') * 15 + this.getLevel('veteranReserve') * 25,
       tokenMultiplier: 1 + this.getLevel('tokenBonus') * 0.15 + this.getLevel('tokenBonusII') * 0.2,
-      ballistaSpeedMultiplier: 1 + this.getLevel('ballistaMastery') * 0.08,
+      ballistaSpeedMultiplier: 1 + this.getLevel('ballistaMastery') * 0.08 + this.getLevel('warDrums') * 0.03,
       flatTokenBonus: this.getLevel('bonusResources') * 3,
       abilityHaste: this.getLevel('abilityHaste') * 0.06,
+      abilityPower: 1 + this.getLevel('abilityPower') * 0.12,
+      repairBonus: this.getLevel('repairMastery') * 10,
+      repairCostReduction: this.getLevel('fieldMedics') * 5,
+      enemySpeedMultiplier: Math.max(0.7, 1 - this.getLevel('enemySuppression') * 0.03),
+      towerSpeedMultiplier: 1 + this.getLevel('warDrums') * 0.03,
+      commandSlots: this.getLevel('commandSlots'),
+      towerDamage: {
+        ballista: 1 + this.getLevel('ballistaDamage') * 0.08,
+        cannon: 1 + this.getLevel('cannonDamage') * 0.1,
+        fireTower: 1 + this.getLevel('fireDamage') * 0.1,
+        lightningTower: 1 + this.getLevel('lightningDamage') * 0.1,
+        mortar: 1 + this.getLevel('mortarDamage') * 0.1,
+      },
+      towerSpeed: {
+        ballista: 1 + this.getLevel('ballistaSpeed') * 0.05,
+        cannon: 1 + this.getLevel('cannonSpeed') * 0.05,
+        fireTower: 1 + this.getLevel('fireSpeed') * 0.05,
+        lightningTower: 1 + this.getLevel('lightningSpeed') * 0.05,
+        mortar: 1 + this.getLevel('mortarSpeed') * 0.05,
+      },
+      towerCost: {
+        ballista: Math.max(0.5, 1 - this.getLevel('ballistaDiscount') * 0.04),
+        cannon: Math.max(0.5, 1 - this.getLevel('cannonDiscount') * 0.05),
+        fireTower: Math.max(0.5, 1 - this.getLevel('fireDiscount') * 0.05),
+        lightningTower: Math.max(0.5, 1 - this.getLevel('lightningDiscount') * 0.05),
+        mortar: Math.max(0.5, 1 - this.getLevel('mortarDiscount') * 0.05),
+      },
       towerSlots: {
-        ballista: this.getLevel('ballistaSlots') + this.getLevel('ballistaSlotsII'),
-        cannon: this.getLevel('cannonSlots') + this.getLevel('cannonSlotsII'),
-        fireTower: this.getLevel('fireSlots') + this.getLevel('fireSlotsII'),
-        lightningTower: this.getLevel('lightningSlots') + this.getLevel('lightningSlotsII'),
-        mortar: this.getLevel('mortarSlots') + this.getLevel('mortarSlotsII'),
+        ballista: this.getLevel('ballistaSlots') + this.getLevel('ballistaSlotsII') + this.getLevel('commandSlots'),
+        cannon: this.getLevel('cannonSlots') + this.getLevel('cannonSlotsII') + this.getLevel('commandSlots'),
+        fireTower: this.getLevel('fireSlots') + this.getLevel('fireSlotsII') + this.getLevel('commandSlots'),
+        lightningTower: this.getLevel('lightningSlots') + this.getLevel('lightningSlotsII') + this.getLevel('commandSlots'),
+        mortar: this.getLevel('mortarSlots') + this.getLevel('mortarSlotsII') + this.getLevel('commandSlots'),
       },
     };
   }

@@ -8,6 +8,8 @@ export abstract class TowerBase {
   aimY = 0;
   hasAim = false;
   facing = -Math.PI / 2;
+  protected towerDamageMultiplier = 1;
+  protected towerSpeedMultiplier = 1;
   readonly targeting: TowerTargetingConfig;
 
   constructor(x: number, y: number, mode: TowerTargetMode, distance: number, radius = 0, coneAngle = 0.7) {
@@ -15,6 +17,8 @@ export abstract class TowerBase {
     this.y = y;
     this.targeting = createTargeting(mode, distance, radius, coneAngle);
   }
+
+  abstract reset(): void;
 
   moveTo(x: number, y: number): void {
     if (this.hasAim) {
@@ -55,6 +59,11 @@ export abstract class TowerBase {
     this.hasAim = false;
   }
 
+  setTowerBonuses(damageMultiplier: number, speedMultiplier: number): void {
+    this.towerDamageMultiplier = damageMultiplier;
+    this.towerSpeedMultiplier = speedMultiplier;
+  }
+
   get range(): number {
     return this.targeting.distance;
   }
@@ -67,11 +76,11 @@ export abstract class TowerBase {
     return { x: Math.cos(this.targeting.angle), y: Math.sin(this.targeting.angle) };
   }
 
-  isInFixedCone(x: number, y: number): boolean {
+  isInFixedCone(x: number, y: number, range = this.targeting.distance): boolean {
     const deltaX = x - this.x;
     const deltaY = y - this.y;
     const distance = Math.hypot(deltaX, deltaY);
-    if (distance > this.targeting.distance) return false;
+    if (distance > range) return false;
     const difference = Math.atan2(Math.sin(Math.atan2(deltaY, deltaX) - this.targeting.angle), Math.cos(Math.atan2(deltaY, deltaX) - this.targeting.angle));
     return Math.abs(difference) <= this.targeting.coneAngle * 0.5;
   }

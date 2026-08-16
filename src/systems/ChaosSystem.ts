@@ -11,7 +11,7 @@ export const AbilityId = {
 
 export type AbilityIdValue = (typeof AbilityId)[keyof typeof AbilityId];
 
-const COOLDOWNS = [12, 18, 28, 22, 75] as const;
+const COOLDOWNS = [18, 28, 42, 36, 120] as const;
 const EFFECT_CAPACITY = 96;
 const STRIKE_CAPACITY = 24;
 const PARTICLE_CAPACITY = 300;
@@ -21,6 +21,7 @@ export class ChaosSystem {
   private readonly height: number;
   private readonly cooldowns = new Float32Array(5);
   private cooldownMultiplier = 1;
+  private damageMultiplier = 1;
   private gameTime = 0;
 
   // Effects (expanding shockwave rings)
@@ -520,6 +521,7 @@ export class ChaosSystem {
     this.deathBeamTime = 0;
     this.apocalypseTime = 0;
     this.cooldownMultiplier = 1;
+    this.damageMultiplier = 1;
   }
 
   applyCooldownHaste(): void {
@@ -528,6 +530,10 @@ export class ChaosSystem {
 
   setCooldownHaste(haste: number): void {
     this.cooldownMultiplier = Math.max(0.4, 1 - haste);
+  }
+
+  setAbilityPower(multiplier: number): void {
+    this.damageMultiplier = multiplier;
   }
 
   private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number, kind: number, targetX: number, targetY: number): void {
@@ -561,6 +567,7 @@ export class ChaosSystem {
   }
 
   private damageArea(x: number, y: number, radius: number, damage: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, chain: boolean): void {
+    damage *= this.damageMultiplier;
     const count = grid.collectInRange(x, y, radius, enemies, 320);
     this.chainBudget = chain ? 42 : 0;
     let queuedChains = 0;

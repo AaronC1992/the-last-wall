@@ -3,7 +3,7 @@ import type { MetaUpgradeId } from './UpgradeDefinitions';
 import { FEATURE_UNLOCKS } from './FeatureUnlocks';
 import type { FeatureUnlockId } from './FeatureUnlocks';
 
-export type SkillBranch = 'core' | 'offense' | 'defense' | 'economy' | 'arcane' | 'abilities';
+export type SkillBranch = 'core' | 'offense' | 'defense' | 'economy' | 'arcane' | 'abilities' | 'command' | 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar';
 
 export interface SkillNode {
   id: string;
@@ -24,6 +24,12 @@ export const BRANCH_COLORS: Record<SkillBranch, string> = {
   economy: '#d8c14a',
   arcane: '#d45fa8',
   abilities: '#9b7fe0',
+  command: '#54c7b5',
+  ballista: '#d6b56a',
+  cannon: '#9aa8b5',
+  fire: '#f0783c',
+  lightning: '#64b5f6',
+  mortar: '#b68a6a',
 };
 
 interface Placement {
@@ -78,6 +84,30 @@ const PLACEMENTS: readonly Placement[] = [
   { id: 'dragon', branch: 'abilities', angle: 118, ring: 2.6, parent: 'meteor' },
   { id: 'deathBeam', branch: 'abilities', angle: 100, ring: 3.8, parent: 'artillery' },
   { id: 'apocalypse', branch: 'abilities', angle: 126, ring: 4.2, parent: 'dragon' },
+
+  { id: 'abilityPower', branch: 'command', angle: 12, ring: 1.4, parent: 'core' },
+  { id: 'repairMastery', branch: 'command', angle: 36, ring: 2.4, parent: 'abilityPower' },
+  { id: 'fieldMedics', branch: 'command', angle: 58, ring: 3.4, parent: 'repairMastery' },
+  { id: 'enemySuppression', branch: 'command', angle: -12, ring: 2.5, parent: 'abilityPower' },
+  { id: 'veteranReserve', branch: 'command', angle: -34, ring: 3.4, parent: 'enemySuppression' },
+  { id: 'warDrums', branch: 'command', angle: 82, ring: 4.2, parent: 'fieldMedics' },
+  { id: 'commandSlots', branch: 'command', angle: 104, ring: 5.2, parent: 'warDrums' },
+
+  { id: 'ballistaDamage', branch: 'ballista', angle: -96, ring: 1.6, parent: 'ballistaMastery' },
+  { id: 'ballistaSpeed', branch: 'ballista', angle: -78, ring: 2.8, parent: 'ballistaDamage' },
+  { id: 'ballistaDiscount', branch: 'ballista', angle: -60, ring: 4.0, parent: 'ballistaSpeed' },
+  { id: 'cannonDamage', branch: 'cannon', angle: 182, ring: 3.4, parent: 'cannon' },
+  { id: 'cannonSpeed', branch: 'cannon', angle: 196, ring: 4.5, parent: 'cannonDamage' },
+  { id: 'cannonDiscount', branch: 'cannon', angle: 210, ring: 5.5, parent: 'cannonSpeed' },
+  { id: 'fireDamage', branch: 'fire', angle: 28, ring: 3.4, parent: 'fireTower' },
+  { id: 'fireSpeed', branch: 'fire', angle: 16, ring: 4.5, parent: 'fireDamage' },
+  { id: 'fireDiscount', branch: 'fire', angle: 4, ring: 5.5, parent: 'fireSpeed' },
+  { id: 'lightningDamage', branch: 'lightning', angle: 68, ring: 3.5, parent: 'lightningTower' },
+  { id: 'lightningSpeed', branch: 'lightning', angle: 78, ring: 4.6, parent: 'lightningDamage' },
+  { id: 'lightningDiscount', branch: 'lightning', angle: 88, ring: 5.6, parent: 'lightningSpeed' },
+  { id: 'mortarDamage', branch: 'mortar', angle: 102, ring: 4.3, parent: 'mortar' },
+  { id: 'mortarSpeed', branch: 'mortar', angle: 112, ring: 5.3, parent: 'mortarDamage' },
+  { id: 'mortarDiscount', branch: 'mortar', angle: 122, ring: 6.2, parent: 'mortarSpeed' },
 ];
 
 function buildNodes(): SkillNode[] {

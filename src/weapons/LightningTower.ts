@@ -59,7 +59,7 @@ export class LightningTower extends TowerBase {
     }
 
     this.tickTimer += deltaTime;
-    if (this.tickTimer >= 0.08) {
+    if (this.tickTimer >= 0.08 / this.towerSpeedMultiplier) {
       this.tickTimer = 0;
       const tickDmg = (this.damage / 0.52) * 0.08;
       for (let index = 0; index < chainCount; index++) {
@@ -76,7 +76,7 @@ export class LightningTower extends TowerBase {
     this.isFiring = false;
     this.primaryTarget = null;
     this.chainedTargets.length = 0;
-    this.damage = 18; this.chains = 5; this.chainRange = 110; this.targeting.maxDistance = 510; this.targeting.distance = 510; this.targeting.radius = 110;
+    this.damage = 18 * this.towerDamageMultiplier; this.chains = 5; this.chainRange = 110; this.targeting.maxDistance = 510; this.targeting.distance = 510; this.targeting.radius = 110;
     this.staticLock = false;
   }
 

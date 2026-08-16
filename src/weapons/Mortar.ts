@@ -24,8 +24,8 @@ export class Mortar extends TowerBase {
 
   reset(): void {
     this.cooldown = 0;
-    this.cooldownDuration = 2.6;
-    this.damage = 42;
+    this.cooldownDuration = 2.6 / this.towerSpeedMultiplier;
+    this.damage = 42 * this.towerDamageMultiplier;
     this.blastRadius = 82;
     this.flightTime = 0.72;
     this.targeting.maxDistance = 460;

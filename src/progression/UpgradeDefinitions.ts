@@ -1,4 +1,4 @@
-export type MetaUpgradeId = 'globalDamage' | 'globalDamageII' | 'wallIntegrity' | 'wallIntegrityII' | 'wallArmor' | 'wallArmorII' | 'startingGold' | 'startingGoldII' | 'bounty' | 'tokenBonus' | 'tokenBonusII' | 'ballistaMastery' | 'bonusResources' | 'abilityHaste' | 'ballistaSlots' | 'ballistaSlotsII' | 'cannonSlots' | 'cannonSlotsII' | 'fireSlots' | 'fireSlotsII' | 'lightningSlots' | 'lightningSlotsII' | 'mortarSlots' | 'mortarSlotsII';
+export type MetaUpgradeId = 'globalDamage' | 'globalDamageII' | 'wallIntegrity' | 'wallIntegrityII' | 'wallArmor' | 'wallArmorII' | 'startingGold' | 'startingGoldII' | 'bounty' | 'tokenBonus' | 'tokenBonusII' | 'ballistaMastery' | 'bonusResources' | 'abilityHaste' | 'ballistaSlots' | 'ballistaSlotsII' | 'cannonSlots' | 'cannonSlotsII' | 'fireSlots' | 'fireSlotsII' | 'lightningSlots' | 'lightningSlotsII' | 'mortarSlots' | 'mortarSlotsII' | 'abilityPower' | 'repairMastery' | 'fieldMedics' | 'enemySuppression' | 'veteranReserve' | 'warDrums' | 'commandSlots' | 'ballistaDamage' | 'ballistaSpeed' | 'ballistaDiscount' | 'cannonDamage' | 'cannonSpeed' | 'cannonDiscount' | 'fireDamage' | 'fireSpeed' | 'fireDiscount' | 'lightningDamage' | 'lightningSpeed' | 'lightningDiscount' | 'mortarDamage' | 'mortarSpeed' | 'mortarDiscount';
 
 export interface MetaUpgradeDefinition {
   id: MetaUpgradeId;
@@ -34,4 +34,26 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'lightningSlotsII', category: 'Weapons', title: 'Tempest Crown', description: 'One more Lightning Tower can be placed each level.', maxLevel: 2, baseCost: 9 },
   { id: 'mortarSlots', category: 'Weapons', title: 'Mortar Yard', description: 'One more Mortar can be placed each level.', maxLevel: 2, baseCost: 5 },
   { id: 'mortarSlotsII', category: 'Weapons', title: 'Siege Arsenal', description: 'One more Mortar can be placed each level.', maxLevel: 2, baseCost: 8 },
+  { id: 'abilityPower', category: 'Damage', title: 'Cataclysm School', description: 'Super power damage gains 12 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'repairMastery', category: 'Defense', title: 'Field Engineers', description: 'Wall repairs restore 10 more health each level.', maxLevel: 6, baseCost: 3 },
+  { id: 'fieldMedics', category: 'Defense', title: 'Field Medics', description: 'Wall repairs cost 5 fewer Build Points each level.', maxLevel: 6, baseCost: 4 },
+  { id: 'enemySuppression', category: 'Defense', title: 'Suppression Doctrine', description: 'Enemies move 3 percent slower each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'veteranReserve', category: 'Economy', title: 'Veteran Reserve', description: 'Start each run with 25 additional Build Points per level.', maxLevel: 8, baseCost: 4 },
+  { id: 'warDrums', category: 'Weapons', title: 'War Drums', description: 'Tower attack speed gains 3 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'commandSlots', category: 'Weapons', title: 'Command Bunkers', description: 'One additional tower of every type can be placed each level.', maxLevel: 4, baseCost: 9 },
+  { id: 'ballistaDamage', category: 'Damage', title: 'Ballista Warheads', description: 'Ballista damage gains 8 percent each level.', maxLevel: 8, baseCost: 3 },
+  { id: 'ballistaSpeed', category: 'Weapons', title: 'Ballista Drills', description: 'Ballista attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 3 },
+  { id: 'ballistaDiscount', category: 'Economy', title: 'Timber Contracts', description: 'Ballista Build Point cost falls 4 percent each level.', maxLevel: 6, baseCost: 4 },
+  { id: 'cannonDamage', category: 'Damage', title: 'Siege Charges', description: 'Cannon damage gains 10 percent each level.', maxLevel: 8, baseCost: 4 },
+  { id: 'cannonSpeed', category: 'Weapons', title: 'Rapid Breeches', description: 'Cannon attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 4 },
+  { id: 'cannonDiscount', category: 'Economy', title: 'Foundry Recycling', description: 'Cannon Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 5 },
+  { id: 'fireDamage', category: 'Damage', title: 'White Hot Fuel', description: 'Fire Tower burn damage gains 10 percent each level.', maxLevel: 8, baseCost: 4 },
+  { id: 'fireSpeed', category: 'Weapons', title: 'Pressure Valves', description: 'Fire Tower attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 4 },
+  { id: 'fireDiscount', category: 'Economy', title: 'Fuel Reclamation', description: 'Fire Tower Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 5 },
+  { id: 'lightningDamage', category: 'Damage', title: 'Storm Capacitors', description: 'Lightning Tower damage gains 10 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'lightningSpeed', category: 'Weapons', title: 'Overclocked Coils', description: 'Lightning Tower attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'lightningDiscount', category: 'Economy', title: 'Copper Routing', description: 'Lightning Tower Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 6 },
+  { id: 'mortarDamage', category: 'Damage', title: 'Bunker Busters', description: 'Mortar damage gains 10 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'mortarSpeed', category: 'Weapons', title: 'Autoloaders', description: 'Mortar attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'mortarDiscount', category: 'Economy', title: 'Shell Salvage', description: 'Mortar Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 6 },
 ] as const;

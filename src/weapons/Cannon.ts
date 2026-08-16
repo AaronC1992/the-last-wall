@@ -33,8 +33,8 @@ export class Cannon extends TowerBase {
 
   reset(): void {
     this.cooldown = 1.8;
-    this.cooldownDuration = 1.8;
-    this.damage = 32;
+    this.cooldownDuration = 1.8 / this.towerSpeedMultiplier;
+    this.damage = 32 * this.towerDamageMultiplier;
     this.radius = 70;
     this.clusterShells = false;
     this.doubleBarrel = false;

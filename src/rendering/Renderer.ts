@@ -546,13 +546,13 @@ export class Renderer {
     const time = Date.now() * 0.006;
     for (const tower of state.weapons.towers) {
       if (tower.kind !== 'fireTower') continue;
-      const fireInstance = tower.instance as unknown as { isFiring?: boolean; targeting: { angle: number; distance: number; coneAngle: number } };
+      const fireInstance = tower.instance as unknown as { isFiring?: boolean; targeting: { angle: number; distance: number; maxDistance: number; coneAngle: number } };
       if (!fireInstance.isFiring) continue;
 
       const originX = tower.instance.x;
       const originY = tower.instance.y;
       const targetAngle = fireInstance.targeting.angle;
-      const maxRange = fireInstance.targeting.distance;
+      const maxRange = fireInstance.targeting.maxDistance;
       const coneAngle = fireInstance.targeting.coneAngle;
 
       context.save();

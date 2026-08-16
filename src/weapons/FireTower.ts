@@ -20,19 +20,19 @@ export class FireTower extends TowerBase {
     }
     this.isFiring = true;
     this.tickTimer += deltaTime;
-    if (this.tickTimer < 0.08) return;
+    if (this.tickTimer < 0.08 / this.towerSpeedMultiplier) return;
     this.tickTimer = 0;
-    const count = grid.collectInRange(this.x, this.y, this.targeting.distance, enemies, 80);
+    const count = grid.collectInRange(this.x, this.y, this.targeting.maxDistance, enemies, 80);
     for (let index = 0; index < count; index++) {
       const target = grid.resultAt(index);
-      if (this.isInFixedCone(enemies.x[target], enemies.y[target])) enemies.applyBurn(target, this.burnDuration, this.burnDamage);
+      if (this.isInFixedCone(enemies.x[target], enemies.y[target], this.targeting.maxDistance)) enemies.applyBurn(target, this.burnDuration, this.burnDamage);
     }
   }
 
   reset(): void {
     this.tickTimer = 0;
     this.isFiring = false;
-    this.burnDamage = 18; this.burnDuration = 3.5; this.targeting.maxDistance = 290; this.targeting.distance = 290; this.targeting.coneAngle = 0.7;
+    this.burnDamage = 18 * this.towerDamageMultiplier; this.burnDuration = 3.5; this.targeting.maxDistance = 290; this.targeting.distance = 290; this.targeting.coneAngle = 0.7;
     this.wildfire = false;
   }
 

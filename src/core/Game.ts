@@ -19,7 +19,7 @@ import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { MapSpawnSystem } from '../map/MapSpawnSystem';
-import { TOWER_CONFIG, towerConfig } from '../weapons/TowerConfig';
+import { TOWER_CONFIG } from '../weapons/TowerConfig';
 import type { TowerKind } from '../weapons/TowerConfig';
 import type { BuildSlotState } from '../ui/BuildBar';
 import type { TowerLayoutEntry } from '../weapons/WeaponManager';
@@ -108,7 +108,8 @@ export class Game implements BattlefieldActions {
     this.elapsed += simulationDelta;
     this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
       const spawn = this.mapSpawns.nextSpawn();
-      this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
+      const bonuses = this.progression.bonuses;
+      this.enemies.spawnAt(spawn.x, spawn.y, (1 + this.waveDirector.currentWave * 0.012) * bonuses.enemySpeedMultiplier, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
     });
     this.grid.rebuild(this.enemies);
     this.congestion.rebuild(this.enemies);
@@ -257,8 +258,8 @@ export class Game implements BattlefieldActions {
       unlocked: config.unlock === null || this.progression.isUnlocked(config.unlock),
       count: this.weapons.countOf(config.kind),
       limit: this.weapons.limitOf(config.kind),
-      cost: config.cost,
-      affordable: this.buildPoints >= config.cost,
+      cost: this.weapons.costOf(config.kind),
+      affordable: this.buildPoints >= this.weapons.costOf(config.kind),
     }));
   }
 
@@ -304,10 +305,11 @@ export class Game implements BattlefieldActions {
   }
 
   repairWall(): void {
-    const cost = 40;
+    const bonuses = this.progression.bonuses;
+    const cost = Math.max(10, 40 - bonuses.repairCostReduction);
     if (this.buildPoints < cost || this.wallHp >= this.wallMaxHp) return;
     this.buildPoints -= cost;
-    this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 25);
+    this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 25 + bonuses.repairBonus);
   }
 
   getAbilityCooldown(id: AbilityIdValue): number {
@@ -334,12 +336,12 @@ export class Game implements BattlefieldActions {
 
   placeTower(x: number, y: number): void {
     if (this.phase !== 'build' || !this.armed) return;
-    const config = towerConfig(this.armed);
-    if (this.buildPoints < config.cost) return;
+    const cost = this.weapons.costOf(this.armed);
+    if (this.buildPoints < cost) return;
     const spot = this.weapons.clampToBuildZone(x, y);
     const placed = this.weapons.place(this.armed, spot.x, spot.y);
     if (!placed) return;
-    this.buildPoints -= config.cost;
+    this.buildPoints -= cost;
     this.selectedId = placed.id;
     this.armed = null;
     const aimTargetX = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerX : spot.x;
@@ -381,7 +383,7 @@ export class Game implements BattlefieldActions {
     if (this.phase !== 'build') return;
     const kind = this.weapons.remove(id);
     if (!kind) return;
-    this.buildPoints += towerConfig(kind).cost;
+    this.buildPoints += this.weapons.costOf(kind);
     if (this.selectedId === id) this.selectedId = 0;
     this.saveLayout();
     this.threatMap.rebuild(this.weapons.towers);
@@ -389,7 +391,7 @@ export class Game implements BattlefieldActions {
 
   removeAllTowers(): void {
     if (this.phase !== 'build') return;
-    for (const kind of this.weapons.removeAll()) this.buildPoints += towerConfig(kind).cost;
+    for (const kind of this.weapons.removeAll()) this.buildPoints += this.weapons.costOf(kind);
     this.selectedId = 0;
     this.saveLayout();
     this.threatMap.rebuild(this.weapons.towers);
@@ -482,7 +484,7 @@ export class Game implements BattlefieldActions {
       kind: this.armed,
       x: spot.x,
       y: spot.y,
-      valid: this.weapons.canPlaceAt(this.armed, spot.x, spot.y) && this.buildPoints >= towerConfig(this.armed).cost,
+      valid: this.weapons.canPlaceAt(this.armed, spot.x, spot.y) && this.buildPoints >= this.weapons.costOf(this.armed),
     };
   }
 
@@ -558,8 +560,13 @@ export class Game implements BattlefieldActions {
     this.wallMaxHp = bonuses.wallMaxHp;
     this.wallArmor = bonuses.wallArmor;
     this.chaos.setCooldownHaste(bonuses.abilityHaste);
+    this.chaos.setAbilityPower(bonuses.abilityPower);
     this.weapons.setPermanentBonuses(bonuses.damageMultiplier, bonuses.ballistaSpeedMultiplier);
-    for (const config of TOWER_CONFIG) this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
+    for (const config of TOWER_CONFIG) {
+      this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
+      this.weapons.setTowerBonuses(config.kind, bonuses.towerDamage[config.kind], bonuses.towerSpeed[config.kind]);
+      this.weapons.setTowerCostMultiplier(config.kind, bonuses.towerCost[config.kind]);
+    }
     this.wallHp = this.wallMaxHp;
   }
 
