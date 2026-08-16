@@ -4,15 +4,17 @@ export class ResultsScreen {
   private readonly panel = document.querySelector<HTMLElement>('#results-screen')!;
   private readonly title = document.querySelector<HTMLElement>('#results-title')!;
   private readonly rows = document.querySelector<HTMLElement>('#results-rows')!;
+  private readonly nextLevel = document.querySelector<HTMLButtonElement>('#results-next-level')!;
   private lastSurvived = false;
   private lastBreakdown: TokenBreakdown | null = null;
 
-  constructor(onUpgrades: () => void, onPlayAgain: () => void) {
+  constructor(onUpgrades: () => void, onPlayAgain: () => void, onNextLevel: () => void) {
     document.querySelector<HTMLButtonElement>('#results-upgrades')!.addEventListener('click', onUpgrades);
     document.querySelector<HTMLButtonElement>('#results-play-again')!.addEventListener('click', onPlayAgain);
+    this.nextLevel.addEventListener('click', onNextLevel);
   }
 
-  show(survived: boolean, breakdown: TokenBreakdown): void {
+  show(survived: boolean, breakdown: TokenBreakdown, nextMapName: string | null = null): void {
     this.lastSurvived = survived;
     this.lastBreakdown = breakdown;
     this.title.textContent = survived ? 'Survived' : 'The Wall Has Fallen';
@@ -22,6 +24,8 @@ export class ResultsScreen {
     if (breakdown.flatBonus > 0) markup += row('Bonus', breakdown.flatBonus);
     markup += `<div class="results-row total"><span>Total</span><strong>${breakdown.total.toLocaleString()}<i class="token-gem"></i></strong></div>`;
     this.rows.innerHTML = markup;
+    this.nextLevel.hidden = !survived || nextMapName === null;
+    if (nextMapName) this.nextLevel.textContent = `Next Level: ${nextMapName}`;
     this.panel.hidden = false;
   }
 

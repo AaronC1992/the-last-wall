@@ -72,7 +72,8 @@ export class Renderer {
 
     this.map.renderBackground(context);
     if (state.showThreatMap) state.threatMap.render(context);
-    if (state.graphicsQuality !== 'low') this.decals.render(context);
+    if (state.graphicsQuality === 'high') this.decals.render(context);
+    else if (state.graphicsQuality === 'medium') this.decals.render(context, 20);
     this.renderEnemies(context, state.enemies, state.graphicsQuality);
     this.renderProjectiles(context, state.projectiles, state.graphicsQuality);
     state.chaos.render(context, state.graphicsQuality);

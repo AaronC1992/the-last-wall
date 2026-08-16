@@ -7,6 +7,7 @@ import { DebugPanel } from './ui/DebugPanel';
 import { MetaProgression } from './progression/MetaProgression';
 import { MetaMenu } from './ui/MetaMenu';
 import { AbilityPanel } from './ui/AbilityPanel';
+import { CAMPAIGN_MAPS } from './map/CampaignMaps';
 import { AudioSystem } from './systems/AudioSystem';
 import { MenuViews } from './ui/MenuViews';
 import { BuildBar } from './ui/BuildBar';
@@ -48,12 +49,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
       <div id="build-bar" class="build-bar" hidden></div>
       <button id="start-battle" type="button" class="start-battle" hidden>Start Battle</button>
+      <button id="build-settings-button" type="button" class="build-settings-button" hidden>Settings</button>
       <button id="in-game-menu-button" type="button" class="main-menu-button" hidden>Main Menu</button>
 
       <div id="results-screen" class="results-screen" hidden>
         <h1 id="results-title">Survived</h1>
         <div id="results-rows" class="results-rows"></div>
         <div class="results-actions">
+          <button id="results-next-level" type="button" hidden>Next Level</button>
           <button id="results-upgrades" type="button">Upgrades</button>
           <button id="results-play-again" type="button">Play Again</button>
         </div>
@@ -140,8 +143,20 @@ const results = new ResultsScreen(
     results.hide();
     game.restart();
   },
+  () => {
+    const currentIndex = CAMPAIGN_MAPS.findIndex((map) => map.id === game.activeMap.id);
+    const nextMap = currentIndex >= 0 ? CAMPAIGN_MAPS[currentIndex + 1] : undefined;
+    if (!nextMap) return;
+    results.hide();
+    game.loadMap(nextMap);
+    game.start();
+  },
 );
-const game = new Game(canvas, hud, progression, (breakdown, survived) => results.show(survived, breakdown));
+const game = new Game(canvas, hud, progression, (breakdown, survived) => {
+  const currentIndex = CAMPAIGN_MAPS.findIndex((map) => map.id === game.activeMap.id);
+  const nextMap = survived && currentIndex >= 0 ? CAMPAIGN_MAPS[currentIndex + 1] : undefined;
+  results.show(survived, breakdown, nextMap?.name ?? null);
+});
 const buildBar = new BuildBar((kind) => game.setArmedKind(kind));
 const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); }, (id) => game.isAbilityUnlocked(id));
 const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => {
@@ -193,6 +208,7 @@ new GameLoop((deltaTime) => {
 }, (fps) => {
   game.render(fps);
   document.querySelector<HTMLButtonElement>('#in-game-menu-button')!.hidden = game.currentPhase === 'idle';
+  document.querySelector<HTMLButtonElement>('#build-settings-button')!.hidden = game.currentPhase !== 'build';
   debugPanel.update(game.debugState);
   abilityPanel.update((id) => game.getAbilityCooldown(id), (id) => game.getAbilityTotalCooldown(id));
   buildBar.update(game.buildSlotStates(), game.currentPhase === 'build', game.armedKind());

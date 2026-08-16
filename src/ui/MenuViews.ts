@@ -19,6 +19,7 @@ export class MenuViews {
   private readonly graphics = document.querySelector<HTMLSelectElement>('#setting-graphics')!;
   private readonly campaign = document.querySelector<HTMLElement>('#campaign-menu')!;
   private readonly customMaps = document.querySelector<HTMLElement>('#custom-maps-menu')!;
+  private settingsReturn: 'main' | 'build' = 'main';
   private readonly storage = new CustomMapStorage();
 
   constructor(progression: MetaProgression, audio: AudioSystem, onPlay: () => void, onUpgrades: () => void, onMapBuilder: () => void, onPlayMap: (map: MapDefinition) => void, onEditMap: (map: MapDefinition) => void, onReset: () => void) {
@@ -38,7 +39,8 @@ export class MenuViews {
     document.querySelector<HTMLButtonElement>('#menu-settings')!.addEventListener('click', () => this.showSettings());
     document.querySelector<HTMLButtonElement>('#menu-statistics')?.addEventListener('click', () => this.showStatistics());
     document.querySelector<HTMLButtonElement>('#menu-armory')?.addEventListener('click', () => this.showArmory());
-    document.querySelector<HTMLButtonElement>('#settings-close')!.addEventListener('click', () => this.closeToMain(this.settings));
+    document.querySelector<HTMLButtonElement>('#settings-close')!.addEventListener('click', () => this.closeSettings());
+    document.querySelector<HTMLButtonElement>('#build-settings-button')!.addEventListener('click', () => this.showInGameSettings());
     document.querySelector<HTMLButtonElement>('#statistics-close')!.addEventListener('click', () => this.closeToMain(this.statistics));
     document.querySelector<HTMLButtonElement>('#armory-close')!.addEventListener('click', () => this.closeToMain(this.armory));
     document.querySelector<HTMLButtonElement>('#campaign-close')!.addEventListener('click', () => this.closeToMain(this.campaign));
@@ -86,6 +88,18 @@ export class MenuViews {
   private showSettings(): void {
     const settings = this.progression.settings;
     this.main.hidden = true;
+    this.settingsReturn = 'main';
+    this.master.value = settings.masterVolume.toString();
+    this.sfx.value = settings.sfxVolume.toString();
+    this.shake.checked = settings.screenShake;
+    this.damageNumbers.checked = settings.damageNumbers;
+    this.graphics.value = settings.graphicsQuality;
+    this.settings.hidden = false;
+  }
+
+  showInGameSettings(): void {
+    const settings = this.progression.settings;
+    this.settingsReturn = 'build';
     this.master.value = settings.masterVolume.toString();
     this.sfx.value = settings.sfxVolume.toString();
     this.shake.checked = settings.screenShake;
@@ -128,5 +142,10 @@ export class MenuViews {
   private closeToMain(panel: HTMLElement): void {
     panel.hidden = true;
     this.main.hidden = false;
+  }
+
+  private closeSettings(): void {
+    this.settings.hidden = true;
+    if (this.settingsReturn === 'main') this.main.hidden = false;
   }
 }

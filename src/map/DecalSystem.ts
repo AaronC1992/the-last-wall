@@ -6,6 +6,7 @@ export class DecalSystem {
   private readonly x = new Float32Array(DECAL_CAPACITY);
   private readonly y = new Float32Array(DECAL_CAPACITY);
   private readonly size = new Float32Array(DECAL_CAPACITY);
+  private readonly hiddenBlood = new Uint8Array(DECAL_CAPACITY);
   private readonly kind: DecalKind[] = [];
   private count = 0;
   private nextIndex = 0;
@@ -20,11 +21,21 @@ export class DecalSystem {
     this.count = Math.min(DECAL_CAPACITY, this.count + 1);
   }
 
-  render(context: CanvasRenderingContext2D): void {
+  render(context: CanvasRenderingContext2D, bloodLimit = Number.POSITIVE_INFINITY): void {
     const start = this.count === DECAL_CAPACITY ? this.nextIndex : 0;
+    this.hiddenBlood.fill(0);
+    let bloodCount = 0;
+    if (bloodLimit !== Number.POSITIVE_INFINITY) {
+      for (let offset = this.count - 1; offset >= 0; offset--) {
+        const index = (start + offset) % DECAL_CAPACITY;
+        if (this.kind[index] === 'blood') bloodCount++;
+        if (bloodCount > bloodLimit) this.hiddenBlood[index] = 1;
+      }
+    }
     for (let offset = 0; offset < this.count; offset++) {
       const index = (start + offset) % DECAL_CAPACITY;
       const kind = this.kind[index];
+      if (this.hiddenBlood[index] !== 0) continue;
       if (kind === 'crater') this.drawCrater(context, index);
       else if (kind === 'scorch') this.drawScorch(context, index);
       else this.drawBlood(context, index);
