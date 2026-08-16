@@ -118,11 +118,15 @@ export class ChaosSystem {
       this.addEffect(this.deathBeamX, targetY, 90 * radiusScale, 0.6);
     } else if (id === AbilityId.Apocalypse) {
       this.apocalypseTime = 3.0;
-      this.queueStrike(this.width / 2, this.height * 0.45, 0.8, 220 * radiusScale, 300 * damageScale, 2);
-      this.queueStrike(this.width * 0.25, this.height * 0.35, 1.2, 150 * radiusScale, 180 * damageScale, 2);
-      this.queueStrike(this.width * 0.75, this.height * 0.35, 1.5, 150 * radiusScale, 180 * damageScale, 2);
-      this.queueStrike(this.width * 0.38, this.height * 0.55, 1.9, 160 * radiusScale, 200 * damageScale, 2);
-      this.queueStrike(this.width * 0.62, this.height * 0.55, 2.2, 160 * radiusScale, 200 * damageScale, 2);
+      const centerX = Math.max(120, Math.min(this.width - 120, targetX));
+      const centerY = Math.max(120, Math.min(this.height - 120, targetY));
+      const spreadX = this.width * 0.12;
+      const spreadY = this.height * 0.1;
+      this.queueStrike(centerX, centerY - spreadY * 0.4, 0.8, 220 * radiusScale, 300 * damageScale, 2);
+      this.queueStrike(centerX - spreadX, centerY - spreadY, 1.2, 150 * radiusScale, 180 * damageScale, 2);
+      this.queueStrike(centerX + spreadX, centerY - spreadY, 1.5, 150 * radiusScale, 180 * damageScale, 2);
+      this.queueStrike(centerX - spreadX * 0.7, centerY + spreadY * 0.6, 1.9, 160 * radiusScale, 200 * damageScale, 2);
+      this.queueStrike(centerX + spreadX * 0.7, centerY + spreadY * 0.6, 2.2, 160 * radiusScale, 200 * damageScale, 2);
     }
 
     return true;

@@ -297,10 +297,6 @@ export class Game implements BattlefieldActions {
   activateAbility(id: AbilityIdValue): void {
     if (this.phase !== 'battle' || this.gameOver || this.menuOpen) return;
     if (!this.isAbilityUnlocked(id)) return;
-    if (id === 4) {
-      if (this.chaos.activate(id, this.enemies, this.grid, () => this.registerKill())) this.feedback.triggerShake(14);
-      return;
-    }
     this.pendingAbility = this.pendingAbility === id ? null : id;
   }
 
