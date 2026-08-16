@@ -9,17 +9,16 @@ export interface LaserTargetPoint {
 
 export class LightningTower extends TowerBase {
   private tickTimer = 0;
-  private damage = 18;
-  private chains = 5;
-  private chainRange = 110;
-  private staticLock = false;
+  private damage = 42;
+  private beamWidth = 0.09;
+  private rangeValue = 560;
 
   isFiring = false;
   primaryTarget: LaserTargetPoint | null = null;
   chainedTargets: LaserTargetPoint[] = [];
 
   constructor(x: number, y: number) {
-    super(x, y, 'zone', 510, 110);
+    super(x, y, 'line', 560, 0, 0.09);
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
@@ -30,13 +29,12 @@ export class LightningTower extends TowerBase {
       return;
     }
 
-    const count = grid.collectInRange(this.targeting.targetX, this.targeting.targetY, this.targeting.radius, enemies, 80);
+    const count = grid.collectInRange(this.x, this.y, this.rangeValue, enemies, 80);
     let target = -1;
-    let closestDistance = Number.POSITIVE_INFINITY;
+    let highestProgress = Number.NEGATIVE_INFINITY;
     for (let index = 0; index < count; index++) {
       const candidate = grid.resultAt(index);
-      const distance = Math.hypot(enemies.x[candidate] - this.targeting.targetX, enemies.y[candidate] - this.targeting.targetY);
-      if (distance < closestDistance) { closestDistance = distance; target = candidate; }
+      if (this.isInFixedCone(enemies.x[candidate], enemies.y[candidate], this.rangeValue) && enemies.y[candidate] > highestProgress) { highestProgress = enemies.y[candidate]; target = candidate; }
     }
 
     if (target < 0) {
@@ -50,24 +48,11 @@ export class LightningTower extends TowerBase {
     this.primaryTarget = { x: enemies.x[target], y: enemies.y[target] };
     this.chainedTargets.length = 0;
 
-    const chainCount = grid.collectInRange(enemies.x[target], enemies.y[target], this.chainRange, enemies, this.chains);
-    for (let index = 0; index < chainCount; index++) {
-      const chainedEnemyIndex = grid.resultAt(index);
-      if (chainedEnemyIndex !== target) {
-        this.chainedTargets.push({ x: enemies.x[chainedEnemyIndex], y: enemies.y[chainedEnemyIndex] });
-      }
-    }
-
     this.tickTimer += deltaTime;
-    if (this.tickTimer >= 0.08 / this.towerSpeedMultiplier) {
+    if (this.tickTimer >= 0.06 / this.towerSpeedMultiplier) {
       this.tickTimer = 0;
-      const tickDmg = (this.damage / 0.52) * 0.08;
-      for (let index = 0; index < chainCount; index++) {
-        const chainedEnemyIndex = grid.resultAt(index);
-        const reward = enemies.damage(chainedEnemyIndex, tickDmg);
-        if (reward > 0) onKill(reward);
-        else if (this.staticLock && Math.random() < 0.1) enemies.stun(chainedEnemyIndex, 0.4);
-      }
+      const reward = enemies.damage(target, (this.damage / 0.6) * 0.06);
+      if (reward > 0) onKill(reward);
     }
   }
 
@@ -76,9 +61,8 @@ export class LightningTower extends TowerBase {
     this.isFiring = false;
     this.primaryTarget = null;
     this.chainedTargets.length = 0;
-    this.damage = 18 * this.towerDamageMultiplier; this.chains = 5; this.chainRange = 110; this.targeting.maxDistance = 510; this.targeting.distance = 510; this.targeting.radius = 110;
-    this.staticLock = false;
+    this.damage = 42 * this.towerDamageMultiplier; this.beamWidth = 0.09; this.rangeValue = 560; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; this.targeting.coneAngle = this.beamWidth;
   }
 
-  applyUpgrade(id: string): void { if (id === 'lightningDamage') this.damage *= 1.3; if (id === 'lightningChains') this.chains += 2; if (id === 'lightningRange') { this.chainRange *= 1.25; this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; this.targeting.radius *= 1.15; } if (id === 'lightningStun') this.staticLock = true; if (id === 'thunderstorm') { this.chains += 10; this.damage *= 2; this.targeting.radius *= 1.25; } }
+  applyUpgrade(id: string): void { if (id === 'lightningDamage') this.damage *= 1.3; if (id === 'lightningChains') this.beamWidth += 0.04; if (id === 'lightningRange') { this.rangeValue *= 1.2; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; } if (id === 'lightningStun') this.damage *= 1.2; if (id === 'thunderstorm') { this.damage *= 2; this.beamWidth += 0.12; } this.targeting.coneAngle = this.beamWidth; }
 }

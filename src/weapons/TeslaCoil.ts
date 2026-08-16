@@ -8,6 +8,7 @@ export class TeslaCoil extends TowerBase {
   private damage = 26;
   private chains = 3;
   private chainRange = 82;
+  private shock = false;
 
   isFiring = false;
   primaryTarget: LaserTargetPoint | null = null;
@@ -57,6 +58,7 @@ export class TeslaCoil extends TowerBase {
     for (let index = 0; index < chainCount; index++) {
       const reward = enemies.damage(grid.resultAt(index), tickDamage);
       if (reward > 0) onKill(reward);
+      else if (this.shock && Math.random() < 0.18) enemies.stun(grid.resultAt(index), 0.3);
     }
   }
 
@@ -68,6 +70,7 @@ export class TeslaCoil extends TowerBase {
     this.damage = 26 * this.towerDamageMultiplier;
     this.chains = 3;
     this.chainRange = 82;
+    this.shock = false;
     this.targeting.maxDistance = 240;
     this.targeting.distance = 240;
     this.targeting.radius = 72;
@@ -77,5 +80,6 @@ export class TeslaCoil extends TowerBase {
     if (id === 'teslaDamage') this.damage *= 1.3;
     if (id === 'teslaChains') this.chains += 2;
     if (id === 'teslaReach') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; this.targeting.radius *= 1.15; this.chainRange *= 1.2; }
+    if (id === 'teslaShock') this.shock = true;
   }
 }

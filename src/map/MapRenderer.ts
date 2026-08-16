@@ -513,9 +513,9 @@ export class MapRenderer {
     if (kind === 'ballista') this.drawPixelBallista(context);
     else if (kind === 'cannon') this.drawPixelCannon(context);
     else if (kind === 'fireTower') this.drawPixelFireTower(context);
-    else if (kind === 'lightningTower') this.drawPixelLightningTower(context);
+    else if (kind === 'lightningTower') this.drawPixelTeslaCoil(context);
     else if (kind === 'mortar') this.drawPixelMortar(context);
-    else if (kind === 'teslaCoil') this.drawPixelTeslaCoil(context);
+    else if (kind === 'teslaCoil') this.drawPixelLightningTower(context);
     else if (kind === 'sniperTower') this.drawPixelSniperTower(context);
 
     context.restore();

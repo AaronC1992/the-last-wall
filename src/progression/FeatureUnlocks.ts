@@ -11,7 +11,7 @@ export interface FeatureUnlockDefinition {
 export const FEATURE_UNLOCKS: readonly FeatureUnlockDefinition[] = [
   { id: 'cannon', category: 'Weapons', title: 'Cannon Plans', description: 'Allows Cannons to be built with Build Points during runs.', cost: 15 },
   { id: 'fireTower', category: 'Weapons', title: 'Fire Tower Plans', description: 'Allows Fire Towers to be built with Build Points during runs.', cost: 30 },
-  { id: 'lightningTower', category: 'Weapons', title: 'Lightning Tower Plans', description: 'Allows Lightning Towers to be built with Build Points during runs.', cost: 55 },
+  { id: 'lightningTower', category: 'Weapons', title: 'Laser Tower Plans', description: 'Allows Laser Towers to be built with Build Points during runs.', cost: 55 },
   { id: 'mortar', category: 'Weapons', title: 'Mortar Plans', description: 'Allows Mortars to be built with Build Points during runs.', cost: 45 },
   { id: 'teslaCoil', category: 'Weapons', title: 'Tesla Coil Plans', description: 'Allows Tesla Coils to chain lightning across nearby enemies.', cost: 65 },
   { id: 'sniperTower', category: 'Weapons', title: 'Sniper Tower Plans', description: 'Allows Sniper Towers to eliminate priority targets at long range.', cost: 80 },
