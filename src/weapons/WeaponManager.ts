@@ -6,6 +6,8 @@ import { Cannon } from './Cannon';
 import { FireTower } from './FireTower';
 import { LightningTower } from './LightningTower';
 import { Mortar } from './Mortar';
+import { SniperTower } from './SniperTower';
+import { TeslaCoil } from './TeslaCoil';
 import { ProjectileManager } from './ProjectileManager';
 import { TowerBase } from './TowerBase';
 import { towerConfig } from './TowerConfig';
@@ -32,10 +34,10 @@ export const TOWER_FOOTPRINT = 20;
 export class WeaponManager {
   private readonly placed: PlacedTower[] = [];
   private readonly appliedUpgrades: UpgradeKind[] = [];
-  private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0, mortar: 0 };
-  private readonly towerDamageBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1 };
-  private readonly towerSpeedBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1 };
-  private readonly towerCostMultiplier: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1 };
+  private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0, mortar: 0, teslaCoil: 0, sniperTower: 0 };
+  private readonly towerDamageBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
+  private readonly towerSpeedBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
+  private readonly towerCostMultiplier: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly buildTop: number;
   private readonly buildBottom: number;
   private readonly buildRight: number;
@@ -81,6 +83,8 @@ export class WeaponManager {
       else if (tower instanceof FireTower) tower.update(deltaTime, enemies, grid);
       else if (tower instanceof LightningTower) tower.update(deltaTime, enemies, grid, onKill);
       else if (tower instanceof Mortar) tower.update(deltaTime, enemies, grid, projectiles);
+      else if (tower instanceof TeslaCoil) tower.update(deltaTime, enemies, grid, onKill);
+      else if (tower instanceof SniperTower) tower.update(deltaTime, enemies, grid, projectiles);
     }
   }
 
@@ -191,12 +195,14 @@ export class WeaponManager {
     return this.countOf(id) > 0;
   }
 
-  isTargetBuilt(target: 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar' | 'general'): boolean {
+  isTargetBuilt(target: 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar' | 'tesla' | 'sniper' | 'general'): boolean {
     if (target === 'general') return true;
     if (target === 'ballista') return this.countOf('ballista') > 0;
     if (target === 'cannon') return this.countOf('cannon') > 0;
     if (target === 'fire') return this.countOf('fireTower') > 0;
     if (target === 'mortar') return this.countOf('mortar') > 0;
+    if (target === 'tesla') return this.countOf('teslaCoil') > 0;
+    if (target === 'sniper') return this.countOf('sniperTower') > 0;
     return this.countOf('lightningTower') > 0;
   }
 
@@ -243,6 +249,8 @@ export class WeaponManager {
     else if (kind === 'fireTower') instance = new FireTower(x, y);
     else if (kind === 'lightningTower') instance = new LightningTower(x, y);
     else if (kind === 'mortar') instance = new Mortar(x, y);
+    else if (kind === 'teslaCoil') instance = new TeslaCoil(x, y);
+    else if (kind === 'sniperTower') instance = new SniperTower(x, y);
     else instance = new Ballista(x, y);
     instance.setTowerBonuses(this.towerDamageBonus[kind], this.towerSpeedBonus[kind]);
     instance.reset();
@@ -270,6 +278,14 @@ export class WeaponManager {
     }
     if (upgrade.startsWith('mortar') || upgrade === 'doubleShot') {
       if (kind === 'mortar') (instance as Mortar).applyUpgrade(upgrade);
+      return;
+    }
+    if (upgrade.startsWith('tesla')) {
+      if (kind === 'teslaCoil') (instance as TeslaCoil).applyUpgrade(upgrade);
+      return;
+    }
+    if (upgrade.startsWith('sniper')) {
+      if (kind === 'sniperTower') (instance as SniperTower).applyUpgrade(upgrade);
       return;
     }
     if (kind === 'ballista') (instance as Ballista).applyUpgrade(upgrade);

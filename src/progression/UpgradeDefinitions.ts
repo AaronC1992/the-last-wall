@@ -1,4 +1,4 @@
-export type MetaUpgradeId = 'globalDamage' | 'globalDamageII' | 'wallIntegrity' | 'wallIntegrityII' | 'wallArmor' | 'wallArmorII' | 'startingGold' | 'startingGoldII' | 'bounty' | 'tokenBonus' | 'tokenBonusII' | 'ballistaMastery' | 'bonusResources' | 'abilityHaste' | 'ballistaSlots' | 'ballistaSlotsII' | 'cannonSlots' | 'cannonSlotsII' | 'fireSlots' | 'fireSlotsII' | 'lightningSlots' | 'lightningSlotsII' | 'mortarSlots' | 'mortarSlotsII' | 'abilityPower' | 'repairMastery' | 'fieldMedics' | 'enemySuppression' | 'veteranReserve' | 'warDrums' | 'commandSlots' | 'ballistaDamage' | 'ballistaSpeed' | 'ballistaDiscount' | 'cannonDamage' | 'cannonSpeed' | 'cannonDiscount' | 'fireDamage' | 'fireSpeed' | 'fireDiscount' | 'lightningDamage' | 'lightningSpeed' | 'lightningDiscount' | 'mortarDamage' | 'mortarSpeed' | 'mortarDiscount';
+export type MetaUpgradeId = 'globalDamage' | 'globalDamageII' | 'wallIntegrity' | 'wallIntegrityII' | 'wallArmor' | 'wallArmorII' | 'startingGold' | 'startingGoldII' | 'bounty' | 'tokenBonus' | 'tokenBonusII' | 'ballistaMastery' | 'bonusResources' | 'abilityHaste' | 'ballistaSlots' | 'ballistaSlotsII' | 'cannonSlots' | 'cannonSlotsII' | 'fireSlots' | 'fireSlotsII' | 'lightningSlots' | 'lightningSlotsII' | 'mortarSlots' | 'mortarSlotsII' | 'teslaSlots' | 'teslaSlotsII' | 'sniperSlots' | 'sniperSlotsII' | 'abilityPower' | 'repairMastery' | 'fieldMedics' | 'enemySuppression' | 'veteranReserve' | 'warDrums' | 'commandSlots' | 'ballistaDamage' | 'ballistaSpeed' | 'ballistaDiscount' | 'cannonDamage' | 'cannonSpeed' | 'cannonDiscount' | 'fireDamage' | 'fireSpeed' | 'fireDiscount' | 'lightningDamage' | 'lightningSpeed' | 'lightningDiscount' | 'mortarDamage' | 'mortarSpeed' | 'mortarDiscount' | 'teslaDamage' | 'teslaSpeed' | 'teslaDiscount' | 'sniperDamage' | 'sniperSpeed' | 'sniperDiscount';
 
 export interface MetaUpgradeDefinition {
   id: MetaUpgradeId;
@@ -34,6 +34,10 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'lightningSlotsII', category: 'Weapons', title: 'Tempest Crown', description: 'One more Lightning Tower can be placed each level.', maxLevel: 2, baseCost: 9 },
   { id: 'mortarSlots', category: 'Weapons', title: 'Mortar Yard', description: 'One more Mortar can be placed each level.', maxLevel: 2, baseCost: 5 },
   { id: 'mortarSlotsII', category: 'Weapons', title: 'Siege Arsenal', description: 'One more Mortar can be placed each level.', maxLevel: 2, baseCost: 8 },
+  { id: 'teslaSlots', category: 'Weapons', title: 'Coil Workshop', description: 'One more Tesla Coil can be placed each level.', maxLevel: 3, baseCost: 6 },
+  { id: 'teslaSlotsII', category: 'Weapons', title: 'Arc Reactor', description: 'One more Tesla Coil can be placed each level.', maxLevel: 2, baseCost: 9 },
+  { id: 'sniperSlots', category: 'Weapons', title: 'Marksman Post', description: 'One more Sniper Tower can be placed each level.', maxLevel: 2, baseCost: 7 },
+  { id: 'sniperSlotsII', category: 'Weapons', title: 'Watchtower Network', description: 'One more Sniper Tower can be placed each level.', maxLevel: 2, baseCost: 10 },
   { id: 'abilityPower', category: 'Damage', title: 'Cataclysm School', description: 'Super power damage gains 12 percent each level.', maxLevel: 8, baseCost: 5 },
   { id: 'repairMastery', category: 'Defense', title: 'Field Engineers', description: 'Wall repairs restore 10 more health each level.', maxLevel: 6, baseCost: 3 },
   { id: 'fieldMedics', category: 'Defense', title: 'Field Medics', description: 'Wall repairs cost 5 fewer Build Points each level.', maxLevel: 6, baseCost: 4 },
@@ -56,4 +60,10 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'mortarDamage', category: 'Damage', title: 'Bunker Busters', description: 'Mortar damage gains 10 percent each level.', maxLevel: 8, baseCost: 5 },
   { id: 'mortarSpeed', category: 'Weapons', title: 'Autoloaders', description: 'Mortar attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 5 },
   { id: 'mortarDiscount', category: 'Economy', title: 'Shell Salvage', description: 'Mortar Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 6 },
+  { id: 'teslaDamage', category: 'Damage', title: 'Induction Cells', description: 'Tesla Coil damage gains 10 percent each level.', maxLevel: 8, baseCost: 6 },
+  { id: 'teslaSpeed', category: 'Weapons', title: 'Rapid Discharge', description: 'Tesla Coil attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 6 },
+  { id: 'teslaDiscount', category: 'Economy', title: 'Copper Recovery', description: 'Tesla Coil Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 7 },
+  { id: 'sniperDamage', category: 'Damage', title: 'Precision Rounds', description: 'Sniper Tower damage gains 10 percent each level.', maxLevel: 8, baseCost: 7 },
+  { id: 'sniperSpeed', category: 'Weapons', title: 'Veteran Spotters', description: 'Sniper Tower reload speed gains 5 percent each level.', maxLevel: 8, baseCost: 7 },
+  { id: 'sniperDiscount', category: 'Economy', title: 'Rifle Contracts', description: 'Sniper Tower Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 8 },
 ] as const;

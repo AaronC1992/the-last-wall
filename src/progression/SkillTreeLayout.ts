@@ -3,7 +3,7 @@ import type { MetaUpgradeId } from './UpgradeDefinitions';
 import { FEATURE_UNLOCKS } from './FeatureUnlocks';
 import type { FeatureUnlockId } from './FeatureUnlocks';
 
-export type SkillBranch = 'core' | 'offense' | 'defense' | 'economy' | 'arcane' | 'abilities' | 'command' | 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar';
+export type SkillBranch = 'core' | 'offense' | 'defense' | 'economy' | 'arcane' | 'abilities' | 'command' | 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar' | 'tesla' | 'sniper';
 
 export interface SkillNode {
   id: string;
@@ -30,6 +30,8 @@ export const BRANCH_COLORS: Record<SkillBranch, string> = {
   fire: '#f0783c',
   lightning: '#64b5f6',
   mortar: '#b68a6a',
+  tesla: '#38bdf8',
+  sniper: '#b7c5ad',
 };
 
 interface Placement {
@@ -77,6 +79,12 @@ const PLACEMENTS: readonly Placement[] = [
   { id: 'mortar', branch: 'arcane', angle: 92, ring: 3.2, parent: 'fireTower' },
   { id: 'mortarSlots', branch: 'arcane', angle: 108, ring: 4.2, parent: 'mortar' },
   { id: 'mortarSlotsII', branch: 'arcane', angle: 116, ring: 5.2, parent: 'mortarSlots' },
+  { id: 'teslaCoil', branch: 'arcane', angle: 72, ring: 4.5, parent: 'lightningTower' },
+  { id: 'teslaSlots', branch: 'tesla', angle: 76, ring: 5.4, parent: 'teslaCoil' },
+  { id: 'teslaSlotsII', branch: 'tesla', angle: 82, ring: 6.4, parent: 'teslaSlots' },
+  { id: 'sniperTower', branch: 'offense', angle: -116, ring: 4.4, parent: 'ballistaMastery' },
+  { id: 'sniperSlots', branch: 'sniper', angle: -124, ring: 5.4, parent: 'sniperTower' },
+  { id: 'sniperSlotsII', branch: 'sniper', angle: -132, ring: 6.4, parent: 'sniperSlots' },
   { id: 'evolutions', branch: 'arcane', angle: 40, ring: 3.8, parent: 'fireSlots' },
 
   { id: 'meteor', branch: 'abilities', angle: 104, ring: 1.2, parent: 'core' },
@@ -108,6 +116,12 @@ const PLACEMENTS: readonly Placement[] = [
   { id: 'mortarDamage', branch: 'mortar', angle: 102, ring: 4.3, parent: 'mortar' },
   { id: 'mortarSpeed', branch: 'mortar', angle: 112, ring: 5.3, parent: 'mortarDamage' },
   { id: 'mortarDiscount', branch: 'mortar', angle: 122, ring: 6.2, parent: 'mortarSpeed' },
+  { id: 'teslaDamage', branch: 'tesla', angle: 68, ring: 5.2, parent: 'teslaCoil' },
+  { id: 'teslaSpeed', branch: 'tesla', angle: 58, ring: 6.2, parent: 'teslaDamage' },
+  { id: 'teslaDiscount', branch: 'tesla', angle: 48, ring: 7.2, parent: 'teslaSpeed' },
+  { id: 'sniperDamage', branch: 'sniper', angle: -110, ring: 5.2, parent: 'sniperTower' },
+  { id: 'sniperSpeed', branch: 'sniper', angle: -100, ring: 6.2, parent: 'sniperDamage' },
+  { id: 'sniperDiscount', branch: 'sniper', angle: -90, ring: 7.2, parent: 'sniperSpeed' },
 ];
 
 function buildNodes(): SkillNode[] {

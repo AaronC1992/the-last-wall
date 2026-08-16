@@ -639,7 +639,7 @@ export class Renderer {
     if (state.buildPhase) return;
     const time = Date.now() * 0.012;
     for (const tower of state.weapons.towers) {
-      if (tower.kind !== 'lightningTower') continue;
+      if (tower.kind !== 'lightningTower' && tower.kind !== 'teslaCoil') continue;
       const laserInstance = tower.instance as unknown as { isFiring?: boolean; primaryTarget?: { x: number; y: number } | null; chainedTargets?: Array<{ x: number; y: number }> };
       if (!laserInstance.isFiring || !laserInstance.primaryTarget) continue;
 

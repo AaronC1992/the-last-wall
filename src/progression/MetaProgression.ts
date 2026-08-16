@@ -22,10 +22,10 @@ export interface PermanentBonuses {
   enemySpeedMultiplier: number;
   towerSpeedMultiplier: number;
   commandSlots: number;
-  towerDamage: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
-  towerSpeed: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
-  towerCost: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
-  towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
+  towerDamage: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
+  towerSpeed: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
+  towerCost: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
+  towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
 }
 
 export interface TokenBreakdown {
@@ -131,6 +131,8 @@ export class MetaProgression {
         fireTower: 1 + this.getLevel('fireDamage') * 0.1,
         lightningTower: 1 + this.getLevel('lightningDamage') * 0.1,
         mortar: 1 + this.getLevel('mortarDamage') * 0.1,
+        teslaCoil: 1 + this.getLevel('teslaDamage') * 0.1,
+        sniperTower: 1 + this.getLevel('sniperDamage') * 0.1,
       },
       towerSpeed: {
         ballista: 1 + this.getLevel('ballistaSpeed') * 0.05,
@@ -138,6 +140,8 @@ export class MetaProgression {
         fireTower: 1 + this.getLevel('fireSpeed') * 0.05,
         lightningTower: 1 + this.getLevel('lightningSpeed') * 0.05,
         mortar: 1 + this.getLevel('mortarSpeed') * 0.05,
+        teslaCoil: 1 + this.getLevel('teslaSpeed') * 0.05,
+        sniperTower: 1 + this.getLevel('sniperSpeed') * 0.05,
       },
       towerCost: {
         ballista: Math.max(0.5, 1 - this.getLevel('ballistaDiscount') * 0.04),
@@ -145,6 +149,8 @@ export class MetaProgression {
         fireTower: Math.max(0.5, 1 - this.getLevel('fireDiscount') * 0.05),
         lightningTower: Math.max(0.5, 1 - this.getLevel('lightningDiscount') * 0.05),
         mortar: Math.max(0.5, 1 - this.getLevel('mortarDiscount') * 0.05),
+        teslaCoil: Math.max(0.5, 1 - this.getLevel('teslaDiscount') * 0.05),
+        sniperTower: Math.max(0.5, 1 - this.getLevel('sniperDiscount') * 0.05),
       },
       towerSlots: {
         ballista: this.getLevel('ballistaSlots') + this.getLevel('ballistaSlotsII') + this.getLevel('commandSlots'),
@@ -152,6 +158,8 @@ export class MetaProgression {
         fireTower: this.getLevel('fireSlots') + this.getLevel('fireSlotsII') + this.getLevel('commandSlots'),
         lightningTower: this.getLevel('lightningSlots') + this.getLevel('lightningSlotsII') + this.getLevel('commandSlots'),
         mortar: this.getLevel('mortarSlots') + this.getLevel('mortarSlotsII') + this.getLevel('commandSlots'),
+        teslaCoil: this.getLevel('teslaSlots') + this.getLevel('teslaSlotsII') + this.getLevel('commandSlots'),
+        sniperTower: this.getLevel('sniperSlots') + this.getLevel('sniperSlotsII') + this.getLevel('commandSlots'),
       },
     };
   }

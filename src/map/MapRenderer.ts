@@ -515,6 +515,8 @@ export class MapRenderer {
     else if (kind === 'fireTower') this.drawPixelFireTower(context);
     else if (kind === 'lightningTower') this.drawPixelLightningTower(context);
     else if (kind === 'mortar') this.drawPixelMortar(context);
+    else if (kind === 'teslaCoil') this.drawPixelTeslaCoil(context);
+    else if (kind === 'sniperTower') this.drawPixelSniperTower(context);
 
     context.restore();
   }
@@ -524,6 +526,8 @@ export class MapRenderer {
     if (kind === 'cannon') return '#8f9aa4';
     if (kind === 'fireTower') return '#c4713c';
     if (kind === 'lightningTower') return '#6f8fc4';
+    if (kind === 'teslaCoil') return '#38bdf8';
+    if (kind === 'sniperTower') return '#7c8c72';
     return '#8f6f56';
   }
 
@@ -577,6 +581,16 @@ export class MapRenderer {
       context.fillRect(x + 12, y - 1, 3, 2);
       context.fillRect(x - 1, y - 15, 2, 3);
       context.fillRect(x - 1, y + 12, 2, 3);
+    } else if (kind === 'teslaCoil') {
+      context.fillStyle = '#38bdf8';
+      context.fillRect(x - 15, y - 2, 30, 4);
+      context.fillRect(x - 2, y - 15, 4, 30);
+    } else if (kind === 'sniperTower') {
+      context.fillStyle = '#b7c5ad';
+      context.fillRect(x - 16, y - 16, 4, 4);
+      context.fillRect(x + 12, y - 16, 4, 4);
+      context.fillRect(x - 16, y + 12, 4, 4);
+      context.fillRect(x + 12, y + 12, 4, 4);
     } else if (kind === 'mortar') {
       context.fillStyle = '#8f9aa4';
       context.fillRect(x - 14, y - 14, 2, 2);
@@ -818,7 +832,6 @@ export class MapRenderer {
     context.fillRect(7, -36, 3, 8);
     context.fillStyle = '#00f2fe';
     context.fillRect(9, -38, 2, 3);
-
     context.strokeStyle = '#ffffff';
     context.lineWidth = 1;
     context.beginPath();
@@ -826,6 +839,46 @@ export class MapRenderer {
     context.moveTo(0, -28); context.lineTo(0, -39);
     context.moveTo(5, -28); context.lineTo(8, -36);
     context.stroke();
+  }
+
+  private drawPixelTeslaCoil(context: CanvasRenderingContext2D): void {
+    context.fillStyle = '#162432';
+    context.fillRect(-13, -9, 26, 18);
+    context.fillStyle = '#31526b';
+    context.fillRect(-11, -8, 22, 3);
+    context.fillStyle = '#1e3a4d';
+    context.fillRect(-5, -24, 10, 18);
+    context.fillStyle = '#7dd3fc';
+    context.fillRect(-3, -29, 6, 8);
+    context.fillStyle = '#e0f2fe';
+    context.fillRect(-1, -33, 2, 6);
+    context.fillStyle = '#38bdf8';
+    context.fillRect(-18, -22, 8, 2);
+    context.fillRect(10, -22, 8, 2);
+    context.fillRect(-20, -20, 2, 8);
+    context.fillRect(18, -20, 2, 8);
+    context.fillStyle = '#bae6fd';
+    context.fillRect(-21, -21, 3, 3);
+    context.fillRect(18, -21, 3, 3);
+  }
+
+  private drawPixelSniperTower(context: CanvasRenderingContext2D): void {
+    context.fillStyle = '#1f2920';
+    context.fillRect(-12, -8, 24, 16);
+    context.fillStyle = '#53634e';
+    context.fillRect(-10, -7, 20, 3);
+    context.fillStyle = '#303b2e';
+    context.fillRect(-6, -26, 12, 20);
+    context.fillStyle = '#8fa184';
+    context.fillRect(-4, -33, 8, 9);
+    context.fillStyle = '#d5e3c8';
+    context.fillRect(-2, -37, 4, 5);
+    context.fillStyle = '#171d16';
+    context.fillRect(-3, -47, 6, 15);
+    context.fillStyle = '#b7c5ad';
+    context.fillRect(-2, -49, 4, 4);
+    context.fillStyle = '#0b0f0a';
+    context.fillRect(-1, -49, 2, 2);
   }
 
   private drawPixelMortar(context: CanvasRenderingContext2D): void {
