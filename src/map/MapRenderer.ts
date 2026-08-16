@@ -28,6 +28,34 @@ export class MapRenderer {
       context.fillStyle = 'rgba(5, 8, 10, 0.16)';
       context.fillRect(0, 0, this.cache.width, this.cache.height);
     }
+    this.renderSpawnGlows(context, quality);
+  }
+
+  private renderSpawnGlows(context: CanvasRenderingContext2D, quality: GraphicsQuality): void {
+    const time = performance.now() * 0.004;
+    for (let index = 0; index < this.definition.spawnCells.length; index++) {
+      const spawn = this.grid.cellToWorld(this.definition.spawnCells[index].x, this.definition.spawnCells[index].y);
+      if (quality === 'low') {
+        context.fillStyle = 'rgba(190, 32, 42, 0.65)';
+        context.fillRect(spawn.x - 7, spawn.y - 7, 14, 14);
+        context.fillStyle = '#ff8b83';
+        context.fillRect(spawn.x - 3, spawn.y - 3, 6, 6);
+        continue;
+      }
+      const pulse = 30 + Math.sin(time * 3 + index) * 5;
+      const glow = context.createRadialGradient(spawn.x, spawn.y, 2, spawn.x, spawn.y, pulse);
+      glow.addColorStop(0, 'rgba(255, 92, 76, 0.9)');
+      glow.addColorStop(0.35, 'rgba(220, 35, 42, 0.55)');
+      glow.addColorStop(1, 'rgba(120, 10, 20, 0)');
+      context.fillStyle = glow;
+      context.beginPath();
+      context.arc(spawn.x, spawn.y, pulse, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = '#ffb0a7';
+      context.beginPath();
+      context.arc(spawn.x, spawn.y, 5 + Math.sin(time * 5 + index), 0, Math.PI * 2);
+      context.fill();
+    }
   }
 
   renderDefenseLine(context: CanvasRenderingContext2D, wallHp: number, wallMaxHp: number, animateTorches = true): void {
