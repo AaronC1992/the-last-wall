@@ -11,8 +11,7 @@ export interface PermanentBonuses {
   damageMultiplier: number;
   wallMaxHp: number;
   wallArmor: number;
-  startingGold: number;
-  rewardMultiplier: number;
+  startingBuildPoints: number;
   tokenMultiplier: number;
   ballistaSpeedMultiplier: number;
   flatTokenBonus: number;
@@ -84,7 +83,7 @@ export class MetaProgression {
     return true;
   }
 
-  awardTokens(kills: number, elapsed: number, gold: number, highestCombo: number, awardCurrency = true): TokenBreakdown {
+  awardTokens(kills: number, elapsed: number, buildPoints: number, highestCombo: number, awardCurrency = true): TokenBreakdown {
     const bonuses = this.bonuses;
     const base = Math.max(1, Math.floor(kills / 20 + elapsed / 90));
     const percentBonus = awardCurrency ? Math.floor(base * (bonuses.tokenMultiplier - 1)) : 0;
@@ -93,7 +92,7 @@ export class MetaProgression {
     this.data.warTokens += total;
     this.data.statistics.totalKills += kills;
     this.data.statistics.totalRuns++;
-    this.data.statistics.totalGold += gold;
+    this.data.statistics.totalBuildPoints += buildPoints;
     this.data.statistics.highestKills = Math.max(this.data.statistics.highestKills, kills);
     this.data.statistics.highestLifetimeCombo = Math.max(this.data.statistics.highestLifetimeCombo, highestCombo);
     this.persist();
@@ -105,8 +104,7 @@ export class MetaProgression {
       damageMultiplier: 1 + this.getLevel('globalDamage') * 0.1,
       wallMaxHp: 100 + this.getLevel('wallIntegrity') * 20,
       wallArmor: this.getLevel('wallArmor'),
-      startingGold: 400 + this.getLevel('startingGold') * 10,
-      rewardMultiplier: 1 + this.getLevel('bounty') * 0.1,
+      startingBuildPoints: 400 + this.getLevel('startingGold') * 10,
       tokenMultiplier: 1 + this.getLevel('tokenBonus') * 0.15,
       ballistaSpeedMultiplier: 1 + this.getLevel('ballistaMastery') * 0.08,
       flatTokenBonus: this.getLevel('bonusResources') * 3,

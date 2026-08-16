@@ -6,7 +6,7 @@ export interface SaveData {
   warTokens: number;
   upgrades: Record<string, number>;
   unlocks: Record<string, boolean>;
-  statistics: { totalKills: number; totalRuns: number; totalGold: number; highestKills: number; highestLifetimeCombo: number };
+  statistics: { totalKills: number; totalRuns: number; totalBuildPoints: number; highestKills: number; highestLifetimeCombo: number };
   settings: { damageNumbers: boolean; screenShake: boolean; masterVolume: number; sfxVolume: number; musicVolume: number; particleAmount: number };
   completedCampaign: string[];
 }
@@ -17,14 +17,14 @@ export class SaveSystem {
     try {
       const rawSave = localStorage.getItem(SAVE_KEY);
       if (!rawSave) return fallback;
-      const parsed = JSON.parse(rawSave) as Partial<SaveData>;
+      const parsed = JSON.parse(rawSave) as Partial<SaveData> & { statistics?: Partial<SaveData['statistics']> & { totalGold?: number } };
       if ((parsed.version !== 1 && parsed.version !== SAVE_VERSION) || typeof parsed.warTokens !== 'number' || !parsed.upgrades) return fallback;
       return {
         version: SAVE_VERSION,
         warTokens: Math.max(0, parsed.warTokens),
         upgrades: parsed.upgrades,
         unlocks: parsed.unlocks ?? {},
-        statistics: { totalKills: parsed.statistics?.totalKills ?? 0, totalRuns: parsed.statistics?.totalRuns ?? 0, totalGold: parsed.statistics?.totalGold ?? 0, highestKills: parsed.statistics?.highestKills ?? 0, highestLifetimeCombo: parsed.statistics?.highestLifetimeCombo ?? 0 },
+        statistics: { totalKills: parsed.statistics?.totalKills ?? 0, totalRuns: parsed.statistics?.totalRuns ?? 0, totalBuildPoints: parsed.statistics?.totalBuildPoints ?? parsed.statistics?.totalGold ?? 0, highestKills: parsed.statistics?.highestKills ?? 0, highestLifetimeCombo: parsed.statistics?.highestLifetimeCombo ?? 0 },
         settings: { damageNumbers: parsed.settings?.damageNumbers ?? true, screenShake: parsed.settings?.screenShake ?? true, masterVolume: parsed.settings?.masterVolume ?? 0.5, sfxVolume: parsed.settings?.sfxVolume ?? 0.6, musicVolume: parsed.settings?.musicVolume ?? 0.3, particleAmount: parsed.settings?.particleAmount ?? 1 },
         completedCampaign: Array.isArray(parsed.completedCampaign) ? parsed.completedCampaign.filter((id): id is string => typeof id === 'string') : [],
       };
@@ -51,7 +51,7 @@ export class SaveSystem {
       warTokens: 0,
       upgrades: {},
       unlocks: {},
-      statistics: { totalKills: 0, totalRuns: 0, totalGold: 0, highestKills: 0, highestLifetimeCombo: 0 },
+      statistics: { totalKills: 0, totalRuns: 0, totalBuildPoints: 0, highestKills: 0, highestLifetimeCombo: 0 },
       settings: { damageNumbers: true, screenShake: true, masterVolume: 0.5, sfxVolume: 0.6, musicVolume: 0.3, particleAmount: 1 },
       completedCampaign: [],
     };

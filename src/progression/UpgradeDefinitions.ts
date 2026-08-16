@@ -13,7 +13,7 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'globalDamage', category: 'Damage', title: 'Siege Doctrine', description: 'All Ballista damage gains 10 percent each level.', maxLevel: 10, baseCost: 1 },
   { id: 'wallIntegrity', category: 'Defense', title: 'Reinforced Wall', description: 'Wall maximum health gains 20 each level.', maxLevel: 10, baseCost: 1 },
   { id: 'wallArmor', category: 'Defense', title: 'Stone Plating', description: 'Wall damage taken is reduced by 1 each level.', maxLevel: 8, baseCost: 2 },
-  { id: 'startingGold', category: 'Economy', title: 'War Chest', description: 'Each run begins with 10 more Gold.', maxLevel: 8, baseCost: 1 },
+  { id: 'startingGold', category: 'Economy', title: 'Build Reserve', description: 'Each level grants 100 Build Points at the start of a run.', maxLevel: 8, baseCost: 1 },
   { id: 'bounty', category: 'Economy', title: 'Bounty Orders', description: 'Enemy rewards gain 10 percent each level.', maxLevel: 8, baseCost: 2 },
   { id: 'tokenBonus', category: 'Economy', title: 'Victory Ledger', description: 'War Token rewards gain 15 percent each level.', maxLevel: 6, baseCost: 3 },
   { id: 'ballistaMastery', category: 'Weapons', title: 'Ballista Mastery', description: 'Ballista attack speed gains 8 percent each level.', maxLevel: 8, baseCost: 2 },

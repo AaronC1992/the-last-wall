@@ -11,7 +11,7 @@ export interface TowerReadout {
 export interface HudState {
   wallHp: number;
   maxWallHp: number;
-  gold: number;
+  buildPoints: number;
   kills: number;
   enemyCount: number;
   fps: number;
@@ -25,7 +25,7 @@ export interface HudState {
 export class HUD {
   private readonly healthFill = this.element('health-fill');
   private readonly healthText = this.element('health-text');
-  private readonly gold = this.element('gold-value');
+  private readonly buildPoints = this.element('build-points-value');
   private readonly kills = this.element('kills-value');
   private readonly enemies = this.element('enemy-value');
   private readonly fps = this.element('fps-value');
@@ -55,7 +55,7 @@ export class HUD {
     this.healthFill.style.width = `${ratio * 100}%`;
     this.healthFill.classList.toggle('critical', ratio <= 0.35);
     this.healthText.textContent = `${Math.ceil(state.wallHp)} / ${state.maxWallHp}`;
-    this.gold.textContent = this.compact(state.gold);
+    this.buildPoints.textContent = this.compact(state.buildPoints);
     this.kills.textContent = this.compact(state.kills);
     this.enemies.textContent = this.compact(state.enemyCount);
     this.fps.textContent = Math.round(state.fps).toString();

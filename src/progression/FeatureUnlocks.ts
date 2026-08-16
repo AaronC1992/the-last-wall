@@ -9,10 +9,10 @@ export interface FeatureUnlockDefinition {
 }
 
 export const FEATURE_UNLOCKS: readonly FeatureUnlockDefinition[] = [
-  { id: 'cannon', category: 'Weapons', title: 'Cannon Plans', description: 'Allows Cannons to be built with Gold during runs.', cost: 15 },
-  { id: 'fireTower', category: 'Weapons', title: 'Fire Tower Plans', description: 'Allows Fire Towers to be built with Gold during runs.', cost: 30 },
-  { id: 'lightningTower', category: 'Weapons', title: 'Lightning Tower Plans', description: 'Allows Lightning Towers to be built with Gold during runs.', cost: 55 },
-  { id: 'mortar', category: 'Weapons', title: 'Mortar Plans', description: 'Allows Mortars to be built with Gold during runs.', cost: 45 },
+  { id: 'cannon', category: 'Weapons', title: 'Cannon Plans', description: 'Allows Cannons to be built with Build Points during runs.', cost: 15 },
+  { id: 'fireTower', category: 'Weapons', title: 'Fire Tower Plans', description: 'Allows Fire Towers to be built with Build Points during runs.', cost: 30 },
+  { id: 'lightningTower', category: 'Weapons', title: 'Lightning Tower Plans', description: 'Allows Lightning Towers to be built with Build Points during runs.', cost: 55 },
+  { id: 'mortar', category: 'Weapons', title: 'Mortar Plans', description: 'Allows Mortars to be built with Build Points during runs.', cost: 45 },
   { id: 'meteor', category: 'Abilities', title: 'Meteor', description: 'Unlocks the Meteor ability.', cost: 20 },
   { id: 'artillery', category: 'Abilities', title: 'Artillery', description: 'Unlocks the Artillery ability.', cost: 40 },
   { id: 'dragon', category: 'Abilities', title: 'Dragon Strike', description: 'Unlocks the Dragon ability.', cost: 75 },

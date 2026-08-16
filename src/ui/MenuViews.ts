@@ -93,7 +93,7 @@ export class MenuViews {
     const stats = this.progression.statistics;
     document.querySelector<HTMLElement>('#stats-runs')!.textContent = stats.totalRuns.toLocaleString();
     document.querySelector<HTMLElement>('#stats-kills')!.textContent = stats.totalKills.toLocaleString();
-    document.querySelector<HTMLElement>('#stats-gold')!.textContent = stats.totalGold.toLocaleString();
+    document.querySelector<HTMLElement>('#stats-gold')!.textContent = stats.totalBuildPoints.toLocaleString();
     document.querySelector<HTMLElement>('#stats-best-kills')!.textContent = stats.highestKills.toLocaleString();
     this.main.hidden = true;
     this.statistics.hidden = false;

@@ -53,7 +53,7 @@ export class Game implements BattlefieldActions {
   private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.logicalWidth, TUNING.logicalHeight);
   private readonly onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void;
   private wallHp: number = TUNING.wallMaxHp;
-  private gold = 0;
+  private buildPoints = 0;
   private kills = 0;
   private elapsed = 0;
   private phase: GamePhase = 'idle';
@@ -63,7 +63,6 @@ export class Game implements BattlefieldActions {
   private gameSpeed = 1;
   private wallMaxHp: number = TUNING.wallMaxHp;
   private wallArmor = 0;
-  private rewardMultiplier = 1;
   private highestCombo = 0;
   private menuOpen = false;
   private mapIntroTimer = 0;
@@ -111,14 +110,14 @@ export class Game implements BattlefieldActions {
       this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
     });
     this.congestion.rebuild(this.enemies);
-    this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (reward, index, burning) => {
-      this.registerKill(reward);
+    this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
+      this.registerKill();
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
     }, this.flowField, this.terrain, this.congestion, this.threatMap);
     this.grid.rebuild(this.enemies);
-    this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, (reward) => this.registerKill(reward));
-    this.projectiles.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => this.damageArea(x, y, damage, radius), this.terrain);
-    this.chaos.update(simulationDelta, this.enemies, this.grid, (reward) => this.registerKill(reward));
+    this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, () => this.registerKill());
+    this.projectiles.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => this.damageArea(x, y, damage, radius), this.terrain);
+    this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill());
     this.enemies.compact();
     this.feedback.update(simulationDelta);
     if (this.waveDirector.isWaveCleared(this.enemies.count)) this.endRun();
@@ -149,7 +148,7 @@ export class Game implements BattlefieldActions {
     this.hud.update({
       wallHp: this.wallHp,
       maxWallHp: this.wallMaxHp,
-      gold: this.gold,
+      buildPoints: this.buildPoints,
       kills: this.kills,
       enemyCount: this.enemies.count,
       fps: this.fps,
@@ -172,7 +171,7 @@ export class Game implements BattlefieldActions {
     this.weapons.importLayout(savedLayout);
     this.threatMap.rebuild(this.weapons.towers);
     this.wallHp = this.wallMaxHp;
-    this.gold = Math.max(0, this.progression.bonuses.startingGold - this.weapons.totalCost());
+    this.buildPoints = Math.max(0, this.progression.bonuses.startingBuildPoints - this.weapons.totalCost());
     this.kills = 0;
     this.elapsed = 0;
     this.gameOver = false;
@@ -228,7 +227,7 @@ export class Game implements BattlefieldActions {
       count: this.weapons.countOf(config.kind),
       limit: this.weapons.limitOf(config.kind),
       cost: config.cost,
-      affordable: this.gold >= config.cost,
+      affordable: this.buildPoints >= config.cost,
     }));
   }
 
@@ -246,7 +245,7 @@ export class Game implements BattlefieldActions {
   activateAbility(id: AbilityIdValue): void {
     if (this.phase !== 'battle' || this.gameOver || this.menuOpen) return;
     if (!this.isAbilityUnlocked(id)) return;
-    if (this.chaos.activate(id, this.enemies, this.grid, (reward) => this.registerKill(reward))) this.feedback.triggerShake(id === 4 ? 14 : 7);
+    if (this.chaos.activate(id, this.enemies, this.grid, () => this.registerKill())) this.feedback.triggerShake(id === 4 ? 14 : 7);
   }
 
   isAbilityUnlocked(id: AbilityIdValue): boolean {
@@ -256,8 +255,8 @@ export class Game implements BattlefieldActions {
 
   repairWall(): void {
     const cost = 40;
-    if (this.gold < cost || this.wallHp >= this.wallMaxHp) return;
-    this.gold -= cost;
+    if (this.buildPoints < cost || this.wallHp >= this.wallMaxHp) return;
+    this.buildPoints -= cost;
     this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 25);
   }
 
@@ -266,7 +265,7 @@ export class Game implements BattlefieldActions {
   }
 
   get economyState() {
-    return { gold: this.gold, wallFull: this.wallHp >= this.wallMaxHp };
+    return { buildPoints: this.buildPoints, wallFull: this.wallHp >= this.wallMaxHp };
   }
 
   // BattlefieldActions
@@ -282,11 +281,11 @@ export class Game implements BattlefieldActions {
   placeTower(x: number, y: number): void {
     if (this.phase !== 'build' || !this.armed) return;
     const config = towerConfig(this.armed);
-    if (this.gold < config.cost) return;
+    if (this.buildPoints < config.cost) return;
     const spot = this.weapons.clampToBuildZone(x, y);
     const placed = this.weapons.place(this.armed, spot.x, spot.y);
     if (!placed) return;
-    this.gold -= config.cost;
+    this.buildPoints -= config.cost;
     this.selectedId = placed.id;
     this.armed = null;
     const aimTargetX = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerX : spot.x;
@@ -328,7 +327,7 @@ export class Game implements BattlefieldActions {
     if (this.phase !== 'build') return;
     const kind = this.weapons.remove(id);
     if (!kind) return;
-    this.gold += Math.floor(towerConfig(kind).cost * 0.75);
+    this.buildPoints += towerConfig(kind).cost;
     if (this.selectedId === id) this.selectedId = 0;
     this.saveLayout();
     this.threatMap.rebuild(this.weapons.towers);
@@ -336,7 +335,7 @@ export class Game implements BattlefieldActions {
 
   removeAllTowers(): void {
     if (this.phase !== 'build') return;
-    for (const kind of this.weapons.removeAll()) this.gold += Math.floor(towerConfig(kind).cost * 0.75);
+    for (const kind of this.weapons.removeAll()) this.buildPoints += towerConfig(kind).cost;
     this.selectedId = 0;
     this.saveLayout();
     this.threatMap.rebuild(this.weapons.towers);
@@ -380,7 +379,7 @@ export class Game implements BattlefieldActions {
   }
 
   addGold(): void {
-    this.gold += 10000;
+    this.buildPoints += 10000;
   }
 
   healWall(): void {
@@ -429,7 +428,7 @@ export class Game implements BattlefieldActions {
       kind: this.armed,
       x: spot.x,
       y: spot.y,
-      valid: this.weapons.canPlaceAt(this.armed, spot.x, spot.y) && this.gold >= towerConfig(this.armed).cost,
+      valid: this.weapons.canPlaceAt(this.armed, spot.x, spot.y) && this.buildPoints >= towerConfig(this.armed).cost,
     };
   }
 
@@ -448,20 +447,20 @@ export class Game implements BattlefieldActions {
     if (this.wallHp === 0) this.endRun();
   }
 
-  private registerKill(reward: number): void {
+  private registerKill(): void {
     this.kills++;
     this.renderer.addDeathDecal(this.enemies.lastDeathX, this.enemies.lastDeathY);
     this.feedback.registerKill(this.kills);
     this.highestCombo = Math.max(this.highestCombo, this.feedback.currentCombo);
-    this.gold += Math.max(1, Math.ceil(reward * this.rewardMultiplier * this.feedback.goldMultiplier));
+    // Removed kill rewards
   }
 
   private damageArea(x: number, y: number, damage: number, radius: number): void {
     const count = this.grid.collectInRange(x, y, radius, this.enemies, 320);
     for (let index = 0; index < count; index++) {
-      const reward = this.enemies.damage(this.grid.resultAt(index), damage);
+      const killed = this.enemies.damage(this.grid.resultAt(index), damage);
       if (this.enemies.lastDamageDealt > 0) this.feedback.registerDamage(x, y, this.enemies.lastDamageDealt, this.progression.settings.damageNumbers);
-      if (reward > 0) this.registerKill(reward);
+      if (killed > 0) this.registerKill();
     }
   }
 
@@ -496,7 +495,7 @@ export class Game implements BattlefieldActions {
     this.phase = 'idle';
     const survived = this.wallHp > 0;
     if (survived && !this.map.custom) this.progression.completeCampaign(this.map.id);
-    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.gold, this.highestCombo, !this.map.custom);
+    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom);
     this.onRunEnd(breakdown, survived);
   }
 
@@ -504,7 +503,6 @@ export class Game implements BattlefieldActions {
     const bonuses = this.progression.bonuses;
     this.wallMaxHp = bonuses.wallMaxHp;
     this.wallArmor = bonuses.wallArmor;
-    this.rewardMultiplier = bonuses.rewardMultiplier;
     this.weapons.setPermanentBonuses(bonuses.damageMultiplier, bonuses.ballistaSpeedMultiplier);
     for (const config of TOWER_CONFIG) this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
     this.wallHp = this.wallMaxHp;
