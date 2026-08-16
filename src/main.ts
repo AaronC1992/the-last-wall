@@ -13,7 +13,6 @@ import { MenuViews } from './ui/MenuViews';
 import { BuildBar } from './ui/BuildBar';
 import { ResultsScreen } from './ui/ResultsScreen';
 import { MapBuilder } from './ui/MapBuilder';
-import { UpgradeMenu } from './ui/UpgradeMenu';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <main class="game-shell">
@@ -54,15 +53,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <button id="results-next-level" type="button" hidden>Next Level</button>
           <button id="results-upgrades" type="button">Upgrades</button>
           <button id="results-play-again" type="button">Play Again</button>
-        </div>
-      </div>
-
-      <div id="upgrade-menu" class="upgrade-menu" hidden>
-        <div class="upgrade-heading"><span>Level Up</span><strong>Choose One Upgrade</strong></div>
-        <div class="upgrade-options">
-          <button type="button" class="upgrade-card"><span class="upgrade-rarity"></span><strong class="upgrade-name"></strong><small class="upgrade-description"></small></button>
-          <button type="button" class="upgrade-card"><span class="upgrade-rarity"></span><strong class="upgrade-name"></strong><small class="upgrade-description"></small></button>
-          <button type="button" class="upgrade-card"><span class="upgrade-rarity"></span><strong class="upgrade-name"></strong><small class="upgrade-description"></small></button>
         </div>
       </div>
 
@@ -151,12 +141,11 @@ const results = new ResultsScreen(
   },
 );
 let game: Game;
-const upgradeMenu = new UpgradeMenu((index) => game.chooseUpgrade(index));
 game = new Game(canvas, hud, progression, (breakdown, survived) => {
   const currentIndex = CAMPAIGN_MAPS.findIndex((map) => map.id === game.activeMap.id);
   const nextMap = survived && currentIndex >= 0 ? CAMPAIGN_MAPS[currentIndex + 1] : undefined;
   results.show(survived, breakdown, nextMap?.name ?? null);
-}, (choices) => upgradeMenu.show(choices));
+});
 const buildBar = new BuildBar((kind) => game.setArmedKind(kind));
 const abilityPanel = new AbilityPanel((id) => { game.activateAbility(id); audio.playAbility(); }, (id) => game.isAbilityUnlocked(id));
 const metaMenu = new MetaMenu(progression, (visible) => game.setProgressionOpen(visible), () => {

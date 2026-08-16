@@ -1,7 +1,7 @@
 export class Camera {
   x: number;
   y: number;
-  zoom = 0.82;
+  zoom = 0.6;
   readonly minZoom = 0.15;
   readonly maxZoom = 3.5;
 
@@ -13,6 +13,7 @@ export class Camera {
   ) {
     this.x = worldWidth / 2;
     this.y = worldHeight / 2;
+    this.fitToView();
   }
 
   setWorldBounds(worldWidth: number, worldHeight: number): void {
@@ -51,10 +52,7 @@ export class Camera {
   }
 
   reset(): void {
-    this.zoom = 0.82;
-    this.x = this.worldWidth / 2;
-    this.y = this.worldHeight / 2;
-    this.clamp();
+    this.fitToView();
   }
 
   fitToView(): void {
