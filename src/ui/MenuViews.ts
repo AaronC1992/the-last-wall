@@ -16,6 +16,7 @@ export class MenuViews {
   private readonly sfxCheat = document.querySelector<HTMLButtonElement>('#sfx-cheat')!;
   private readonly shake = document.querySelector<HTMLInputElement>('#setting-shake')!;
   private readonly damageNumbers = document.querySelector<HTMLInputElement>('#setting-damage-numbers')!;
+  private readonly graphics = document.querySelector<HTMLSelectElement>('#setting-graphics')!;
   private readonly campaign = document.querySelector<HTMLElement>('#campaign-menu')!;
   private readonly customMaps = document.querySelector<HTMLElement>('#custom-maps-menu')!;
   private readonly storage = new CustomMapStorage();
@@ -47,6 +48,7 @@ export class MenuViews {
     this.sfxCheat.addEventListener('click', () => this.activateSfxCheat());
     this.shake.addEventListener('change', () => this.saveSettings());
     this.damageNumbers.addEventListener('change', () => this.saveSettings());
+    this.graphics.addEventListener('change', () => this.saveSettings());
     document.querySelector<HTMLButtonElement>('#settings-reset')!.addEventListener('click', () => {
       if (window.confirm('Reset all progress and start over? This cannot be undone.')) onReset();
     });
@@ -88,6 +90,7 @@ export class MenuViews {
     this.sfx.value = settings.sfxVolume.toString();
     this.shake.checked = settings.screenShake;
     this.damageNumbers.checked = settings.damageNumbers;
+    this.graphics.value = settings.graphicsQuality;
     this.settings.hidden = false;
   }
 
@@ -113,7 +116,7 @@ export class MenuViews {
   private saveSettings(): void {
     const masterVolume = Number(this.master.value);
     const sfxVolume = Number(this.sfx.value);
-    this.progression.updateSettings({ masterVolume, sfxVolume, screenShake: this.shake.checked, damageNumbers: this.damageNumbers.checked });
+    this.progression.updateSettings({ masterVolume, sfxVolume, screenShake: this.shake.checked, damageNumbers: this.damageNumbers.checked, graphicsQuality: this.graphics.value as 'low' | 'medium' | 'high' });
     this.audio.setSettings({ masterVolume, sfxVolume });
   }
 

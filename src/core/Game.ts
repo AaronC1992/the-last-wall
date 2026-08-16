@@ -143,6 +143,7 @@ export class Game implements BattlefieldActions {
       wallMaxHp: this.wallMaxHp,
       damageNumbers: this.progression.settings.damageNumbers,
       screenShake: this.progression.settings.screenShake,
+      graphicsQuality: this.progression.settings.graphicsQuality,
       camera: this.camera,
       buildPhase: this.phase === 'build',
       selectedTowerId: this.selectedId,

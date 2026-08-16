@@ -12,6 +12,7 @@ import { towerConfig } from '../weapons/TowerConfig';
 import type { TowerKind } from '../weapons/TowerConfig';
 import type { MapDefinition } from '../map/TerrainTypes';
 import type { ThreatMap } from '../systems/ThreatMap';
+import type { GraphicsQuality } from '../systems/SaveSystem';
 
 export interface GhostTower {
   kind: TowerKind;
@@ -37,6 +38,7 @@ export interface RenderState {
   wallMaxHp: number;
   damageNumbers: boolean;
   screenShake: boolean;
+  graphicsQuality: GraphicsQuality;
   camera: Camera;
   buildPhase: boolean;
   selectedTowerId: number;
@@ -70,14 +72,14 @@ export class Renderer {
 
     this.map.renderBackground(context);
     if (state.showThreatMap) state.threatMap.render(context);
-    this.decals.render(context);
-    this.renderEnemies(context, state.enemies);
-    this.renderProjectiles(context, state.projectiles);
-    state.chaos.render(context);
+    if (state.graphicsQuality !== 'low') this.decals.render(context);
+    this.renderEnemies(context, state.enemies, state.graphicsQuality);
+    this.renderProjectiles(context, state.projectiles, state.graphicsQuality);
+    state.chaos.render(context, state.graphicsQuality);
     state.feedback.render(context, state.damageNumbers);
     this.map.renderDefenseLine(context, state.wallHp, state.wallMaxHp);
-    this.renderFireStreams(context, state);
-    this.renderLasers(context, state);
+    if (state.graphicsQuality !== 'low') this.renderFireStreams(context, state);
+    if (state.graphicsQuality !== 'low') this.renderLasers(context, state);
     this.renderTowers(context, state);
     this.renderAbilityTarget(context, state.abilityTarget);
     this.renderGhost(context, state);
@@ -97,7 +99,7 @@ export class Renderer {
     this.decals.clear();
   }
 
-  private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager): void {
+  private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality): void {
     for (let index = 0; index < enemies.count; index++) {
       if (enemies.active[index] === 0) continue;
       const x = enemies.x[index];
@@ -113,7 +115,7 @@ export class Renderer {
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
 
-      if (isBurning) {
+      if (isBurning && quality !== 'low') {
         this.renderBurningEffect(context, x, y, radius, index);
       }
 
@@ -413,7 +415,7 @@ export class Renderer {
     context.fillRect(r + 1, r + 1 + sparkPulse, 3, 3);
   }
 
-  private renderProjectiles(context: CanvasRenderingContext2D, projectiles: ProjectileManager): void {
+  private renderProjectiles(context: CanvasRenderingContext2D, projectiles: ProjectileManager, quality: GraphicsQuality): void {
     for (let index = 0; index < projectiles.count; index++) {
       const mode = projectiles.mode[index];
       const px = projectiles.x[index];
@@ -422,7 +424,7 @@ export class Renderer {
       if (mode === 2) {
         const totalFlight = Math.max(0.001, projectiles.flight[index]);
         const progress = Math.min(1, Math.max(0, 1 - projectiles.life[index] / totalFlight));
-        const arcHeight = Math.sin(progress * Math.PI) * 75;
+        const arcHeight = Math.sin(progress * Math.PI) * (quality === 'high' ? 75 : 48);
         const renderY = py - arcHeight;
         const impactRadius = projectiles.impactRadius[index];
 

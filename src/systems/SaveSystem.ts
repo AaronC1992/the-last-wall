@@ -1,5 +1,6 @@
 export const SAVE_VERSION = 3;
 export const SAVE_KEY = 'the-last-wall-save';
+export type GraphicsQuality = 'low' | 'medium' | 'high';
 
 export interface SaveData {
   version: number;
@@ -7,7 +8,7 @@ export interface SaveData {
   upgrades: Record<string, number>;
   unlocks: Record<string, boolean>;
   statistics: { totalKills: number; totalRuns: number; totalBuildPoints: number; highestKills: number; highestLifetimeCombo: number };
-  settings: { damageNumbers: boolean; screenShake: boolean; masterVolume: number; sfxVolume: number; musicVolume: number; particleAmount: number };
+  settings: { damageNumbers: boolean; screenShake: boolean; masterVolume: number; sfxVolume: number; musicVolume: number; graphicsQuality: GraphicsQuality };
   completedCampaign: string[];
 }
 
@@ -25,7 +26,7 @@ export class SaveSystem {
         upgrades: parsed.upgrades,
         unlocks: parsed.unlocks ?? {},
         statistics: { totalKills: parsed.statistics?.totalKills ?? 0, totalRuns: parsed.statistics?.totalRuns ?? 0, totalBuildPoints: parsed.statistics?.totalBuildPoints ?? parsed.statistics?.totalGold ?? 0, highestKills: parsed.statistics?.highestKills ?? 0, highestLifetimeCombo: parsed.statistics?.highestLifetimeCombo ?? 0 },
-        settings: { damageNumbers: parsed.settings?.damageNumbers ?? true, screenShake: parsed.settings?.screenShake ?? true, masterVolume: parsed.settings?.masterVolume ?? 0.5, sfxVolume: parsed.settings?.sfxVolume ?? 0.6, musicVolume: parsed.settings?.musicVolume ?? 0.3, particleAmount: parsed.settings?.particleAmount ?? 1 },
+        settings: { damageNumbers: parsed.settings?.damageNumbers ?? true, screenShake: parsed.settings?.screenShake ?? true, masterVolume: parsed.settings?.masterVolume ?? 0.5, sfxVolume: parsed.settings?.sfxVolume ?? 0.6, musicVolume: parsed.settings?.musicVolume ?? 0.3, graphicsQuality: parsed.settings?.graphicsQuality === 'low' || parsed.settings?.graphicsQuality === 'high' ? parsed.settings.graphicsQuality : 'medium' },
         completedCampaign: Array.isArray(parsed.completedCampaign) ? parsed.completedCampaign.filter((id): id is string => typeof id === 'string') : [],
       };
     } catch {
@@ -52,7 +53,7 @@ export class SaveSystem {
       upgrades: {},
       unlocks: {},
       statistics: { totalKills: 0, totalRuns: 0, totalBuildPoints: 0, highestKills: 0, highestLifetimeCombo: 0 },
-      settings: { damageNumbers: true, screenShake: true, masterVolume: 0.5, sfxVolume: 0.6, musicVolume: 0.3, particleAmount: 1 },
+      settings: { damageNumbers: true, screenShake: true, masterVolume: 0.5, sfxVolume: 0.6, musicVolume: 0.3, graphicsQuality: 'medium' },
       completedCampaign: [],
     };
   }

@@ -1,5 +1,6 @@
 import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from './SpatialGrid';
+import type { GraphicsQuality } from './SaveSystem';
 
 export const AbilityId = {
   Meteor: 0,
@@ -208,7 +209,7 @@ export class ChaosSystem {
     }
   }
 
-  render(context: CanvasRenderingContext2D): void {
+  render(context: CanvasRenderingContext2D, quality: GraphicsQuality = 'high'): void {
     const time = this.gameTime;
 
     // Apocalypse sky tint
@@ -455,7 +456,8 @@ export class ChaosSystem {
     // Render Particles
     context.save();
     context.globalCompositeOperation = 'screen';
-    for (let index = 0; index < PARTICLE_CAPACITY; index++) {
+    const particleLimit = quality === 'low' ? 0 : quality === 'medium' ? Math.floor(PARTICLE_CAPACITY * 0.45) : PARTICLE_CAPACITY;
+    for (let index = 0; index < particleLimit; index++) {
       if (this.plife[index] <= 0) continue;
       const alpha = this.plife[index] / this.pmaxLife[index];
       const ptype = this.ptype[index];
@@ -481,7 +483,8 @@ export class ChaosSystem {
     context.restore();
 
     // Render Expanding Effects
-    for (let index = 0; index < EFFECT_CAPACITY; index++) {
+    const effectLimit = quality === 'low' ? 0 : quality === 'medium' ? Math.floor(EFFECT_CAPACITY * 0.55) : EFFECT_CAPACITY;
+    for (let index = 0; index < effectLimit; index++) {
       if (this.effectTime[index] <= 0) continue;
       const progress = 1 - this.effectTime[index] / this.effectMaxTime[index];
       const alpha = 1 - progress;
