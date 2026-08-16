@@ -110,10 +110,16 @@ button { font: inherit; }
 .upgrade-description { color: #b7c2bb; font: 12px/1.5 Verdana, sans-serif; }
 
 /* Abilities */
-.ability-strip { position: absolute; right: 12px; bottom: 112px; display: grid; gap: 5px; }
-.ability-button { min-width: 132px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 10px; border: 1px solid #6b5a3c; background: rgba(30, 25, 17, .86); color: #f2c46d; cursor: pointer; font: 12px Verdana, sans-serif; }
-.ability-button small { color: #e9efe8; font-size: 11px; }
-.ability-button:disabled { border-color: #3a444b; background: rgba(20, 26, 30, .8); color: #71817a; cursor: default; }
+.ability-strip { position: absolute; right: 12px; bottom: 112px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.ability-button { position: relative; min-width: 148px; height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border: 1px solid #7c6842; background: linear-gradient(180deg, rgba(38, 30, 20, 0.92) 0%, rgba(20, 16, 10, 0.95) 100%); color: #f2c46d; cursor: pointer; font: bold 12px Verdana, sans-serif; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 230, 180, 0.15); transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s; }
+.ability-button:hover:not(:disabled) { border-color: #f5a623; box-shadow: 0 0 10px rgba(245, 166, 35, 0.4), inset 0 1px 0 rgba(255, 230, 180, 0.3); transform: translateY(-1px); }
+.ability-button.ready { border-color: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.35); }
+.ability-button:disabled { border-color: #333d42; background: rgba(18, 22, 25, 0.85); color: #64748b; cursor: default; box-shadow: none; transform: none; }
+.ability-info { display: flex; align-items: center; gap: 8px; z-index: 2; }
+.ability-icon { font-size: 15px; line-height: 1; }
+.ability-button small { position: relative; z-index: 2; padding: 2px 6px; border-radius: 3px; background: rgba(10, 12, 15, 0.7); border: 1px solid #475569; color: #f1f5f9; font: bold 10px Verdana, sans-serif; }
+.ability-button:disabled small { border-color: #334155; color: #64748b; background: rgba(10, 12, 15, 0.5); }
+.ability-cd-overlay { position: absolute; top: 0; left: 0; bottom: 0; width: 0%; background: rgba(0, 0, 0, 0.62); z-index: 1; pointer-events: none; transition: width 0.1s linear; }
 
 /* Menus */
 .main-menu, .menu-panel { position: absolute; inset: 0; z-index: 10; display: grid; place-content: center; justify-items: center; gap: 16px; padding: 28px; background: #090d0f; text-align: center; overflow: auto; }

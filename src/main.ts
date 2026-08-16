@@ -194,6 +194,6 @@ new GameLoop((deltaTime) => {
   game.render(fps);
   document.querySelector<HTMLButtonElement>('#in-game-menu-button')!.hidden = game.currentPhase === 'idle';
   debugPanel.update(game.debugState);
-  abilityPanel.update((id) => game.getAbilityCooldown(id));
+  abilityPanel.update((id) => game.getAbilityCooldown(id), (id) => game.getAbilityTotalCooldown(id));
   buildBar.update(game.buildSlotStates(), game.currentPhase === 'build', game.armedKind());
 }).start();

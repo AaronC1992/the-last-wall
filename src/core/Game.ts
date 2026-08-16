@@ -291,6 +291,10 @@ export class Game implements BattlefieldActions {
     return this.chaos.getCooldown(id);
   }
 
+  getAbilityTotalCooldown(id: AbilityIdValue): number {
+    return this.chaos.getTotalCooldown(id);
+  }
+
   get economyState() {
     return { buildPoints: this.buildPoints, wallFull: this.wallHp >= this.wallMaxHp };
   }
