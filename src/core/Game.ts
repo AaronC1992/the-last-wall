@@ -73,6 +73,7 @@ export class Game implements BattlefieldActions {
   private pointerY = 0;
   private pointerOverCanvas = false;
   private showThreatMap = false;
+  private pendingAbility: AbilityIdValue | null = null;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -146,6 +147,7 @@ export class Game implements BattlefieldActions {
       selectedTowerId: this.selectedId,
       hoveredTowerId: this.hoveredId,
       ghost: this.ghostTower(),
+      abilityTarget: this.pendingAbility === null ? null : { x: this.pointerOverCanvas ? this.pointerX : TUNING.logicalWidth / 2, y: this.pointerOverCanvas ? this.pointerY : (TUNING.logicalHeight - TUNING.wallHeight) * 0.42 },
       threatMap: this.threatMap,
       showThreatMap: this.showThreatMap,
     });
@@ -187,6 +189,7 @@ export class Game implements BattlefieldActions {
     this.camera.reset();
     this.selectedId = 0;
     this.hoveredId = 0;
+    this.pendingAbility = null;
     this.mapIntroTimer = 2;
     this.highestCombo = 0;
     this.phase = 'build';
@@ -230,6 +233,7 @@ export class Game implements BattlefieldActions {
     this.selectedId = 0;
     this.hoveredId = 0;
     this.armed = null;
+    this.pendingAbility = null;
     this.kills = 0;
     this.elapsed = 0;
     this.waveDirector.reset();
@@ -272,7 +276,26 @@ export class Game implements BattlefieldActions {
   activateAbility(id: AbilityIdValue): void {
     if (this.phase !== 'battle' || this.gameOver || this.menuOpen) return;
     if (!this.isAbilityUnlocked(id)) return;
-    if (this.chaos.activate(id, this.enemies, this.grid, () => this.registerKill())) this.feedback.triggerShake(id === 4 ? 14 : 7);
+    if (id === 4) {
+      if (this.chaos.activate(id, this.enemies, this.grid, () => this.registerKill())) this.feedback.triggerShake(14);
+      return;
+    }
+    this.pendingAbility = this.pendingAbility === id ? null : id;
+  }
+
+  abilityTargeting(): boolean {
+    return this.pendingAbility !== null;
+  }
+
+  useAbilityAt(x: number, y: number): void {
+    if (this.pendingAbility === null) return;
+    if (x < 0 || y < 0) {
+      this.pendingAbility = null;
+      return;
+    }
+    const ability = this.pendingAbility;
+    this.pendingAbility = null;
+    if (this.chaos.activate(ability, this.enemies, this.grid, () => this.registerKill(), x, y)) this.feedback.triggerShake(7);
   }
 
   isAbilityUnlocked(id: AbilityIdValue): boolean {

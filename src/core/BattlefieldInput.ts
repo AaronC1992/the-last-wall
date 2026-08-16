@@ -14,6 +14,8 @@ export interface BattlefieldActions {
   removeAllTowers(): void;
   setPointer(x: number, y: number, overCanvas: boolean): void;
   setHoveredTower(id: number): void;
+  abilityTargeting(): boolean;
+  useAbilityAt(x: number, y: number): void;
 }
 
 type DragMode = 'none' | 'pan' | 'move' | 'aim';
@@ -70,6 +72,11 @@ export class BattlefieldInput {
     if (!this.actions.isInteractive()) return;
 
     const world = this.camera.screenToWorld(screen.x, screen.y);
+    if (event.button === 0 && this.actions.abilityTargeting()) {
+      this.actions.useAbilityAt(world.x, world.y);
+      event.preventDefault();
+      return;
+    }
     const towerId = this.actions.towerIdAt(world.x, world.y);
 
     if (event.button === 2) {
@@ -153,6 +160,9 @@ export class BattlefieldInput {
     if (event.key === 'r' || event.key === 'R') {
       if (this.actions.isInteractive()) this.actions.removeAllTowers();
     }
-    if (event.key === 'Escape') this.actions.selectTower(0);
+    if (event.key === 'Escape') {
+      this.actions.selectTower(0);
+      this.actions.useAbilityAt(-1, -1);
+    }
   }
 }

@@ -56,6 +56,7 @@ export class ChaosSystem {
   private dragonTime = 0;
   private dragonMaxTime = 3.8;
   private dragonTick = 0;
+  private dragonY = 0;
 
   private deathBeamTime = 0;
   private deathBeamMaxTime = 0.9;
@@ -73,25 +74,26 @@ export class ChaosSystem {
     this.height = height;
   }
 
-  activate(id: AbilityIdValue, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): boolean {
+  activate(id: AbilityIdValue, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, targetX = this.width / 2, targetY = this.height * 0.42): boolean {
     if (this.cooldowns[id] > 0) return false;
     this.cooldowns[id] = COOLDOWNS[id] * this.cooldownMultiplier;
 
     if (id === AbilityId.Meteor) {
-      this.queueTargetedStrike(enemies, grid, 0.65, 120, 160, 0);
+      this.queueTargetedStrike(enemies, grid, 0.65, 120, 160, 0, targetX, targetY);
     } else if (id === AbilityId.Artillery) {
       for (let index = 0; index < 6; index++) {
-        this.queueTargetedStrike(enemies, grid, 0.2 + index * 0.16, 75, 65, 1);
+        this.queueTargetedStrike(enemies, grid, 0.2 + index * 0.16, 75, 65, 1, targetX, targetY);
       }
     } else if (id === AbilityId.Dragon) {
       this.dragonTime = this.dragonMaxTime;
       this.dragonTick = 0;
+      this.dragonY = targetY;
     } else if (id === AbilityId.DeathBeam) {
       this.deathBeamTime = this.deathBeamMaxTime;
-      this.deathBeamX = this.width / 2;
+      this.deathBeamX = targetX;
       this.deathBeamTick = 0;
-      this.damageArea(this.deathBeamX, this.height * 0.42, 60, 180, enemies, grid, onKill, false);
-      this.addEffect(this.deathBeamX, this.height * 0.42, 90, 0.6);
+      this.damageArea(this.deathBeamX, targetY, 60, 180, enemies, grid, onKill, false);
+      this.addEffect(this.deathBeamX, targetY, 90, 0.6);
     } else if (id === AbilityId.Apocalypse) {
       this.apocalypseTime = 3.0;
       this.queueStrike(this.width / 2, this.height * 0.45, 0.8, 220, 300, 2);
@@ -165,7 +167,7 @@ export class ChaosSystem {
       const p = 1 - this.dragonTime / this.dragonMaxTime;
       const dx = p * (this.width + 240) - 120;
       const dy = this.height * 0.28 + Math.sin(p * Math.PI * 4) * 25;
-      const groundY = this.height * 0.52;
+      const groundY = this.dragonY;
 
       // Dragon breath particle stream
       for (let i = 0; i < 3; i++) {
@@ -511,6 +513,7 @@ export class ChaosSystem {
     this.strikeActive.fill(0);
     this.plife.fill(0);
     this.dragonTime = 0;
+    this.dragonY = 0;
     this.deathBeamTime = 0;
     this.apocalypseTime = 0;
     this.cooldownMultiplier = 1;
@@ -520,7 +523,11 @@ export class ChaosSystem {
     this.cooldownMultiplier *= 0.88;
   }
 
-  private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number, kind: number): void {
+  private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number, kind: number, targetX: number, targetY: number): void {
+    if (targetX !== this.width / 2 || targetY !== this.height * 0.42) {
+      this.queueStrike(targetX, targetY, delay, radius, damage, kind);
+      return;
+    }
     const target = grid.findClosestInRange(this.width / 2, this.height * 0.42, 900, enemies);
     if (target >= 0) {
       this.queueStrike(enemies.x[target], enemies.y[target], delay, radius, damage, kind);

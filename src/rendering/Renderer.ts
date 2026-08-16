@@ -20,6 +20,11 @@ export interface GhostTower {
   valid: boolean;
 }
 
+export interface AbilityTarget {
+  x: number;
+  y: number;
+}
+
 export interface RenderState {
   width: number;
   height: number;
@@ -37,6 +42,7 @@ export interface RenderState {
   selectedTowerId: number;
   hoveredTowerId: number;
   ghost: GhostTower | null;
+  abilityTarget: AbilityTarget | null;
   threatMap: ThreatMap;
   showThreatMap: boolean;
 }
@@ -73,6 +79,7 @@ export class Renderer {
     this.renderFireStreams(context, state);
     this.renderLasers(context, state);
     this.renderTowers(context, state);
+    this.renderAbilityTarget(context, state.abilityTarget);
     this.renderGhost(context, state);
 
     context.restore();
@@ -464,6 +471,32 @@ export class Renderer {
         context.stroke();
       }
     }
+  }
+
+  private renderAbilityTarget(context: CanvasRenderingContext2D, target: AbilityTarget | null): void {
+    if (!target) return;
+    const time = Date.now() * 0.006;
+    const pulse = 28 + Math.sin(time * 4) * 3;
+    context.save();
+    context.globalCompositeOperation = 'screen';
+    context.strokeStyle = '#fef08a';
+    context.shadowColor = '#f97316';
+    context.shadowBlur = 14;
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(target.x, target.y, pulse, 0, Math.PI * 2);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(target.x - 42, target.y); context.lineTo(target.x - 12, target.y);
+    context.moveTo(target.x + 12, target.y); context.lineTo(target.x + 42, target.y);
+    context.moveTo(target.x, target.y - 42); context.lineTo(target.x, target.y - 12);
+    context.moveTo(target.x, target.y + 12); context.lineTo(target.x, target.y + 42);
+    context.stroke();
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.arc(target.x, target.y, 3, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
   }
 
   private renderBurningEffect(context: CanvasRenderingContext2D, x: number, y: number, radius: number, index: number): void {
