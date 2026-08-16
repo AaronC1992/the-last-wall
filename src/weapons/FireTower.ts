@@ -10,7 +10,7 @@ export class FireTower extends TowerBase {
   isFiring = false;
 
   constructor(x: number, y: number) {
-    super(x, y, 'cone', 290, 0, 0.7);
+    super(x, y, 'cone', 145, 0, 0.7);
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid): void {
@@ -32,7 +32,7 @@ export class FireTower extends TowerBase {
   reset(): void {
     this.tickTimer = 0;
     this.isFiring = false;
-    this.burnDamage = 18 * this.towerDamageMultiplier; this.burnDuration = 3.5; this.targeting.maxDistance = 290; this.targeting.distance = 290; this.targeting.coneAngle = 0.7;
+    this.burnDamage = 18 * this.towerDamageMultiplier; this.burnDuration = 3.5; this.targeting.maxDistance = 145; this.targeting.distance = 145; this.targeting.coneAngle = 0.7;
     this.wildfire = false;
   }
 
