@@ -98,13 +98,15 @@ export class Renderer {
       const radius = enemies.radius[index];
       const enemyType = enemies.type[index] as EnemyTypeId;
       const isElite = enemies.elite[index] !== 0;
-      const color = enemyType === EnemyType.Grunt ? '#d84b48' : enemyType === EnemyType.Runner ? '#ee9a4d' : enemyType === EnemyType.Brute ? '#a6465d' : enemyType === EnemyType.Armored ? '#8a97a5' : enemyType === EnemyType.Exploder ? '#e5c553' : '#8753b4';
+      const isBurning = enemies.burnTime[index] > 0;
+      const baseColor = enemyType === EnemyType.Grunt ? '#d84b48' : enemyType === EnemyType.Runner ? '#ee9a4d' : enemyType === EnemyType.Brute ? '#a6465d' : enemyType === EnemyType.Armored ? '#8a97a5' : enemyType === EnemyType.Exploder ? '#e5c553' : '#8753b4';
+      const color = isBurning ? '#ffffff' : baseColor;
       context.fillStyle = color;
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
 
-      if (enemies.burnTime[index] > 0) {
+      if (isBurning) {
         this.renderBurningEffect(context, x, y, radius, index);
       }
 
@@ -465,26 +467,45 @@ export class Renderer {
   }
 
   private renderBurningEffect(context: CanvasRenderingContext2D, x: number, y: number, radius: number, index: number): void {
-    const time = Date.now() * 0.008 + index;
-    const auraRadius = radius * (1.3 + Math.sin(time * 3) * 0.15);
+    const time = Date.now() * 0.01 + index;
+    const pulse = Math.sin(time * 6) * 0.2;
+    const auraRadius = radius * (1.7 + pulse);
+
+    context.save();
+    context.globalCompositeOperation = 'screen';
+
+    // Blinding white-hot core right over enemy body
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.arc(x, y, radius * 1.1, 0, Math.PI * 2);
+    context.fill();
+
+    // Intense incandescent heat aura (White -> Gold -> Fire Orange -> Flame Red)
     const fireGlow = context.createRadialGradient(x, y, radius * 0.2, x, y, auraRadius);
-    fireGlow.addColorStop(0, 'rgba(255, 235, 120, 0.9)');
-    fireGlow.addColorStop(0.4, 'rgba(255, 120, 30, 0.7)');
-    fireGlow.addColorStop(0.8, 'rgba(210, 40, 10, 0.4)');
-    fireGlow.addColorStop(1, 'rgba(120, 10, 0, 0)');
+    fireGlow.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    fireGlow.addColorStop(0.3, 'rgba(255, 245, 160, 0.9)');
+    fireGlow.addColorStop(0.6, 'rgba(255, 120, 20, 0.75)');
+    fireGlow.addColorStop(0.85, 'rgba(220, 30, 0, 0.4)');
+    fireGlow.addColorStop(1, 'rgba(120, 0, 0, 0)');
+
     context.fillStyle = fireGlow;
     context.beginPath();
     context.arc(x, y, auraRadius, 0, Math.PI * 2);
     context.fill();
 
-    for (let spark = 0; spark < 3; spark++) {
-      const sparkAngle = time * 2 + spark * 2.1;
-      const sparkDist = radius * (0.4 + ((time + spark) % 1) * 0.9);
+    // Rising white-hot and golden sparks/flames
+    for (let spark = 0; spark < 4; spark++) {
+      const sparkAngle = time * 2.5 + spark * 1.57;
+      const sparkDist = radius * (0.3 + ((time + spark * 0.7) % 1) * 0.8);
       const sparkX = x + Math.cos(sparkAngle) * sparkDist;
-      const sparkY = y - ((time * 12 + spark * 5) % 10) + Math.sin(sparkAngle) * 3;
-      context.fillStyle = spark % 2 === 0 ? '#ffeb3b' : '#ff5722';
-      context.fillRect(sparkX - 1, sparkY - 1, 2.5, 2.5);
+      const sparkY = y - ((time * 16 + spark * 7) % 12) + Math.sin(sparkAngle) * 2;
+      const sparkSize = 1.5 + (spark % 2) * 1.5;
+
+      context.fillStyle = spark % 2 === 0 ? '#ffffff' : '#fef08a';
+      context.fillRect(sparkX - sparkSize / 2, sparkY - sparkSize / 2, sparkSize, sparkSize);
     }
+
+    context.restore();
   }
 
   private renderFireStreams(context: CanvasRenderingContext2D, state: RenderState): void {

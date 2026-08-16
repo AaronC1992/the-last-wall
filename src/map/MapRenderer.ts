@@ -498,12 +498,18 @@ export class MapRenderer {
     context.beginPath(); context.arc(x, y, 11, 0, Math.PI * 2); context.fill();
 
     if (kind === 'fireTower') {
-      context.fillStyle = '#e67e22';
-      context.fillRect(x - 12, y - 4, 6, 2);
-      context.fillRect(x + 6, y + 3, 7, 2);
-      context.fillStyle = '#f39c12';
-      context.fillRect(x - 10, y - 3, 3, 1);
-      context.fillRect(x + 8, y + 3, 3, 1);
+      context.fillStyle = '#b45309';
+      context.fillRect(x - 14, y - 14, 28, 28);
+      context.fillStyle = '#1c1917';
+      context.fillRect(x - 12, y - 12, 24, 24);
+      context.fillStyle = '#ea580c';
+      context.fillRect(x - 8, y - 2, 4, 4);
+      context.fillRect(x + 4, y - 2, 4, 4);
+      context.fillRect(x - 2, y - 8, 4, 4);
+      context.fillRect(x - 2, y + 4, 4, 4);
+      context.fillStyle = '#fef08a';
+      context.fillRect(x - 7, y - 1, 2, 2);
+      context.fillRect(x + 5, y - 1, 2, 2);
     } else if (kind === 'lightningTower') {
       context.fillStyle = '#00d2d3';
       context.fillRect(x - 15, y - 1, 3, 2);
@@ -629,49 +635,82 @@ export class MapRenderer {
   }
 
   private drawPixelFireTower(context: CanvasRenderingContext2D): void {
-    context.fillStyle = '#1c2226';
-    context.fillRect(-13, -13, 5, 26);
-    context.fillRect(8, -13, 5, 26);
-    context.fillStyle = '#404c54';
-    context.fillRect(-13, -13, 1, 26);
-    context.fillRect(8, -13, 1, 26);
+    // Side fuel tanks & pressure canisters
+    context.fillStyle = '#1c1917';
+    context.fillRect(-15, -10, 5, 20);
+    context.fillRect(10, -10, 5, 20);
 
-    context.fillStyle = '#261c16';
-    context.fillRect(-11, -11, 22, 22);
-    context.fillStyle = '#3d2e24';
-    context.fillRect(-12, -12, 24, 3);
-    context.fillRect(-12, 9, 24, 3);
+    context.fillStyle = '#78350f';
+    context.fillRect(-14, -9, 3, 18);
+    context.fillRect(11, -9, 3, 18);
 
-    context.fillStyle = '#423325';
-    context.fillRect(-8, -22, 16, 10);
-    context.fillStyle = '#d4b66e';
-    context.fillRect(-9, -24, 18, 2);
-    context.fillStyle = '#1a1008';
-    context.fillRect(-7, -24, 14, 1);
+    context.fillStyle = '#f97316';
+    context.fillRect(-13, -6, 1, 12);
+    context.fillRect(12, -6, 1, 12);
+    context.fillStyle = '#fef08a';
+    context.fillRect(-13, -2, 1, 4);
+    context.fillRect(12, -2, 1, 4);
 
-    context.fillStyle = '#781c12';
-    context.fillRect(-8, -8, 16, 16);
+    // Fuel conduits connecting tanks to central furnace
+    context.fillStyle = '#b45309';
+    context.fillRect(-10, -2, 4, 4);
+    context.fillRect(6, -2, 4, 4);
 
-    context.fillStyle = '#d35400';
-    context.fillRect(-7, -18, 14, 14);
-    context.fillRect(-5, -24, 10, 8);
+    // Main furnace housing
+    context.fillStyle = '#18181b';
+    context.fillRect(-11, -12, 22, 22);
 
-    context.fillStyle = '#e67e22';
-    context.fillRect(-5, -16, 10, 12);
-    context.fillRect(-3, -27, 6, 12);
+    context.fillStyle = '#27272a';
+    context.fillRect(-10, -11, 20, 20);
 
-    context.fillStyle = '#f1c40f';
-    context.fillRect(-3, -14, 6, 10);
-    context.fillRect(-2, -29, 4, 12);
+    context.fillStyle = '#451a03';
+    context.fillRect(-8, -9, 16, 16);
 
+    // Heat vents / grates on the furnace body
+    context.fillStyle = '#dc2626';
+    context.fillRect(-6, -6, 12, 10);
+    context.fillStyle = '#f97316';
+    context.fillRect(-5, -5, 10, 8);
+    context.fillStyle = '#fef08a';
+    context.fillRect(-3, -3, 6, 4);
+
+    context.fillStyle = '#18181b';
+    context.fillRect(-6, -3, 12, 1);
+    context.fillRect(-6, 1, 12, 1);
+    context.fillRect(-1, -6, 2, 10);
+
+    // Forward Flame Ejector / Flared Nozzle Assembly (-Y direction)
+    context.fillStyle = '#27272a';
+    context.fillRect(-8, -24, 16, 13);
+
+    context.fillStyle = '#78350f';
+    context.fillRect(-7, -22, 14, 3);
+    context.fillRect(-7, -15, 14, 2);
+
+    context.fillStyle = '#1c1917';
+    context.fillRect(-10, -31, 20, 7);
+
+    context.fillStyle = '#92400e';
+    context.fillRect(-10, -31, 20, 2);
+    context.fillRect(-10, -31, 2, 7);
+    context.fillRect(8, -31, 2, 7);
+
+    // Internal Incendiary Chamber & Muzzle Igniter
+    context.fillStyle = '#b91c1c';
+    context.fillRect(-7, -29, 14, 4);
+    context.fillStyle = '#ea580c';
+    context.fillRect(-5, -30, 10, 4);
+    context.fillStyle = '#facc15';
+    context.fillRect(-3, -31, 6, 4);
     context.fillStyle = '#ffffff';
-    context.fillRect(-1, -12, 2, 8);
-    context.fillRect(-1, -26, 2, 6);
+    context.fillRect(-1, -31, 2, 3);
 
-    context.fillStyle = '#f39c12';
-    context.fillRect(-4, -32, 2, 2);
-    context.fillRect(3, -35, 2, 2);
-    context.fillRect(-1, -38, 2, 2);
+    // Pilot flame embers floating off nozzle
+    context.fillStyle = '#f97316';
+    context.fillRect(-4, -35, 2, 2);
+    context.fillRect(3, -34, 2, 2);
+    context.fillStyle = '#fef08a';
+    context.fillRect(-1, -37, 2, 2);
   }
 
   private drawPixelLightningTower(context: CanvasRenderingContext2D): void {
