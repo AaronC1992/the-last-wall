@@ -25,6 +25,7 @@ export class MenuViews {
   private readonly decals = document.querySelector<HTMLInputElement>('#setting-decals')!;
   private readonly towerEffects = document.querySelector<HTMLInputElement>('#setting-tower-effects')!;
   private readonly abilityEffects = document.querySelector<HTMLInputElement>('#setting-ability-effects')!;
+  private readonly statusEffects = document.querySelector<HTMLInputElement>('#setting-status-effects')!;
   private readonly gateTorches = document.querySelector<HTMLInputElement>('#setting-gate-torches')!;
   private readonly enemyDetail = document.querySelector<HTMLInputElement>('#setting-enemy-detail')!;
   private readonly campaign = document.querySelector<HTMLElement>('#campaign-menu')!;
@@ -67,7 +68,7 @@ export class MenuViews {
     this.shake.addEventListener('change', () => this.saveSettings());
     this.damageNumbers.addEventListener('change', () => this.saveSettings());
     this.graphics.addEventListener('change', () => this.saveGraphicsSettings());
-    for (const input of [this.graphicsShake, this.graphicsDamageNumbers, this.decals, this.towerEffects, this.abilityEffects, this.gateTorches, this.enemyDetail]) input.addEventListener('change', () => this.saveGraphicsSettings());
+    for (const input of [this.graphicsShake, this.graphicsDamageNumbers, this.decals, this.towerEffects, this.abilityEffects, this.statusEffects, this.gateTorches, this.enemyDetail]) input.addEventListener('change', () => this.saveGraphicsSettings());
     document.querySelector<HTMLButtonElement>('#graphics-low')!.addEventListener('click', () => this.setGraphicsPreset('low'));
     document.querySelector<HTMLButtonElement>('#graphics-high')!.addEventListener('click', () => this.setGraphicsPreset('high'));
     document.querySelector<HTMLButtonElement>('#settings-reset')!.addEventListener('click', () => {
@@ -125,6 +126,7 @@ export class MenuViews {
     this.decals.checked = settings.showDecals;
     this.towerEffects.checked = settings.showTowerEffects;
     this.abilityEffects.checked = settings.showAbilityEffects;
+    this.statusEffects.checked = settings.showStatusEffects;
     this.gateTorches.checked = settings.animateGateTorches;
     this.enemyDetail.checked = settings.detailedEnemies;
     this.graphicsMenu.hidden = false;
@@ -182,7 +184,7 @@ export class MenuViews {
     this.graphicsShake.checked = this.graphicsShake.checked;
     this.shake.checked = this.graphicsShake.checked;
     this.damageNumbers.checked = this.graphicsDamageNumbers.checked;
-    this.progression.updateSettings({ graphicsQuality: this.graphics.value as 'low' | 'medium' | 'high', screenShake: this.graphicsShake.checked, damageNumbers: this.graphicsDamageNumbers.checked, showDecals: this.decals.checked, showTowerEffects: this.towerEffects.checked, showAbilityEffects: this.abilityEffects.checked, animateGateTorches: this.gateTorches.checked, detailedEnemies: this.enemyDetail.checked });
+    this.progression.updateSettings({ graphicsQuality: this.graphics.value as 'low' | 'medium' | 'high', screenShake: this.graphicsShake.checked, damageNumbers: this.graphicsDamageNumbers.checked, showDecals: this.decals.checked, showTowerEffects: this.towerEffects.checked, showAbilityEffects: this.abilityEffects.checked, showStatusEffects: this.statusEffects.checked, animateGateTorches: this.gateTorches.checked, detailedEnemies: this.enemyDetail.checked });
   }
 
   private setGraphicsPreset(preset: 'low' | 'high'): void {
@@ -193,6 +195,7 @@ export class MenuViews {
     this.decals.checked = enabled;
     this.towerEffects.checked = enabled;
     this.abilityEffects.checked = enabled;
+    this.statusEffects.checked = enabled;
     this.gateTorches.checked = enabled;
     this.enemyDetail.checked = enabled;
     this.saveGraphicsSettings();

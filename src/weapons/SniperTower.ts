@@ -44,6 +44,7 @@ export class SniperTower extends TowerBase {
     if (id === 'sniperSpeed') this.cooldownDuration *= 0.8;
     if (id === 'sniperRange') { this.rangeValue *= 1.2; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; }
     if (id === 'sniperPiercing') this.penetration++;
+    if (id === 'deadeyeProtocol') { this.damage *= 2; this.penetration += 5; this.cooldownDuration *= 0.7; }
   }
 
   private findPriorityTarget(enemies: EnemyManager, grid: SpatialGrid): number {

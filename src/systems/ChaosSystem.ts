@@ -23,6 +23,9 @@ export class ChaosSystem {
   private readonly cooldowns = new Float32Array(5);
   private cooldownMultiplier = 1;
   private damageMultiplier = 1;
+  private readonly abilityDamageMultiplier = new Float32Array([1, 1, 1, 1, 1]);
+  private readonly abilityRadiusMultiplier = new Float32Array([1, 1, 1, 1, 1]);
+  private readonly abilityCooldownMultiplier = new Float32Array([1, 1, 1, 1, 1]);
   private gameTime = 0;
 
   // Effects (expanding shockwave rings)
@@ -60,11 +63,15 @@ export class ChaosSystem {
   private dragonTick = 0;
   private dragonY = 0;
   private dragonFlightY = 0;
+  private dragonDamageScale = 1;
+  private dragonRadiusScale = 1;
 
   private deathBeamTime = 0;
   private deathBeamMaxTime = 0.9;
   private deathBeamX = 0;
   private deathBeamTick = 0;
+  private deathBeamDamageScale = 1;
+  private deathBeamRadiusScale = 1;
 
   private apocalypseTime = 0;
 
@@ -84,32 +91,38 @@ export class ChaosSystem {
 
   activate(id: AbilityIdValue, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, targetX = this.width / 2, targetY = this.height * 0.42): boolean {
     if (this.cooldowns[id] > 0) return false;
-    this.cooldowns[id] = COOLDOWNS[id] * this.cooldownMultiplier;
+    this.cooldowns[id] = COOLDOWNS[id] * this.cooldownMultiplier * this.abilityCooldownMultiplier[id];
+    const damageScale = this.abilityDamageMultiplier[id];
+    const radiusScale = this.abilityRadiusMultiplier[id];
 
     if (id === AbilityId.Meteor) {
-      this.queueTargetedStrike(enemies, grid, 0.65, 120, 160, 0, targetX, targetY);
+      this.queueTargetedStrike(enemies, grid, 0.65, 120 * radiusScale, 160 * damageScale, 0, targetX, targetY);
     } else if (id === AbilityId.Artillery) {
       for (let index = 0; index < 6; index++) {
-        this.queueTargetedStrike(enemies, grid, 0.2 + index * 0.16, 75, 65, 1, targetX, targetY);
+        this.queueTargetedStrike(enemies, grid, 0.2 + index * 0.16, 75 * radiusScale, 65 * damageScale, 1, targetX, targetY);
       }
     } else if (id === AbilityId.Dragon) {
       this.dragonTime = this.dragonMaxTime;
       this.dragonTick = 0;
       this.dragonY = targetY;
+      this.dragonDamageScale = damageScale;
+      this.dragonRadiusScale = radiusScale;
       this.dragonFlightY = Math.max(70, Math.min(this.height - 120, targetY - 110));
     } else if (id === AbilityId.DeathBeam) {
       this.deathBeamTime = this.deathBeamMaxTime;
       this.deathBeamX = targetX;
+      this.deathBeamDamageScale = damageScale;
+      this.deathBeamRadiusScale = radiusScale;
       this.deathBeamTick = 0;
-      this.damageArea(this.deathBeamX, targetY, 60, 180, enemies, grid, onKill, false);
-      this.addEffect(this.deathBeamX, targetY, 90, 0.6);
+      this.damageArea(this.deathBeamX, targetY, 60 * radiusScale, 180 * damageScale, enemies, grid, onKill, false);
+      this.addEffect(this.deathBeamX, targetY, 90 * radiusScale, 0.6);
     } else if (id === AbilityId.Apocalypse) {
       this.apocalypseTime = 3.0;
-      this.queueStrike(this.width / 2, this.height * 0.45, 0.8, 220, 300, 2);
-      this.queueStrike(this.width * 0.25, this.height * 0.35, 1.2, 150, 180, 2);
-      this.queueStrike(this.width * 0.75, this.height * 0.35, 1.5, 150, 180, 2);
-      this.queueStrike(this.width * 0.38, this.height * 0.55, 1.9, 160, 200, 2);
-      this.queueStrike(this.width * 0.62, this.height * 0.55, 2.2, 160, 200, 2);
+      this.queueStrike(this.width / 2, this.height * 0.45, 0.8, 220 * radiusScale, 300 * damageScale, 2);
+      this.queueStrike(this.width * 0.25, this.height * 0.35, 1.2, 150 * radiusScale, 180 * damageScale, 2);
+      this.queueStrike(this.width * 0.75, this.height * 0.35, 1.5, 150 * radiusScale, 180 * damageScale, 2);
+      this.queueStrike(this.width * 0.38, this.height * 0.55, 1.9, 160 * radiusScale, 200 * damageScale, 2);
+      this.queueStrike(this.width * 0.62, this.height * 0.55, 2.2, 160 * radiusScale, 200 * damageScale, 2);
     }
 
     return true;
@@ -186,7 +199,7 @@ export class ChaosSystem {
       }
 
       if (this.dragonTick <= 0) {
-        this.damageArea(dx + 70, groundY, 110, 36, enemies, grid, onKill, false);
+        this.damageArea(dx + 70, groundY, 110 * this.dragonRadiusScale, 36 * this.dragonDamageScale, enemies, grid, onKill, false);
         this.dragonTick = 0.08;
       }
     }
@@ -203,7 +216,7 @@ export class ChaosSystem {
       }
 
       if (this.deathBeamTick <= 0) {
-        this.damageArea(this.deathBeamX, this.height * 0.42, 65, 30, enemies, grid, onKill, false);
+        this.damageArea(this.deathBeamX, this.height * 0.42, 65 * this.deathBeamRadiusScale, 30 * this.deathBeamDamageScale, enemies, grid, onKill, false);
         this.deathBeamTick = 0.08;
       }
     }
@@ -509,7 +522,7 @@ export class ChaosSystem {
   }
 
   getTotalCooldown(id: AbilityIdValue): number {
-    return COOLDOWNS[id] * this.cooldownMultiplier;
+    return COOLDOWNS[id] * this.cooldownMultiplier * this.abilityCooldownMultiplier[id];
   }
 
   get activeEffects(): number {
@@ -530,6 +543,13 @@ export class ChaosSystem {
     this.apocalypseTime = 0;
     this.cooldownMultiplier = 1;
     this.damageMultiplier = 1;
+    this.abilityDamageMultiplier.fill(1);
+    this.abilityRadiusMultiplier.fill(1);
+    this.abilityCooldownMultiplier.fill(1);
+    this.dragonDamageScale = 1;
+    this.dragonRadiusScale = 1;
+    this.deathBeamDamageScale = 1;
+    this.deathBeamRadiusScale = 1;
   }
 
   applyCooldownHaste(): void {
@@ -542,6 +562,19 @@ export class ChaosSystem {
 
   setAbilityPower(multiplier: number): void {
     this.damageMultiplier = multiplier;
+  }
+
+  applyUpgrade(id: string): void {
+    const ability = id.startsWith('meteor') ? AbilityId.Meteor
+      : id.startsWith('artillery') ? AbilityId.Artillery
+      : id.startsWith('dragon') ? AbilityId.Dragon
+      : id.startsWith('deathBeam') ? AbilityId.DeathBeam
+      : id.startsWith('apocalypse') ? AbilityId.Apocalypse
+      : -1;
+    if (ability < 0) return;
+    if (id.endsWith('Damage')) this.abilityDamageMultiplier[ability] *= 1.25;
+    if (id.endsWith('Radius')) this.abilityRadiusMultiplier[ability] *= 1.2;
+    if (id.endsWith('Cooldown')) this.abilityCooldownMultiplier[ability] *= 0.85;
   }
 
   private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number, kind: number, targetX: number, targetY: number): void {

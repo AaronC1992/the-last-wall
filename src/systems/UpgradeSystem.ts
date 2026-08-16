@@ -63,7 +63,7 @@ export class UpgradeSystem {
     const pool: UpgradeDefinition[] = [];
     for (let index = 0; index < UPGRADE_DEFINITIONS.length; index++) {
       const upgrade = UPGRADE_DEFINITIONS[index];
-      if (!EVOLUTION_IDS.has(upgrade.id) && this.targetAvailable(upgrade.target) && this.rarityAvailable(upgrade.rarity)) pool.push(upgrade);
+      if (this.targetAvailable(upgrade.target) && this.rarityAvailable(upgrade.rarity) && (!EVOLUTION_IDS.has(upgrade.id) || !this.hasEvolution(upgrade.id))) pool.push(upgrade);
     }
     const choices: UpgradeDefinition[] = [];
     while (choices.length < 3 && pool.length > 0) {

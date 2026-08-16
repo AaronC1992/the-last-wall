@@ -14,7 +14,7 @@ import { WaveDirector } from '../systems/WaveDirector';
 import { EnemyType } from '../enemies/EnemyTypes';
 import { MetaProgression } from '../progression/MetaProgression';
 import type { TokenBreakdown } from '../progression/MetaProgression';
-import { ChaosSystem } from '../systems/ChaosSystem';
+import { AbilityId, ChaosSystem } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
@@ -29,6 +29,8 @@ import { TerrainGrid } from '../map/TerrainGrid';
 import { FlowField } from '../map/FlowField';
 import { CongestionGrid } from '../systems/CongestionGrid';
 import { ThreatMap } from '../systems/ThreatMap';
+import { UpgradeSystem } from '../systems/UpgradeSystem';
+import type { UpgradeDefinition } from '../systems/UpgradeDefinitions';
 
 export type GamePhase = 'idle' | 'build' | 'battle';
 
@@ -44,6 +46,7 @@ export class Game implements BattlefieldActions {
   private readonly progression: MetaProgression;
   private readonly chaos: ChaosSystem;
   private readonly feedback = new FeedbackSystem();
+  private readonly upgrades = new UpgradeSystem();
   private map: MapDefinition;
   private terrain: TerrainGrid;
   private flowField: FlowField;
@@ -52,6 +55,7 @@ export class Game implements BattlefieldActions {
   private threatMap: ThreatMap;
   private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.worldWidth, TUNING.worldHeight);
   private readonly onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void;
+  private readonly onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void;
   private wallHp: number = TUNING.wallMaxHp;
   private buildPoints = 0;
   private kills = 0;
@@ -81,10 +85,12 @@ export class Game implements BattlefieldActions {
     hud: HUD,
     progression: MetaProgression,
     onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void,
+    onUpgradeChoices: (choices: readonly UpgradeDefinition[] | null) => void = () => undefined,
   ) {
     this.canvas = canvas;
     this.hud = hud;
     this.onRunEnd = onRunEnd;
+    this.onUpgradeChoices = onUpgradeChoices;
     this.progression = progression;
     this.map = DEFAULT_CAMPAIGN_MAP;
     this.terrain = new TerrainGrid(this.map);
@@ -95,6 +101,8 @@ export class Game implements BattlefieldActions {
     this.renderer = new Renderer(canvas.getContext('2d')!, this.map);
     this.weapons = new WeaponManager(TUNING.worldHeight - TUNING.wallHeight, TUNING.worldWidth, this.terrain);
     this.chaos = new ChaosSystem(TUNING.worldWidth, TUNING.worldHeight - TUNING.wallHeight);
+    this.upgrades.setTargetAvailability((target) => target === 'general' || this.weapons.isTargetBuilt(target) || this.isUpgradeAbilityAvailable(target));
+    this.upgrades.setRarityAvailability((rarity) => this.progression.isRarityUnlocked(rarity));
     this.applyPermanentBonuses();
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -151,6 +159,7 @@ export class Game implements BattlefieldActions {
       showAbilityEffects: this.progression.settings.showAbilityEffects,
       animateGateTorches: this.progression.settings.animateGateTorches,
       detailedEnemies: this.progression.settings.detailedEnemies,
+      showStatusEffects: this.progression.settings.showStatusEffects,
       camera: this.camera,
       buildPhase: this.phase === 'build',
       selectedTowerId: this.selectedId,
@@ -193,6 +202,8 @@ export class Game implements BattlefieldActions {
     this.waveDirector.reset();
     this.mapSpawns.reset();
     this.chaos.reset();
+    this.upgrades.reset();
+    this.onUpgradeChoices(null);
     this.feedback.reset();
     this.renderer.clearDecals();
     this.camera.reset();
@@ -252,6 +263,8 @@ export class Game implements BattlefieldActions {
     this.elapsed = 0;
     this.waveDirector.reset();
     this.chaos.reset();
+    this.upgrades.reset();
+    this.onUpgradeChoices(null);
     this.feedback.reset();
     this.renderer.clearDecals();
     this.camera.reset();
@@ -337,6 +350,17 @@ export class Game implements BattlefieldActions {
 
   getAbilityTotalCooldown(id: AbilityIdValue): number {
     return this.chaos.getTotalCooldown(id);
+  }
+
+  chooseUpgrade(index: number): void {
+    const choice = this.upgrades.choose(index);
+    if (!choice) return;
+    this.weapons.applyUpgrade(choice.id);
+    this.chaos.applyUpgrade(choice.id);
+    if (choice.id === 'repair') this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 20);
+    if (choice.id === 'wallMax') { this.wallMaxHp += 20; this.wallHp = Math.min(this.wallMaxHp, this.wallHp + 20); }
+    if (choice.id === 'goldBonus') this.buildPoints += 40;
+    this.onUpgradeChoices(null);
   }
 
   get economyState() {
@@ -527,7 +551,15 @@ export class Game implements BattlefieldActions {
     this.renderer.addDeathDecal(this.enemies.lastDeathX, this.enemies.lastDeathY);
     this.feedback.registerKill(this.kills);
     this.highestCombo = Math.max(this.highestCombo, this.feedback.currentCombo);
-    // Removed kill rewards
+    if (this.upgrades.registerKill(this.kills)) this.onUpgradeChoices(this.upgrades.takePendingChoices());
+  }
+
+  private isUpgradeAbilityAvailable(target: UpgradeDefinition['target']): boolean {
+    if (target === 'meteor') return this.isAbilityUnlocked(AbilityId.Meteor);
+    if (target === 'artillery') return this.isAbilityUnlocked(AbilityId.Artillery);
+    if (target === 'dragon') return this.isAbilityUnlocked(AbilityId.Dragon);
+    if (target === 'deathBeam') return this.isAbilityUnlocked(AbilityId.DeathBeam);
+    return target === 'apocalypse' && this.isAbilityUnlocked(AbilityId.Apocalypse);
   }
 
   private damageArea(x: number, y: number, damage: number, radius: number): void {

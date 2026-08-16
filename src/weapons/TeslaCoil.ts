@@ -57,9 +57,11 @@ export class TeslaCoil extends TowerBase {
     this.pulseTimer = (0.16 + Math.random() * 0.24) / this.towerSpeedMultiplier;
     const pulseDamage = (this.damage / 0.6) * pulseLength;
     for (let index = 0; index < chainCount; index++) {
-      const reward = enemies.damage(grid.resultAt(index), pulseDamage);
+      const enemyIndex = grid.resultAt(index);
+      enemies.electrify(enemyIndex, 0.16);
+      const reward = enemies.damage(enemyIndex, pulseDamage);
       if (reward > 0) onKill(reward);
-      else if (this.shock && Math.random() < 0.18) enemies.stun(grid.resultAt(index), 0.3);
+      else if (this.shock && Math.random() < 0.18) enemies.stun(enemyIndex, 0.3);
     }
   }
 
@@ -86,6 +88,7 @@ export class TeslaCoil extends TowerBase {
     if (id === 'teslaChains') this.chains += 2;
     if (id === 'teslaReach') { this.targeting.radius *= 1.2; this.chainRange *= 1.2; }
     if (id === 'teslaShock') this.shock = true;
+    if (id === 'plasmaStorm') { this.chains += 8; this.chainRange *= 1.4; this.damage *= 1.6; this.shock = true; }
   }
 
   setAim(_x: number, _y: number): void {

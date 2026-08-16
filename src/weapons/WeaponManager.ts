@@ -195,7 +195,7 @@ export class WeaponManager {
     return this.countOf(id) > 0;
   }
 
-  isTargetBuilt(target: 'ballista' | 'cannon' | 'fire' | 'lightning' | 'mortar' | 'tesla' | 'sniper' | 'general'): boolean {
+  isTargetBuilt(target: string): boolean {
     if (target === 'general') return true;
     if (target === 'ballista') return this.countOf('ballista') > 0;
     if (target === 'cannon') return this.countOf('cannon') > 0;
@@ -203,7 +203,8 @@ export class WeaponManager {
     if (target === 'mortar') return this.countOf('mortar') > 0;
     if (target === 'tesla') return this.countOf('teslaCoil') > 0;
     if (target === 'sniper') return this.countOf('sniperTower') > 0;
-    return this.countOf('lightningTower') > 0;
+    if (target === 'lightning') return this.countOf('lightningTower') > 0;
+    return false;
   }
 
   handleBurnDeath(index: number, enemies: EnemyManager, grid: SpatialGrid): void {
@@ -276,15 +277,15 @@ export class WeaponManager {
       if (kind === 'lightningTower') (instance as LightningTower).applyUpgrade(upgrade);
       return;
     }
-    if (upgrade.startsWith('mortar') || upgrade === 'doubleShot') {
+    if (upgrade.startsWith('mortar') || upgrade === 'doubleShot' || upgrade === 'ironRain') {
       if (kind === 'mortar') (instance as Mortar).applyUpgrade(upgrade);
       return;
     }
-    if (upgrade.startsWith('tesla')) {
+    if (upgrade.startsWith('tesla') || upgrade === 'plasmaStorm') {
       if (kind === 'teslaCoil') (instance as TeslaCoil).applyUpgrade(upgrade);
       return;
     }
-    if (upgrade.startsWith('sniper')) {
+    if (upgrade.startsWith('sniper') || upgrade === 'deadeyeProtocol') {
       if (kind === 'sniperTower') (instance as SniperTower).applyUpgrade(upgrade);
       return;
     }

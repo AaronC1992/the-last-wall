@@ -9,6 +9,7 @@ export class Mortar extends TowerBase {
   private damage = 42;
   private blastRadius = 82;
   private flightTime = 0.72;
+  private barrageCount = 1;
 
   constructor(x: number, y: number) {
     super(x, y, 'area', 460, 82);
@@ -18,7 +19,7 @@ export class Mortar extends TowerBase {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0 || !this.hasAim) return;
     const scatter = this.targeting.radius * 0.18;
-    projectiles.fireMortar(this.x, this.y, this.targeting.targetX + (Math.random() - 0.5) * scatter, this.targeting.targetY + (Math.random() - 0.5) * scatter, this.damage, this.flightTime, this.blastRadius);
+    for (let index = 0; index < this.barrageCount; index++) projectiles.fireMortar(this.x, this.y, this.targeting.targetX + (Math.random() - 0.5) * scatter, this.targeting.targetY + (Math.random() - 0.5) * scatter, this.damage * (index === 0 ? 1 : 0.7), this.flightTime, this.blastRadius);
     this.cooldown = this.cooldownDuration;
   }
 
@@ -28,6 +29,7 @@ export class Mortar extends TowerBase {
     this.damage = 42 * this.towerDamageMultiplier;
     this.blastRadius = 82;
     this.flightTime = 0.72;
+    this.barrageCount = 1;
     this.targeting.maxDistance = 460;
     this.targeting.distance = 460;
     this.targeting.radius = 82;
@@ -39,5 +41,6 @@ export class Mortar extends TowerBase {
     if (id === 'mortarRadius') { this.blastRadius *= 1.2; this.targeting.radius *= 1.2; }
     if (id === 'mortarRange') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; }
     if (id === 'doubleShot') this.cooldownDuration *= 0.65;
+    if (id === 'ironRain') { this.barrageCount += 3; this.blastRadius *= 1.2; }
   }
 }

@@ -28,6 +28,7 @@ export class EnemyManager {
   readonly burnTime = new Float32Array(this.capacity);
   readonly burnDps = new Float32Array(this.capacity);
   readonly stunTime = new Float32Array(this.capacity);
+  readonly electrifiedTime = new Float32Array(this.capacity);
   readonly type = new Uint8Array(this.capacity);
   readonly elite = new Uint8Array(this.capacity);
   readonly active = new Uint8Array(this.capacity);
@@ -76,6 +77,7 @@ export class EnemyManager {
         if (reward > 0) { onDeath(reward, index, true); continue; }
       }
       this.stunTime[index] = Math.max(0, this.stunTime[index] - deltaTime);
+      this.electrifiedTime[index] = Math.max(0, this.electrifiedTime[index] - deltaTime);
       if (this.stunTime[index] > 0) continue;
       if (flowField && terrain) this.updateOnTerrain(index, deltaTime, onWallHit, flowField, terrain, congestion, threat, spatial);
       else this.updateLegacy(index, deltaTime, wallY, onWallHit, width);
@@ -104,12 +106,17 @@ export class EnemyManager {
     this.stunTime[index] = Math.max(this.stunTime[index], duration);
   }
 
+  electrify(index: number, duration: number): void {
+    if (index < 0 || index >= this.count || this.active[index] === 0) return;
+    this.electrifiedTime[index] = Math.max(this.electrifiedTime[index], duration);
+  }
+
   compact(): void {
     let writeIndex = 0;
     for (let readIndex = 0; readIndex < this.count; readIndex++) {
       if (this.active[readIndex] === 0) continue;
       if (writeIndex !== readIndex) {
-        this.x[writeIndex] = this.x[readIndex]; this.y[writeIndex] = this.y[readIndex]; this.hp[writeIndex] = this.hp[readIndex]; this.speed[writeIndex] = this.speed[readIndex]; this.drift[writeIndex] = this.drift[readIndex]; this.velocityX[writeIndex] = this.velocityX[readIndex]; this.velocityY[writeIndex] = this.velocityY[readIndex]; this.targetX[writeIndex] = this.targetX[readIndex]; this.maxHp[writeIndex] = this.maxHp[readIndex]; this.armor[writeIndex] = this.armor[readIndex]; this.radius[writeIndex] = this.radius[readIndex]; this.reward[writeIndex] = this.reward[readIndex]; this.wallDamage[writeIndex] = this.wallDamage[readIndex]; this.burnTime[writeIndex] = this.burnTime[readIndex]; this.burnDps[writeIndex] = this.burnDps[readIndex]; this.stunTime[writeIndex] = this.stunTime[readIndex]; this.type[writeIndex] = this.type[readIndex]; this.elite[writeIndex] = this.elite[readIndex]; this.active[writeIndex] = 1; this.previousCost[writeIndex] = this.previousCost[readIndex]; this.stuckTimer[writeIndex] = this.stuckTimer[readIndex]; this.routeCommit[writeIndex] = this.routeCommit[readIndex]; this.routeBias[writeIndex] = this.routeBias[readIndex]; this.lastX[writeIndex] = this.lastX[readIndex]; this.lastY[writeIndex] = this.lastY[readIndex];
+        this.x[writeIndex] = this.x[readIndex]; this.y[writeIndex] = this.y[readIndex]; this.hp[writeIndex] = this.hp[readIndex]; this.speed[writeIndex] = this.speed[readIndex]; this.drift[writeIndex] = this.drift[readIndex]; this.velocityX[writeIndex] = this.velocityX[readIndex]; this.velocityY[writeIndex] = this.velocityY[readIndex]; this.targetX[writeIndex] = this.targetX[readIndex]; this.maxHp[writeIndex] = this.maxHp[readIndex]; this.armor[writeIndex] = this.armor[readIndex]; this.radius[writeIndex] = this.radius[readIndex]; this.reward[writeIndex] = this.reward[readIndex]; this.wallDamage[writeIndex] = this.wallDamage[readIndex]; this.burnTime[writeIndex] = this.burnTime[readIndex]; this.burnDps[writeIndex] = this.burnDps[readIndex]; this.stunTime[writeIndex] = this.stunTime[readIndex]; this.electrifiedTime[writeIndex] = this.electrifiedTime[readIndex]; this.type[writeIndex] = this.type[readIndex]; this.elite[writeIndex] = this.elite[readIndex]; this.active[writeIndex] = 1; this.previousCost[writeIndex] = this.previousCost[readIndex]; this.stuckTimer[writeIndex] = this.stuckTimer[readIndex]; this.routeCommit[writeIndex] = this.routeCommit[readIndex]; this.routeBias[writeIndex] = this.routeBias[readIndex]; this.lastX[writeIndex] = this.lastX[readIndex]; this.lastY[writeIndex] = this.lastY[readIndex];
       }
       writeIndex++;
     }

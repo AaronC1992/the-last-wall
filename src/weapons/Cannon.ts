@@ -26,7 +26,11 @@ export class Cannon extends TowerBase {
     if (!this.hasAim) return;
     const direction = this.direction();
     projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, this.targeting.distance, this.radius);
-    if (this.clusterShells || this.carpetBombardment) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.6, 340, Math.max(30, this.targeting.distance - 42), this.radius * 0.62);
+    if (this.clusterShells) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.6, 340, Math.max(30, this.targeting.distance - 42), this.radius * 0.62);
+    if (this.carpetBombardment) {
+      projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.65, 340, Math.max(30, this.targeting.distance - 84), this.radius * 0.7);
+      projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.65, 340, Math.min(this.targeting.maxDistance, this.targeting.distance + 52), this.radius * 0.7);
+    }
     if (this.doubleBarrel) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, Math.min(620, this.targeting.distance + 26), this.radius);
     this.cooldown = this.cooldownDuration;
   }

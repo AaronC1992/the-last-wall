@@ -44,6 +44,7 @@ export interface RenderState {
   showAbilityEffects: boolean;
   animateGateTorches: boolean;
   detailedEnemies: boolean;
+  showStatusEffects: boolean;
   camera: Camera;
   buildPhase: boolean;
   selectedTowerId: number;
@@ -79,7 +80,7 @@ export class Renderer {
     if (state.showThreatMap && state.graphicsQuality === 'high') state.threatMap.render(context);
     if (state.showDecals && state.graphicsQuality === 'high') this.decals.render(context);
     else if (state.showDecals && state.graphicsQuality === 'medium') this.decals.render(context, 20);
-    this.renderEnemies(context, state.enemies, state.graphicsQuality, state.detailedEnemies);
+    this.renderEnemies(context, state.enemies, state.graphicsQuality, state.detailedEnemies, state.showStatusEffects);
     this.renderProjectiles(context, state.projectiles, state.graphicsQuality);
     state.chaos.render(context, state.graphicsQuality, state.showAbilityEffects);
     state.feedback.render(context, state.damageNumbers);
@@ -105,7 +106,7 @@ export class Renderer {
     this.decals.clear();
   }
 
-  private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality, detailed: boolean): void {
+  private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality, detailed: boolean, showStatusEffects: boolean): void {
     if (quality !== 'high' || !detailed) {
       this.renderEfficientEnemies(context, enemies, quality);
       return;
@@ -128,6 +129,8 @@ export class Renderer {
       if (isBurning) {
         this.renderBurningEffect(context, x, y, radius, index);
       }
+      if (showStatusEffects && enemies.electrifiedTime[index] > 0) this.renderElectrifiedEffect(context, x, y, radius, index);
+      if (showStatusEffects && enemies.stunTime[index] > 0) this.renderStunnedEffect(context, x, y, radius, index);
 
       context.fillStyle = 'rgba(255, 255, 255, 0.28)';
       context.beginPath();
@@ -579,6 +582,50 @@ export class Renderer {
     context.restore();
   }
 
+  private renderElectrifiedEffect(context: CanvasRenderingContext2D, x: number, y: number, radius: number, index: number): void {
+    const time = Date.now() * 0.018 + index * 3.7;
+    context.save();
+    context.globalCompositeOperation = 'screen';
+    context.strokeStyle = '#7dd3fc';
+    context.shadowColor = '#38bdf8';
+    context.shadowBlur = 8;
+    context.lineWidth = 1.5;
+
+    for (let arc = 0; arc < 3; arc++) {
+      const startAngle = time + arc * (Math.PI * 2 / 3);
+      const endAngle = startAngle + 1.7;
+      const startX = x + Math.cos(startAngle) * radius * 0.45;
+      const startY = y + Math.sin(startAngle) * radius * 0.45;
+      const endX = x + Math.cos(endAngle) * radius * 1.35;
+      const endY = y + Math.sin(endAngle) * radius * 1.35;
+      const midX = (startX + endX) * 0.5 + Math.sin(time * 2 + arc) * radius * 0.55;
+      const midY = (startY + endY) * 0.5 + Math.cos(time * 3 + arc) * radius * 0.55;
+      context.beginPath();
+      context.moveTo(startX, startY);
+      context.lineTo(midX, midY);
+      context.lineTo(endX, endY);
+      context.stroke();
+    }
+    context.restore();
+  }
+
+  private renderStunnedEffect(context: CanvasRenderingContext2D, x: number, y: number, radius: number, index: number): void {
+    const time = Date.now() * 0.004 + index;
+    context.save();
+    context.fillStyle = '#fef08a';
+    context.shadowColor = '#facc15';
+    context.shadowBlur = 5;
+    for (let star = 0; star < 3; star++) {
+      const angle = time * 3 + star * (Math.PI * 2 / 3);
+      const starX = x + Math.cos(angle) * radius * 1.3;
+      const starY = y - radius * 1.2 + Math.sin(angle) * radius * 0.45;
+      context.beginPath();
+      context.arc(starX, starY, 2.5, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.restore();
+  }
+
   private renderFireStreams(context: CanvasRenderingContext2D, state: RenderState): void {
     if (state.buildPhase) return;
     const time = Date.now() * 0.006;
@@ -763,15 +810,16 @@ export class Renderer {
     this.map.drawTower(context, state.ghost.kind, state.ghost.x, state.ghost.y, true, -Math.PI / 2, state.graphicsQuality);
   }
 
-  private renderTargetGeometry(context: CanvasRenderingContext2D, kind: TowerKind, tower: { x: number; y: number; targeting: { mode: string; angle: number; distance: number; targetX: number; targetY: number; radius: number; coneAngle: number } }, color: string): void {
+  private renderTargetGeometry(context: CanvasRenderingContext2D, kind: TowerKind, tower: { x: number; y: number; targeting: { mode: string; angle: number; distance: number; maxDistance: number; targetX: number; targetY: number; radius: number; coneAngle: number } }, color: string): void {
     const target = tower.targeting;
     context.save();
     context.globalAlpha = 0.28;
     context.strokeStyle = color;
     context.fillStyle = color;
     context.lineWidth = kind === 'ballista' ? 7 : 3;
-    const endX = tower.x + Math.cos(target.angle) * target.distance;
-    const endY = tower.y + Math.sin(target.angle) * target.distance;
+    const displayDistance = kind === 'fireTower' || kind === 'lightningTower' || kind === 'sniperTower' ? target.maxDistance : target.distance;
+    const endX = tower.x + Math.cos(target.angle) * displayDistance;
+    const endY = tower.y + Math.sin(target.angle) * displayDistance;
     if (target.mode === 'line') {
       context.beginPath(); context.moveTo(tower.x, tower.y); context.lineTo(endX, endY); context.stroke();
       if (kind === 'cannon') { context.beginPath(); context.arc(endX, endY, 10, 0, Math.PI * 2); context.stroke(); }
