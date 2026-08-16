@@ -1,8 +1,8 @@
 export class Camera {
   x: number;
   y: number;
-  zoom = 1;
-  readonly minZoom = 0.75;
+  zoom = 0.82;
+  readonly minZoom = 0.62;
   readonly maxZoom = 3.5;
 
   constructor(
@@ -45,7 +45,7 @@ export class Camera {
   }
 
   reset(): void {
-    this.zoom = 1;
+    this.zoom = 0.82;
     this.x = this.worldWidth / 2;
     this.y = this.worldHeight / 2;
     this.clamp();
