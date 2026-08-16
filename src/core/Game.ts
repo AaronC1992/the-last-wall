@@ -109,11 +109,12 @@ export class Game implements BattlefieldActions {
       const spawn = this.mapSpawns.nextSpawn();
       this.enemies.spawnAt(spawn.x, spawn.y, 1 + this.waveDirector.currentWave * 0.012, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
     });
+    this.grid.rebuild(this.enemies);
     this.congestion.rebuild(this.enemies);
     this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
       this.registerKill();
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
-    }, this.flowField, this.terrain, this.congestion, this.threatMap);
+    }, this.flowField, this.terrain, this.congestion, this.threatMap, this.grid);
     this.grid.rebuild(this.enemies);
     this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, () => this.registerKill());
     this.projectiles.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => this.damageArea(x, y, damage, radius), this.terrain);

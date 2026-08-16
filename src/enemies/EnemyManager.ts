@@ -7,6 +7,7 @@ import type { FlowField } from '../map/FlowField';
 import type { TerrainGrid } from '../map/TerrainGrid';
 import type { CongestionGrid } from '../systems/CongestionGrid';
 import type { ThreatMap } from '../systems/ThreatMap';
+import type { SpatialGrid } from '../systems/SpatialGrid';
 import { TerrainCell } from '../map/TerrainTypes';
 
 export class EnemyManager {
@@ -62,7 +63,7 @@ export class EnemyManager {
     return true;
   }
 
-  update(deltaTime: number, width: number, wallY: number, onWallHit: (damage: number) => void, onDeath: (reward: number, index: number, burning: boolean) => void = () => undefined, flowField?: FlowField, terrain?: TerrainGrid, congestion?: CongestionGrid, threat?: ThreatMap): void {
+  update(deltaTime: number, width: number, wallY: number, onWallHit: (damage: number) => void, onDeath: (reward: number, index: number, burning: boolean) => void = () => undefined, flowField?: FlowField, terrain?: TerrainGrid, congestion?: CongestionGrid, threat?: ThreatMap, spatial?: SpatialGrid): void {
     this.minimumY = Number.POSITIVE_INFINITY;
     this.maximumY = Number.NEGATIVE_INFINITY;
     for (let index = 0; index < this.count; index++) {
@@ -76,7 +77,7 @@ export class EnemyManager {
       }
       this.stunTime[index] = Math.max(0, this.stunTime[index] - deltaTime);
       if (this.stunTime[index] > 0) continue;
-      if (flowField && terrain) this.updateOnTerrain(index, deltaTime, onWallHit, flowField, terrain, congestion, threat);
+      if (flowField && terrain) this.updateOnTerrain(index, deltaTime, onWallHit, flowField, terrain, congestion, threat, spatial);
       else this.updateLegacy(index, deltaTime, wallY, onWallHit, width);
     }
   }
@@ -117,7 +118,7 @@ export class EnemyManager {
 
   clear(): void { this.count = 0; this.stuckRecoveries = 0; this.minimumY = 0; this.maximumY = 0; }
 
-  private updateOnTerrain(index: number, deltaTime: number, onWallHit: (damage: number) => void, flowField: FlowField, terrain: TerrainGrid, congestion?: CongestionGrid, threat?: ThreatMap): void {
+  private updateOnTerrain(index: number, deltaTime: number, onWallHit: (damage: number) => void, flowField: FlowField, terrain: TerrainGrid, congestion?: CongestionGrid, threat?: ThreatMap, spatial?: SpatialGrid): void {
     const behavior = ENEMY_BEHAVIOR[this.type[index] as EnemyTypeId];
     const cell = terrain.worldToCell(this.x[index], this.y[index]);
     const cellIndex = terrain.inBounds(cell.x, cell.y) ? terrain.index(cell.x, cell.y) : -1;
@@ -135,6 +136,11 @@ export class EnemyManager {
     const repulsion = this.wallRepulsion(this.x[index], this.y[index], cell.x, cell.y, flowField, terrain);
     direction.x += repulsion.x * behavior.wallAvoidance * 0.05;
     direction.y += repulsion.y * behavior.wallAvoidance * 0.05;
+    if (spatial) {
+      const separation = this.separationVector(index, spatial);
+      direction.x += separation.x * 0.9;
+      direction.y += separation.y * 0.9;
+    }
     const directionLength = Math.hypot(direction.x, direction.y) || 1;
     direction.x /= directionLength; direction.y /= directionLength;
     const response = Math.min(1, behavior.steeringResponsiveness * deltaTime);
@@ -170,6 +176,31 @@ export class EnemyManager {
       this.velocityX[index] = recovery.x * this.speed[index]; this.velocityY[index] = recovery.y * this.speed[index]; this.stuckTimer[index] = 0; this.routeCommit[index] = 0; this.stuckRecoveries++;
     }
     if (updatedCost === 0) { onWallHit(this.wallDamage[index]); this.active[index] = 0; }
+  }
+
+  private separationVector(index: number, spatial: SpatialGrid): { x: number; y: number } {
+    const range = this.radius[index] + 22;
+    const nearby = spatial.collectInRange(this.x[index], this.y[index], range, this, 24);
+    let forceX = 0;
+    let forceY = 0;
+    for (let resultIndex = 0; resultIndex < nearby; resultIndex++) {
+      const otherIndex = spatial.resultAt(resultIndex);
+      if (otherIndex === index || this.active[otherIndex] === 0) continue;
+      const deltaX = this.x[index] - this.x[otherIndex];
+      const deltaY = this.y[index] - this.y[otherIndex];
+      const distance = Math.hypot(deltaX, deltaY);
+      const minimumDistance = this.radius[index] + this.radius[otherIndex] + 2;
+      if (distance >= minimumDistance) continue;
+      if (distance < 0.01) {
+        forceX += (index & 1) === 0 ? 1 : -1;
+        continue;
+      }
+      const strength = (minimumDistance - distance) / minimumDistance;
+      forceX += deltaX / distance * strength;
+      forceY += deltaY / distance * strength;
+    }
+    const length = Math.hypot(forceX, forceY);
+    return length > 0 ? { x: forceX / length, y: forceY / length } : { x: 0, y: 0 };
   }
 
   private updateLegacy(index: number, deltaTime: number, wallY: number, onWallHit: (damage: number) => void, width: number): void {
