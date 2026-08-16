@@ -16,12 +16,12 @@ export class WaveDirector {
     this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer > 0) return;
-    const burst = Math.min(this.queueTail - this.queueHead, Math.min(400, 8 + this.wave * 3));
+    const burst = Math.min(this.queueTail - this.queueHead, Math.min(400, 60 + this.wave * 10));
     for (let index = 0; index < burst; index++) {
       spawn(this.queueType[this.queueHead] as EnemyTypeId, this.queueElite[this.queueHead] !== 0);
       this.queueHead++;
     }
-    this.spawnTimer = Math.max(0.045, 0.22 - this.wave * 0.004);
+    this.spawnTimer = Math.max(0.035, 0.14 - this.wave * 0.003);
   }
 
   reset(): void {

@@ -57,6 +57,7 @@ export class ChaosSystem {
   private dragonMaxTime = 3.8;
   private dragonTick = 0;
   private dragonY = 0;
+  private dragonFlightY = 0;
 
   private deathBeamTime = 0;
   private deathBeamMaxTime = 0.9;
@@ -88,6 +89,7 @@ export class ChaosSystem {
       this.dragonTime = this.dragonMaxTime;
       this.dragonTick = 0;
       this.dragonY = targetY;
+      this.dragonFlightY = Math.max(70, Math.min(this.height - 120, targetY - 110));
     } else if (id === AbilityId.DeathBeam) {
       this.deathBeamTime = this.deathBeamMaxTime;
       this.deathBeamX = targetX;
@@ -166,7 +168,7 @@ export class ChaosSystem {
 
       const p = 1 - this.dragonTime / this.dragonMaxTime;
       const dx = p * (this.width + 240) - 120;
-      const dy = this.height * 0.28 + Math.sin(p * Math.PI * 4) * 25;
+      const dy = this.dragonFlightY + Math.sin(p * Math.PI * 4) * 25;
       const groundY = this.dragonY;
 
       // Dragon breath particle stream
@@ -353,7 +355,7 @@ export class ChaosSystem {
     if (this.dragonTime > 0) {
       const p = 1 - this.dragonTime / this.dragonMaxTime;
       const dx = p * (this.width + 240) - 120;
-      const dy = this.height * 0.28 + Math.sin(p * Math.PI * 4) * 25;
+      const dy = this.dragonFlightY + Math.sin(p * Math.PI * 4) * 25;
       const wingAngle = Math.cos(p * Math.PI * 16) * 0.45;
 
       context.save();
@@ -361,7 +363,7 @@ export class ChaosSystem {
       // Dragon Breath Fire Stream
       context.globalCompositeOperation = 'screen';
       const breathTargetX = dx + 80;
-      const breathTargetY = this.height * 0.52;
+      const breathTargetY = this.dragonY;
 
       const breathGrad = context.createLinearGradient(dx + 28, dy + 6, breathTargetX, breathTargetY);
       breathGrad.addColorStop(0, 'rgba(255, 255, 220, 0.95)');
@@ -514,6 +516,7 @@ export class ChaosSystem {
     this.plife.fill(0);
     this.dragonTime = 0;
     this.dragonY = 0;
+    this.dragonFlightY = 0;
     this.deathBeamTime = 0;
     this.apocalypseTime = 0;
     this.cooldownMultiplier = 1;
