@@ -570,7 +570,7 @@ export class Game implements BattlefieldActions {
     this.phase = 'idle';
     const survived = this.wallHp > 0;
     if (survived && !this.map.custom) this.progression.completeCampaign(this.map.id);
-    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom);
+    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom && this.kills >= 3);
     this.onRunEnd(breakdown, survived);
   }
 

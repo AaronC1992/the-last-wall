@@ -95,7 +95,7 @@ export class MetaProgression {
 
   awardTokens(kills: number, elapsed: number, buildPoints: number, highestCombo: number, awardCurrency = true): TokenBreakdown {
     const bonuses = this.bonuses;
-    const base = Math.max(1, Math.floor(kills / 20 + elapsed / 90));
+    const base = awardCurrency ? Math.max(1, Math.floor(kills / 20 + elapsed / 90)) : 0;
     const percentBonus = awardCurrency ? Math.floor(base * (bonuses.tokenMultiplier - 1)) : 0;
     const flatBonus = awardCurrency ? bonuses.flatTokenBonus : 0;
     const total = awardCurrency ? base + percentBonus + flatBonus : 0;

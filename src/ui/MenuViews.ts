@@ -11,6 +11,7 @@ export class MenuViews {
   private readonly settings = document.querySelector<HTMLElement>('#settings-menu')!;
   private readonly graphicsMenu = document.querySelector<HTMLElement>('#graphics-menu')!;
   private readonly controlsMenu = document.querySelector<HTMLElement>('#controls-menu')!;
+  private readonly tutorialMenu = document.querySelector<HTMLElement>('#tutorial-menu')!;
   private readonly statistics = document.querySelector<HTMLElement>('#statistics-menu')!;
   private readonly armory = document.querySelector<HTMLElement>('#armory-menu')!;
   private readonly master = document.querySelector<HTMLInputElement>('#setting-master')!;
@@ -46,10 +47,12 @@ export class MenuViews {
       onUpgrades();
     });
     document.querySelector<HTMLButtonElement>('#menu-settings')!.addEventListener('click', () => this.showSettings());
+    document.querySelector<HTMLButtonElement>('#menu-tutorial')!.addEventListener('click', () => this.showTutorial());
     document.querySelector<HTMLButtonElement>('#open-graphics')!.addEventListener('click', () => this.showGraphics());
     document.querySelector<HTMLButtonElement>('#open-controls')!.addEventListener('click', () => this.showControls());
     document.querySelector<HTMLButtonElement>('#graphics-close')!.addEventListener('click', () => { this.graphicsMenu.hidden = true; this.settings.hidden = false; });
     document.querySelector<HTMLButtonElement>('#controls-close')!.addEventListener('click', () => { this.controlsMenu.hidden = true; this.settings.hidden = false; });
+    document.querySelector<HTMLButtonElement>('#tutorial-close')!.addEventListener('click', () => this.closeToMain(this.tutorialMenu));
     document.querySelector<HTMLButtonElement>('#menu-statistics')?.addEventListener('click', () => this.showStatistics());
     document.querySelector<HTMLButtonElement>('#menu-armory')?.addEventListener('click', () => this.showArmory());
     document.querySelector<HTMLButtonElement>('#settings-close')!.addEventListener('click', () => this.closeSettings());
@@ -125,6 +128,11 @@ export class MenuViews {
     this.gateTorches.checked = settings.animateGateTorches;
     this.enemyDetail.checked = settings.detailedEnemies;
     this.graphicsMenu.hidden = false;
+  }
+
+  private showTutorial(): void {
+    this.main.hidden = true;
+    this.tutorialMenu.hidden = false;
   }
 
   private showControls(): void {

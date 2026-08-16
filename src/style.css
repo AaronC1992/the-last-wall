@@ -132,6 +132,7 @@ button { font: inherit; }
 .main-menu nav { display: grid; width: min(250px, 100%); gap: 8px; }
 .main-menu nav button { padding: 12px; border: 1px solid #8a6e3e; background: #332b20; color: #f2c46d; cursor: pointer; font-weight: bold; }
 .main-menu nav button:hover { background: #4b3925; }
+.main-menu { width: 100%; max-width: none; min-width: 0; }
 .menu-panel { align-content: center; justify-items: stretch; width: min(540px, calc(100% - 28px)); min-width: 0; text-align: left; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; color: #f2c46d; font-size: 22px; }
 .panel-heading button { padding: 6px 10px; border: 1px solid #52655d; background: #22302e; color: #e9efe8; cursor: pointer; }
@@ -146,6 +147,12 @@ button { font: inherit; }
 .controls-guide h2 { margin: 0 0 10px; color: #55c7b5; font-size: 20px; }
 .controls-guide p { margin: 8px 0; color: #c8d8d2; font: 12px/1.45 Verdana, sans-serif; }
 .controls-guide b { color: #f2c46d; }
+.tutorial-menu { width: min(820px, calc(100% - 28px)); }
+.tutorial-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-height: min(650px, calc(100vh - 150px)); overflow-y: auto; padding-right: 3px; }
+.tutorial-grid section { padding: 13px; border: 1px solid #4a5a52; background: #162021; }
+.tutorial-grid h2 { margin: 0 0 8px; color: #f2c46d; font-size: 17px; }
+.tutorial-grid p { margin: 7px 0; color: #c8d8d2; font: 11px/1.5 Verdana, sans-serif; }
+.tutorial-grid b { color: #f5f1df; }
 .graphics-menu { width: min(680px, calc(100% - 28px)); }
 .graphics-summary { margin: 0; color: #aebdb7; font: 12px/1.45 Verdana, sans-serif; }
 .graphics-menu > label { padding: 10px 0; border-bottom: 1px solid #2e403d; }
@@ -199,9 +206,11 @@ button { font: inherit; }
 	.controls-hint { left: 8px; bottom: 224px; max-width: 210px; max-height: 120px; overflow-y: auto; padding: 9px 10px; }
 	.controls-hint span { gap: 6px; font-size: 10px; }
 	.build-bar { left: 8px; right: 8px; transform: none; justify-content: center; overflow-x: auto; }
+	.build-bar { padding-left: 10px; padding-right: 10px; justify-content: flex-start; scrollbar-width: thin; }
 	.build-slot { width: 50px; height: 50px; flex: 0 0 50px; }
 	.start-battle { top: 166px; right: 8px; bottom: auto; padding: 8px 12px; font-size: 14px; }
 	.build-settings-button { top: 166px; right: 112px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.main-menu-button { top: 166px; left: 8px; right: auto; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.ability-strip { left: 8px; right: 8px; bottom: 78px; display: flex; gap: 5px; overflow-x: auto; }
 	.ability-button { min-width: 108px; flex: 0 0 108px; padding: 5px 7px; font-size: 10px; }
 	.main-menu { gap: 10px; padding: 16px; }
@@ -212,6 +221,8 @@ button { font: inherit; }
 	.graphics-grid { grid-template-columns: 1fr; }
 	.graphics-actions { flex-wrap: wrap; }
 	.controls-guide { grid-template-columns: 1fr; }
+	.tutorial-menu { width: calc(100% - 16px); }
+	.tutorial-grid { grid-template-columns: 1fr; max-height: calc(100vh - 135px); }
 	.graphics-actions button, .settings-feature-button { width: 100%; }
 	.map-builder { width: calc(100% - 16px); }
 	.builder-layout { gap: 8px; }
