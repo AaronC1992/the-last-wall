@@ -25,6 +25,7 @@ export class MapBuilder {
 
   constructor(private readonly onPlay: (map: MapDefinition) => void) {
     this.draft = this.createDraft();
+    this.root.querySelector<HTMLInputElement>('#map-enemy-count')!.max = '200000';
     this.canvas.width = DEFAULT_MAP_WIDTH * EDITOR_CELL_SIZE; this.canvas.height = DEFAULT_MAP_HEIGHT * EDITOR_CELL_SIZE;
     this.terrain[this.goal.y * DEFAULT_MAP_WIDTH + this.goal.x] = TerrainCell.Goal;
     this.root.querySelector<HTMLButtonElement>('#map-builder-close')!.addEventListener('click', () => { this.hide(); document.querySelector<HTMLElement>('#main-menu')!.hidden = false; });
@@ -71,13 +72,16 @@ export class MapBuilder {
     const bounds = this.canvas.getBoundingClientRect();
     const x = Math.floor((event.clientX - bounds.left) / bounds.width * DEFAULT_MAP_WIDTH);
     const y = Math.floor((event.clientY - bounds.top) / bounds.height * DEFAULT_MAP_HEIGHT);
-    for (let cellY = y - this.brush + 1; cellY <= y + this.brush - 1; cellY++) for (let cellX = x - this.brush + 1; cellX <= x + this.brush - 1; cellX++) {
+    for (let cellY = y - this.brush; cellY <= y + this.brush; cellY++) for (let cellX = x - this.brush; cellX <= x + this.brush; cellX++) {
       if (cellX < 0 || cellY < 0 || cellX >= DEFAULT_MAP_WIDTH || cellY >= DEFAULT_MAP_HEIGHT) continue;
       const index = cellY * DEFAULT_MAP_WIDTH + cellX;
-      if (this.tool === 'erase') this.terrain[index] = TerrainCell.Buildable;
+      if (this.tool === 'erase') {
+        this.terrain[index] = TerrainCell.Buildable;
+        this.spawns = this.spawns.filter((point) => point.x !== cellX || point.y !== cellY);
+      }
       else if (this.tool === TerrainCell.Spawn) { this.terrain[index] = TerrainCell.Spawn; if (!this.spawns.some((point) => point.x === cellX && point.y === cellY)) this.spawns.push({ x: cellX, y: cellY }); }
-      else if (this.tool === TerrainCell.Goal) { this.terrain[index] = TerrainCell.Goal; this.goal = { x: cellX, y: cellY }; }
-      else this.terrain[index] = this.tool;
+      else if (this.tool === TerrainCell.Goal) { this.terrain[this.goal.y * DEFAULT_MAP_WIDTH + this.goal.x] = TerrainCell.Buildable; this.terrain[index] = TerrainCell.Goal; this.spawns = this.spawns.filter((point) => point.x !== cellX || point.y !== cellY); this.goal = { x: cellX, y: cellY }; }
+      else { this.terrain[index] = this.tool; this.spawns = this.spawns.filter((point) => point.x !== cellX || point.y !== cellY); }
     }
     this.render();
   }
@@ -98,7 +102,7 @@ export class MapBuilder {
 
   private readBattleSettings(): MapDefinition['enemySettings'] {
     return {
-      enemyCount: Math.max(100, Math.min(100000, Number(this.root.querySelector<HTMLInputElement>('#map-enemy-count')!.value) || 500)),
+      enemyCount: Math.max(100, Math.min(200000, Number(this.root.querySelector<HTMLInputElement>('#map-enemy-count')!.value) || 500)),
       spawnBurst: Math.max(1, Math.min(400, Number(this.root.querySelector<HTMLInputElement>('#map-spawn-burst')!.value) || 80)),
       spawnInterval: Math.max(0.025, Math.min(1, Number(this.root.querySelector<HTMLInputElement>('#map-spawn-interval')!.value) || 0.14)),
       difficulty: this.root.querySelector<HTMLSelectElement>('#map-difficulty')!.value as MapDefinition['enemySettings']['difficulty'],
