@@ -166,7 +166,7 @@ export class BattlefieldInput {
       this.actions.selectTower(0);
       this.actions.useAbilityAt(-1, -1);
     }
-    if (event.key === 'f' || event.key === 'F') {
+    if (event.key === 'z' || event.key === 'Z') {
       this.camera.fitToView();
     }
     const panAmount = 80;
