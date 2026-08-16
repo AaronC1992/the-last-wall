@@ -4,6 +4,7 @@ import { TerrainCell } from './TerrainTypes';
 import type { MapDefinition } from './TerrainTypes';
 import { TerrainGrid } from './TerrainGrid';
 import type { TowerKind } from '../weapons/TowerConfig';
+import type { GraphicsQuality } from '../systems/SaveSystem';
 
 export class MapRenderer {
   private readonly cache: HTMLCanvasElement;
@@ -21,15 +22,21 @@ export class MapRenderer {
     this.generateStaticTerrain();
   }
 
-  renderBackground(context: CanvasRenderingContext2D): void { context.drawImage(this.cache, 0, 0); }
+  renderBackground(context: CanvasRenderingContext2D, quality: GraphicsQuality = 'high'): void {
+    context.drawImage(this.cache, 0, 0);
+    if (quality === 'low') {
+      context.fillStyle = 'rgba(5, 8, 10, 0.16)';
+      context.fillRect(0, 0, TUNING.logicalWidth, TUNING.logicalHeight);
+    }
+  }
 
-  renderDefenseLine(context: CanvasRenderingContext2D, wallHp: number, wallMaxHp: number): void {
+  renderDefenseLine(context: CanvasRenderingContext2D, wallHp: number, wallMaxHp: number, animateTorches = true): void {
     const wallY = TUNING.logicalHeight - TUNING.wallHeight;
     const goal = this.grid.cellToWorld(this.definition.goalCell.x, this.definition.goalCell.y);
     const gateX = goal.x;
 
     this.drawPixelWall(context, wallY, gateX);
-    this.drawPixelGate(context, wallY, gateX);
+    this.drawPixelGate(context, wallY, gateX, animateTorches);
     this.drawPixelHealthBar(context, wallY, wallHp, wallMaxHp);
   }
 
@@ -95,7 +102,7 @@ export class MapRenderer {
     }
   }
 
-  private drawPixelGate(context: CanvasRenderingContext2D, wallY: number, gateX: number): void {
+  private drawPixelGate(context: CanvasRenderingContext2D, wallY: number, gateX: number, animateTorches: boolean): void {
     const towerW = 44;
     const towerH = 110;
     const towerTopY = wallY - 62;
@@ -171,10 +178,10 @@ export class MapRenderer {
 
     this.drawPixelArchFrame(context, gateX, archY, archW);
 
-    this.drawPixelTorch(context, leftTowerX + towerW - 4, wallY - 12);
-    this.drawPixelTorch(context, rightTowerX + 4, wallY - 12);
-    this.drawPixelTorch(context, archX - 10, wallY - 10);
-    this.drawPixelTorch(context, archX + archW + 10, wallY - 10);
+    this.drawPixelTorch(context, leftTowerX + towerW - 4, wallY - 12, animateTorches);
+    this.drawPixelTorch(context, rightTowerX + 4, wallY - 12, animateTorches);
+    this.drawPixelTorch(context, archX - 10, wallY - 10, animateTorches);
+    this.drawPixelTorch(context, archX + archW + 10, wallY - 10, animateTorches);
 
     this.drawPixelBanner(context, leftTowerX + 16, towerTopY - 26);
     this.drawPixelBanner(context, rightTowerX + 16, towerTopY - 26);
@@ -303,7 +310,18 @@ export class MapRenderer {
     }
   }
 
-  private drawPixelTorch(context: CanvasRenderingContext2D, x: number, y: number): void {
+  private drawPixelTorch(context: CanvasRenderingContext2D, x: number, y: number, animated: boolean): void {
+    if (!animated) {
+      context.fillStyle = '#2c353d';
+      context.fillRect(x - 2, y, 5, 8);
+      context.fillStyle = '#5c3a21';
+      context.fillRect(x - 1, y - 4, 3, 5);
+      context.fillStyle = '#d35400';
+      context.fillRect(x - 3, y - 11, 7, 8);
+      context.fillStyle = '#f1c40f';
+      context.fillRect(x - 1, y - 10, 3, 5);
+      return;
+    }
     const time = performance.now() * 0.008;
     const seed = (x * 17 + y * 31) % 100;
     const t = time + seed;
@@ -448,9 +466,16 @@ export class MapRenderer {
     context.shadowBlur = 0;
   }
 
-  drawTower(context: CanvasRenderingContext2D, kind: TowerKind, x: number, y: number, ghost: boolean, angle: number = -Math.PI / 2): void {
+  drawTower(context: CanvasRenderingContext2D, kind: TowerKind, x: number, y: number, ghost: boolean, angle: number = -Math.PI / 2, quality: GraphicsQuality = 'high'): void {
     context.save();
     if (ghost) context.globalAlpha = 0.55;
+
+    if (quality === 'low') {
+      context.fillStyle = ghost ? 'rgba(220, 230, 235, 0.7)' : this.towerColor(kind);
+      context.fillRect(x - 10, y - 10, 20, 20);
+      context.restore();
+      return;
+    }
 
     this.drawPixelTowerBase(context, kind, x, y);
 
@@ -464,6 +489,14 @@ export class MapRenderer {
     else if (kind === 'mortar') this.drawPixelMortar(context);
 
     context.restore();
+  }
+
+  private towerColor(kind: TowerKind): string {
+    if (kind === 'ballista') return '#c9b184';
+    if (kind === 'cannon') return '#8f9aa4';
+    if (kind === 'fireTower') return '#c4713c';
+    if (kind === 'lightningTower') return '#6f8fc4';
+    return '#8f6f56';
   }
 
   private drawPixelTowerBase(context: CanvasRenderingContext2D, kind: TowerKind, x: number, y: number): void {

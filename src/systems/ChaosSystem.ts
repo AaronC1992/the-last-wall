@@ -110,7 +110,7 @@ export class ChaosSystem {
     return true;
   }
 
-  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
+  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, quality: GraphicsQuality = 'high'): void {
     this.gameTime += deltaTime;
 
     for (let index = 0; index < this.cooldowns.length; index++) {
@@ -122,7 +122,7 @@ export class ChaosSystem {
     }
 
     // Update Particles
-    for (let index = 0; index < PARTICLE_CAPACITY; index++) {
+    for (let index = 0; index < (quality === 'low' ? 0 : PARTICLE_CAPACITY); index++) {
       if (this.plife[index] <= 0) continue;
       this.plife[index] -= deltaTime;
       this.px[index] += this.pvx[index] * deltaTime;
@@ -139,7 +139,7 @@ export class ChaosSystem {
       const curY = this.strikeStartY[index] + (this.strikeY[index] - this.strikeStartY[index]) * progress;
 
       // Spawn falling trail particles
-      if (Math.random() < 0.6) {
+      if (quality !== 'low' && Math.random() < 0.6) {
         this.addParticle(curX + (Math.random() - 0.5) * 10, curY + (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 20, -30 - Math.random() * 30, 0.4, 8, 0);
         this.addParticle(curX, curY, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, 0.3, 4, 1);
       }
@@ -174,7 +174,7 @@ export class ChaosSystem {
       const groundY = this.dragonY;
 
       // Dragon breath particle stream
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; quality !== 'low' && i < 3; i++) {
         const angle = 0.6 + (Math.random() - 0.5) * 0.4;
         const speed = 250 + Math.random() * 120;
         this.addParticle(dx + 28, dy + 6, Math.cos(angle) * speed, Math.sin(angle) * speed, 0.35 + Math.random() * 0.25, 8 + Math.random() * 12, 0);
@@ -192,7 +192,7 @@ export class ChaosSystem {
       this.deathBeamTick -= deltaTime;
 
       // Plasma sparks along beam
-      if (Math.random() < 0.8) {
+      if (quality !== 'low' && Math.random() < 0.8) {
         const sy = Math.random() * (this.height * 0.85);
         this.addParticle(this.deathBeamX + (Math.random() - 0.5) * 50, sy, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, 0.25, 6, 3);
       }

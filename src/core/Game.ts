@@ -73,6 +73,7 @@ export class Game implements BattlefieldActions {
   private pointerY = 0;
   private pointerOverCanvas = false;
   private showThreatMap = false;
+  private hudFrame = 0;
   private pendingAbility: AbilityIdValue | null = null;
 
   constructor(
@@ -123,7 +124,7 @@ export class Game implements BattlefieldActions {
       this.damageArea(x, y, damage, radius);
       this.renderer.addExplosionDecal(x, y, radius);
     }, this.terrain);
-    this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill());
+    this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), this.progression.settings.graphicsQuality);
     this.enemies.compact();
     this.feedback.update(simulationDelta);
     if (this.waveDirector.isWaveCleared(this.enemies.count)) this.endRun();
@@ -153,7 +154,7 @@ export class Game implements BattlefieldActions {
       threatMap: this.threatMap,
       showThreatMap: this.showThreatMap,
     });
-    this.hud.update({
+    if (++this.hudFrame % 3 === 0) this.hud.update({
       wallHp: this.wallHp,
       maxWallHp: this.wallMaxHp,
       buildPoints: this.buildPoints,

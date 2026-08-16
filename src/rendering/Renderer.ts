@@ -70,15 +70,15 @@ export class Renderer {
     }
     state.camera.apply(context);
 
-    this.map.renderBackground(context);
-    if (state.showThreatMap) state.threatMap.render(context);
+    this.map.renderBackground(context, state.graphicsQuality);
+    if (state.showThreatMap && state.graphicsQuality === 'high') state.threatMap.render(context);
     if (state.graphicsQuality === 'high') this.decals.render(context);
     else if (state.graphicsQuality === 'medium') this.decals.render(context, 20);
     this.renderEnemies(context, state.enemies, state.graphicsQuality);
     this.renderProjectiles(context, state.projectiles, state.graphicsQuality);
     state.chaos.render(context, state.graphicsQuality);
     state.feedback.render(context, state.damageNumbers);
-    this.map.renderDefenseLine(context, state.wallHp, state.wallMaxHp);
+    this.map.renderDefenseLine(context, state.wallHp, state.wallMaxHp, state.graphicsQuality !== 'low');
     if (state.graphicsQuality !== 'low') this.renderFireStreams(context, state);
     if (state.graphicsQuality !== 'low') this.renderLasers(context, state);
     this.renderTowers(context, state);
@@ -495,7 +495,7 @@ export class Renderer {
       const highlighted = tower.id === state.selectedTowerId || tower.id === state.hoveredTowerId;
       const config = towerConfig(tower.kind);
       if (tower.instance.hasAim && (state.buildPhase || highlighted)) this.renderTargetGeometry(context, tower.kind, tower.instance, config.accent);
-      this.map.drawTower(context, tower.kind, tower.instance.x, tower.instance.y, false, tower.instance.targeting.angle);
+      this.map.drawTower(context, tower.kind, tower.instance.x, tower.instance.y, false, tower.instance.targeting.angle, state.graphicsQuality);
       if (tower.id === state.selectedTowerId) {
         context.strokeStyle = '#f2e0b4';
         context.lineWidth = 2;
@@ -696,7 +696,7 @@ export class Renderer {
     context.arc(state.ghost.x, state.ghost.y, 20, 0, Math.PI * 2);
     context.fill();
     context.restore();
-    this.map.drawTower(context, state.ghost.kind, state.ghost.x, state.ghost.y, true, -Math.PI / 2);
+    this.map.drawTower(context, state.ghost.kind, state.ghost.x, state.ghost.y, true, -Math.PI / 2, state.graphicsQuality);
   }
 
   private renderTargetGeometry(context: CanvasRenderingContext2D, kind: TowerKind, tower: { x: number; y: number; targeting: { mode: string; angle: number; distance: number; targetX: number; targetY: number; radius: number; coneAngle: number } }, color: string): void {
