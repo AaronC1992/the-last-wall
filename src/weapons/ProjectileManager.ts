@@ -7,18 +7,20 @@ export class ProjectileManager {
   private readonly capacity = TUNING.maxProjectiles;
   readonly x = new Float32Array(this.capacity);
   readonly y = new Float32Array(this.capacity);
+  readonly originX = new Float32Array(this.capacity);
+  readonly originY = new Float32Array(this.capacity);
+  readonly targetX = new Float32Array(this.capacity);
+  readonly targetY = new Float32Array(this.capacity);
+  readonly life = new Float32Array(this.capacity);
+  readonly flight = new Float32Array(this.capacity);
+  readonly impactRadius = new Float32Array(this.capacity);
+  readonly mode = new Uint8Array(this.capacity);
   private readonly velocityX = new Float32Array(this.capacity);
   private readonly velocityY = new Float32Array(this.capacity);
   private readonly damage = new Float32Array(this.capacity);
-  private readonly life = new Float32Array(this.capacity);
   private readonly penetration = new Uint8Array(this.capacity);
-  private readonly mode = new Uint8Array(this.capacity);
   private readonly traveled = new Float32Array(this.capacity);
   private readonly maxDistance = new Float32Array(this.capacity);
-  private readonly impactRadius = new Float32Array(this.capacity);
-  private readonly targetX = new Float32Array(this.capacity);
-  private readonly targetY = new Float32Array(this.capacity);
-  private readonly flight = new Float32Array(this.capacity);
   count = 0;
   droppedProjectiles = 0;
 
@@ -30,6 +32,8 @@ export class ProjectileManager {
     if (this.count >= this.capacity) { this.droppedProjectiles++; return; }
     const length = Math.hypot(directionX, directionY) || 1;
     const index = this.count++;
+    this.originX[index] = originX;
+    this.originY[index] = originY;
     this.x[index] = originX;
     this.y[index] = originY;
     this.velocityX[index] = (directionX / length) * speed;
@@ -51,9 +55,17 @@ export class ProjectileManager {
   fireMortar(originX: number, originY: number, targetX: number, targetY: number, damage: number, flightTime: number, radius: number): void {
     if (this.count >= this.capacity) { this.droppedProjectiles++; return; }
     const index = this.count++;
-    this.x[index] = originX; this.y[index] = originY;
-    this.targetX[index] = targetX; this.targetY[index] = targetY;
-    this.damage[index] = damage; this.impactRadius[index] = radius; this.flight[index] = flightTime; this.life[index] = flightTime; this.mode[index] = 2;
+    this.originX[index] = originX;
+    this.originY[index] = originY;
+    this.x[index] = originX;
+    this.y[index] = originY;
+    this.targetX[index] = targetX;
+    this.targetY[index] = targetY;
+    this.damage[index] = damage;
+    this.impactRadius[index] = radius;
+    this.flight[index] = flightTime;
+    this.life[index] = flightTime;
+    this.mode[index] = 2;
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, onDamage: (x: number, y: number, damage: number) => void, onExplosion: (x: number, y: number, damage: number, radius: number) => void = () => undefined, terrain?: TerrainGrid): void {
@@ -61,10 +73,12 @@ export class ProjectileManager {
     while (index < this.count) {
       if (this.mode[index] === 2) {
         this.life[index] -= deltaTime;
+        const totalFlight = Math.max(0.001, this.flight[index]);
+        const progress = Math.min(1, Math.max(0, 1 - this.life[index] / totalFlight));
         const previousX = this.x[index];
         const previousY = this.y[index];
-        this.x[index] += (this.targetX[index] - this.x[index]) * Math.min(1, deltaTime / Math.max(0.001, this.life[index] + deltaTime));
-        this.y[index] += (this.targetY[index] - this.y[index]) * Math.min(1, deltaTime / Math.max(0.001, this.life[index] + deltaTime));
+        this.x[index] = this.originX[index] + (this.targetX[index] - this.originX[index]) * progress;
+        this.y[index] = this.originY[index] + (this.targetY[index] - this.originY[index]) * progress;
         if (terrain?.segmentHitsBuildable(previousX, previousY, this.x[index], this.y[index])) { this.remove(index); continue; }
         if (this.life[index] <= 0) { onExplosion(this.targetX[index], this.targetY[index], this.damage[index], this.impactRadius[index]); this.remove(index); continue; }
         index++;
@@ -108,6 +122,8 @@ export class ProjectileManager {
     if (index === lastIndex) return;
     this.x[index] = this.x[lastIndex];
     this.y[index] = this.y[lastIndex];
+    this.originX[index] = this.originX[lastIndex];
+    this.originY[index] = this.originY[lastIndex];
     this.velocityX[index] = this.velocityX[lastIndex];
     this.velocityY[index] = this.velocityY[lastIndex];
     this.damage[index] = this.damage[lastIndex];

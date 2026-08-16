@@ -3,30 +3,36 @@ import { SpatialGrid } from '../systems/SpatialGrid';
 import { TowerBase } from './TowerBase';
 
 export class FireTower extends TowerBase {
-  private cooldown = 0;
-  private burnDamage = 11;
-  private burnDuration = 3;
+  private tickTimer = 0;
+  private burnDamage = 18;
+  private burnDuration = 3.5;
   private wildfire = false;
+  isFiring = false;
 
   constructor(x: number, y: number) {
     super(x, y, 'cone', 290, 0, 0.7);
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid): void {
-    this.cooldown -= deltaTime;
-    if (this.cooldown > 0) return;
-    if (!this.hasAim) return;
+    if (!this.hasAim) {
+      this.isFiring = false;
+      return;
+    }
+    this.isFiring = true;
+    this.tickTimer += deltaTime;
+    if (this.tickTimer < 0.08) return;
+    this.tickTimer = 0;
     const count = grid.collectInRange(this.x, this.y, this.targeting.distance, enemies, 80);
     for (let index = 0; index < count; index++) {
       const target = grid.resultAt(index);
       if (this.isInFixedCone(enemies.x[target], enemies.y[target])) enemies.applyBurn(target, this.burnDuration, this.burnDamage);
     }
-    this.cooldown = 0.65;
   }
 
   reset(): void {
-    this.cooldown = 0;
-    this.burnDamage = 11; this.burnDuration = 3; this.targeting.maxDistance = 290; this.targeting.distance = 290; this.targeting.coneAngle = 0.7;
+    this.tickTimer = 0;
+    this.isFiring = false;
+    this.burnDamage = 18; this.burnDuration = 3.5; this.targeting.maxDistance = 290; this.targeting.distance = 290; this.targeting.coneAngle = 0.7;
     this.wildfire = false;
   }
 
@@ -35,6 +41,6 @@ export class FireTower extends TowerBase {
   spreadFromDeath(x: number, y: number, enemies: EnemyManager, grid: SpatialGrid): void {
     if (!this.wildfire) return;
     const count = grid.collectInRange(x, y, 78, enemies, 6);
-    for (let index = 0; index < count; index++) enemies.applyBurn(grid.resultAt(index), this.burnDuration, this.burnDamage * 0.8);
+    for (let index = 0; index < count; index++) enemies.applyBurn(grid.resultAt(index), this.burnDuration + 1, this.burnDamage);
   }
 }

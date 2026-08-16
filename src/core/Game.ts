@@ -117,7 +117,10 @@ export class Game implements BattlefieldActions {
     }, this.flowField, this.terrain, this.congestion, this.threatMap, this.grid);
     this.grid.rebuild(this.enemies);
     this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, () => this.registerKill());
-    this.projectiles.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => this.damageArea(x, y, damage, radius), this.terrain);
+    this.projectiles.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => {
+      this.damageArea(x, y, damage, radius);
+      this.renderer.addExplosionDecal(x, y, radius);
+    }, this.terrain);
     this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill());
     this.enemies.compact();
     this.feedback.update(simulationDelta);

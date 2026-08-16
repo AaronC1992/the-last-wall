@@ -70,6 +70,8 @@ export class Renderer {
     state.chaos.render(context);
     state.feedback.render(context, state.damageNumbers);
     this.map.renderDefenseLine(context, state.wallHp, state.wallMaxHp);
+    this.renderFireStreams(context, state);
+    this.renderLasers(context, state);
     this.renderTowers(context, state);
     this.renderGhost(context, state);
 
@@ -78,6 +80,10 @@ export class Renderer {
 
   addDeathDecal(x: number, y: number): void {
     this.decals.add(x, y, 'blood', 0.7 + ((x + y) % 7) / 14);
+  }
+
+  addExplosionDecal(x: number, y: number, radius: number): void {
+    this.decals.add(x, y, 'scorch', radius / 40);
   }
 
   clearDecals(): void {
@@ -97,6 +103,10 @@ export class Renderer {
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
+
+      if (enemies.burnTime[index] > 0) {
+        this.renderBurningEffect(context, x, y, radius, index);
+      }
 
       context.fillStyle = 'rgba(255, 255, 255, 0.28)';
       context.beginPath();
@@ -395,13 +405,47 @@ export class Renderer {
   }
 
   private renderProjectiles(context: CanvasRenderingContext2D, projectiles: ProjectileManager): void {
-    context.fillStyle = '#ffe39a';
-    context.beginPath();
     for (let index = 0; index < projectiles.count; index++) {
-      context.moveTo(projectiles.x[index] + 3, projectiles.y[index]);
-      context.arc(projectiles.x[index], projectiles.y[index], 3, 0, Math.PI * 2);
+      const mode = projectiles.mode[index];
+      const px = projectiles.x[index];
+      const py = projectiles.y[index];
+
+      if (mode === 2) {
+        const totalFlight = Math.max(0.001, projectiles.flight[index]);
+        const progress = Math.min(1, Math.max(0, 1 - projectiles.life[index] / totalFlight));
+        const arcHeight = Math.sin(progress * Math.PI) * 75;
+        const renderY = py - arcHeight;
+        const impactRadius = projectiles.impactRadius[index];
+
+        context.save();
+        context.strokeStyle = 'rgba(235, 130, 60, 0.45)';
+        context.lineWidth = 1.5;
+        context.setLineDash([3, 3]);
+        context.beginPath();
+        context.arc(projectiles.targetX[index], projectiles.targetY[index], impactRadius, 0, Math.PI * 2);
+        context.stroke();
+        context.restore();
+
+        context.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        context.beginPath();
+        context.ellipse(px, py, 5, 2.5, 0, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = '#ff8f3d';
+        context.beginPath();
+        context.arc(px, renderY, 6, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = '#fff4a3';
+        context.beginPath();
+        context.arc(px, renderY, 3, 0, Math.PI * 2);
+        context.fill();
+      } else {
+        context.fillStyle = '#ffe39a';
+        context.beginPath();
+        context.arc(px, py, 3, 0, Math.PI * 2);
+        context.fill();
+      }
     }
-    context.fill();
   }
 
   private renderTowers(context: CanvasRenderingContext2D, state: RenderState): void {
@@ -418,6 +462,139 @@ export class Renderer {
         context.stroke();
       }
     }
+  }
+
+  private renderBurningEffect(context: CanvasRenderingContext2D, x: number, y: number, radius: number, index: number): void {
+    const time = Date.now() * 0.008 + index;
+    const auraRadius = radius * (1.3 + Math.sin(time * 3) * 0.15);
+    const fireGlow = context.createRadialGradient(x, y, radius * 0.2, x, y, auraRadius);
+    fireGlow.addColorStop(0, 'rgba(255, 235, 120, 0.9)');
+    fireGlow.addColorStop(0.4, 'rgba(255, 120, 30, 0.7)');
+    fireGlow.addColorStop(0.8, 'rgba(210, 40, 10, 0.4)');
+    fireGlow.addColorStop(1, 'rgba(120, 10, 0, 0)');
+    context.fillStyle = fireGlow;
+    context.beginPath();
+    context.arc(x, y, auraRadius, 0, Math.PI * 2);
+    context.fill();
+
+    for (let spark = 0; spark < 3; spark++) {
+      const sparkAngle = time * 2 + spark * 2.1;
+      const sparkDist = radius * (0.4 + ((time + spark) % 1) * 0.9);
+      const sparkX = x + Math.cos(sparkAngle) * sparkDist;
+      const sparkY = y - ((time * 12 + spark * 5) % 10) + Math.sin(sparkAngle) * 3;
+      context.fillStyle = spark % 2 === 0 ? '#ffeb3b' : '#ff5722';
+      context.fillRect(sparkX - 1, sparkY - 1, 2.5, 2.5);
+    }
+  }
+
+  private renderFireStreams(context: CanvasRenderingContext2D, state: RenderState): void {
+    if (state.buildPhase) return;
+    const time = Date.now() * 0.006;
+    for (const tower of state.weapons.towers) {
+      if (tower.kind !== 'fireTower') continue;
+      const fireInstance = tower.instance as unknown as { isFiring?: boolean; targeting: { angle: number; distance: number; coneAngle: number } };
+      if (!fireInstance.isFiring) continue;
+
+      const originX = tower.instance.x;
+      const originY = tower.instance.y;
+      const targetAngle = fireInstance.targeting.angle;
+      const maxRange = fireInstance.targeting.distance;
+      const coneAngle = fireInstance.targeting.coneAngle;
+
+      context.save();
+      context.globalCompositeOperation = 'screen';
+
+      const coneGradient = context.createRadialGradient(originX, originY, 10, originX, originY, maxRange);
+      coneGradient.addColorStop(0, 'rgba(255, 240, 180, 0.85)');
+      coneGradient.addColorStop(0.25, 'rgba(255, 140, 30, 0.65)');
+      coneGradient.addColorStop(0.6, 'rgba(220, 50, 10, 0.4)');
+      coneGradient.addColorStop(1, 'rgba(140, 10, 0, 0)');
+
+      context.fillStyle = coneGradient;
+      context.beginPath();
+      context.moveTo(originX, originY);
+      context.arc(originX, originY, maxRange, targetAngle - coneAngle / 2, targetAngle + coneAngle / 2);
+      context.closePath();
+      context.fill();
+
+      for (let stream = 0; stream < 16; stream++) {
+        const angleOffset = (Math.sin(time * 4 + stream) * 0.8) * (coneAngle / 2);
+        const streamAngle = targetAngle + angleOffset;
+        const speed = 140 + (stream % 5) * 35;
+        const progress = ((time * speed + stream * 30) % maxRange) / maxRange;
+        const dist = progress * maxRange;
+        const particleX = originX + Math.cos(streamAngle) * dist;
+        const particleY = originY + Math.sin(streamAngle) * dist;
+        const pSize = 3 + progress * 9 + Math.sin(time * 8 + stream) * 2;
+
+        const pGrad = context.createRadialGradient(particleX, particleY, 0, particleX, particleY, pSize);
+        pGrad.addColorStop(0, 'rgba(255, 255, 220, 0.95)');
+        pGrad.addColorStop(0.3, 'rgba(255, 150, 20, 0.8)');
+        pGrad.addColorStop(0.7, 'rgba(210, 40, 10, 0.4)');
+        pGrad.addColorStop(1, 'rgba(100, 0, 0, 0)');
+
+        context.fillStyle = pGrad;
+        context.beginPath();
+        context.arc(particleX, particleY, pSize, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      context.restore();
+    }
+  }
+
+  private renderLasers(context: CanvasRenderingContext2D, state: RenderState): void {
+    if (state.buildPhase) return;
+    const time = Date.now() * 0.012;
+    for (const tower of state.weapons.towers) {
+      if (tower.kind !== 'lightningTower') continue;
+      const laserInstance = tower.instance as unknown as { isFiring?: boolean; primaryTarget?: { x: number; y: number } | null; chainedTargets?: Array<{ x: number; y: number }> };
+      if (!laserInstance.isFiring || !laserInstance.primaryTarget) continue;
+
+      const originX = tower.instance.x;
+      const originY = tower.instance.y;
+      const primary = laserInstance.primaryTarget;
+
+      context.save();
+      context.globalCompositeOperation = 'screen';
+
+      this.drawLaserBeam(context, originX, originY, primary.x, primary.y, '#9bc4ff', '#3b82f6', 6, time);
+
+      if (laserInstance.chainedTargets && laserInstance.chainedTargets.length > 0) {
+        for (const chainTarget of laserInstance.chainedTargets) {
+          this.drawLaserBeam(context, primary.x, primary.y, chainTarget.x, chainTarget.y, '#cce0ff', '#60a5fa', 3.5, time + chainTarget.x * 0.01);
+        }
+      }
+
+      context.restore();
+    }
+  }
+
+  private drawLaserBeam(context: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, coreColor: string, outerColor: string, baseWidth: number, time: number): void {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    if (dist < 1) return;
+
+    context.shadowColor = outerColor;
+    context.shadowBlur = 12;
+
+    context.strokeStyle = outerColor;
+    context.lineWidth = baseWidth + Math.sin(time * 8) * 1.5;
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+
+    context.strokeStyle = coreColor;
+    context.lineWidth = Math.max(1, baseWidth * 0.4);
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.arc(x2, y2, baseWidth * 0.8 + Math.sin(time * 12) * 1, 0, Math.PI * 2);
+    context.fill();
   }
 
   private renderGhost(context: CanvasRenderingContext2D, state: RenderState): void {

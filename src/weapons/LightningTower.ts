@@ -2,21 +2,34 @@ import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
 import { TowerBase } from './TowerBase';
 
+export interface LaserTargetPoint {
+  x: number;
+  y: number;
+}
+
 export class LightningTower extends TowerBase {
-  private cooldown = 0;
+  private tickTimer = 0;
   private damage = 18;
   private chains = 5;
   private chainRange = 110;
   private staticLock = false;
+
+  isFiring = false;
+  primaryTarget: LaserTargetPoint | null = null;
+  chainedTargets: LaserTargetPoint[] = [];
 
   constructor(x: number, y: number) {
     super(x, y, 'zone', 510, 110);
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void): void {
-    this.cooldown -= deltaTime;
-    if (this.cooldown > 0) return;
-    if (!this.hasAim) return;
+    if (!this.hasAim) {
+      this.isFiring = false;
+      this.primaryTarget = null;
+      this.chainedTargets.length = 0;
+      return;
+    }
+
     const count = grid.collectInRange(this.targeting.targetX, this.targeting.targetY, this.targeting.radius, enemies, 80);
     let target = -1;
     let closestDistance = Number.POSITIVE_INFINITY;
@@ -25,18 +38,44 @@ export class LightningTower extends TowerBase {
       const distance = Math.hypot(enemies.x[candidate] - this.targeting.targetX, enemies.y[candidate] - this.targeting.targetY);
       if (distance < closestDistance) { closestDistance = distance; target = candidate; }
     }
-    if (target < 0) return;
+
+    if (target < 0) {
+      this.isFiring = false;
+      this.primaryTarget = null;
+      this.chainedTargets.length = 0;
+      return;
+    }
+
+    this.isFiring = true;
+    this.primaryTarget = { x: enemies.x[target], y: enemies.y[target] };
+    this.chainedTargets.length = 0;
+
     const chainCount = grid.collectInRange(enemies.x[target], enemies.y[target], this.chainRange, enemies, this.chains);
     for (let index = 0; index < chainCount; index++) {
-      const reward = enemies.damage(grid.resultAt(index), this.damage);
-      if (reward > 0) onKill(reward);
-      else if (this.staticLock && Math.random() < 0.3) enemies.stun(grid.resultAt(index), 0.55);
+      const chainedEnemyIndex = grid.resultAt(index);
+      if (chainedEnemyIndex !== target) {
+        this.chainedTargets.push({ x: enemies.x[chainedEnemyIndex], y: enemies.y[chainedEnemyIndex] });
+      }
     }
-    this.cooldown = 0.52;
+
+    this.tickTimer += deltaTime;
+    if (this.tickTimer >= 0.08) {
+      this.tickTimer = 0;
+      const tickDmg = (this.damage / 0.52) * 0.08;
+      for (let index = 0; index < chainCount; index++) {
+        const chainedEnemyIndex = grid.resultAt(index);
+        const reward = enemies.damage(chainedEnemyIndex, tickDmg);
+        if (reward > 0) onKill(reward);
+        else if (this.staticLock && Math.random() < 0.1) enemies.stun(chainedEnemyIndex, 0.4);
+      }
+    }
   }
 
   reset(): void {
-    this.cooldown = 0;
+    this.tickTimer = 0;
+    this.isFiring = false;
+    this.primaryTarget = null;
+    this.chainedTargets.length = 0;
     this.damage = 18; this.chains = 5; this.chainRange = 110; this.targeting.maxDistance = 510; this.targeting.distance = 510; this.targeting.radius = 110;
     this.staticLock = false;
   }
