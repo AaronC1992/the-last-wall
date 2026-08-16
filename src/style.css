@@ -38,9 +38,6 @@ button { font: inherit; }
 
 /* Overlays */
 .horde-announcement { position: absolute; top: 14%; left: 50%; transform: translateX(-50%); color: #f2c46d; font-size: 27px; font-weight: bold; text-shadow: 0 2px 0 #0b1113; pointer-events: none; }
-.map-intro { position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%); display: grid; gap: 6px; text-align: center; text-shadow: 0 2px 0 #17211a; pointer-events: none; }
-.map-intro strong { color: #f0d28d; font-size: 32px; }
-.map-intro span { color: #e8efe0; font: 13px Verdana, sans-serif; }
 .build-banner { position: absolute; top: 74px; right: 14px; display: grid; justify-items: center; gap: 2px; max-width: 190px; padding: 6px 10px; background: rgba(10, 14, 17, .94); border: 1px solid #4a5a52; pointer-events: none; text-align: center; }
 .build-banner[hidden] { display: none; }
 .build-banner strong { color: #f5f1df; font-size: 17px; letter-spacing: .5px; }

@@ -33,7 +33,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
       <aside id="tower-stock" class="tower-stock" aria-label="Tower stock"></aside>
 
-      <div id="map-intro" class="map-intro" hidden><strong>THE LAST WALL</strong><span>KING'S APPROACH</span></div>
       <div id="horde-announcement" class="horde-announcement" hidden></div>
       <div id="build-banner" class="build-banner" hidden><strong>BUILD PHASE</strong><span>Press SPACE to start battle</span></div>
 

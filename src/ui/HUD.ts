@@ -30,7 +30,6 @@ export class HUD {
   private readonly enemies = this.element('enemy-value');
   private readonly fps = this.element('fps-value');
   private readonly announcement = this.element('horde-announcement');
-  private readonly mapIntro = this.element('map-intro');
   private readonly buildBanner = this.element('build-banner');
   private readonly startBattle = document.querySelector<HTMLButtonElement>('#start-battle')!;
   private readonly stockRoot = this.element('tower-stock');
@@ -61,7 +60,6 @@ export class HUD {
     this.fps.textContent = Math.round(state.fps).toString();
     this.announcement.textContent = state.announcement;
     this.announcement.hidden = state.announcement.length === 0 || showBuildControls;
-    this.mapIntro.hidden = !state.mapIntro;
     this.buildBanner.hidden = !showBuildControls;
     this.startBattle.hidden = !showBuildControls;
 
