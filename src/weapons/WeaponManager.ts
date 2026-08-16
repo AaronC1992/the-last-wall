@@ -209,7 +209,7 @@ export class WeaponManager {
   private isFreeSpot(x: number, y: number, ignoreId: number): boolean {
     if (!this.isInBuildZone(x, y)) return false;
     if (!this.terrain.isBuildableFootprint(x, y, TOWER_FOOTPRINT)) return false;
-    if (Math.abs(x - this.gateGuardCenterX) < this.gateGuardRadius && y > this.buildTop + 40) return false;
+    if (Math.abs(x - this.gateGuardCenterX) < this.gateGuardRadius && y > this.buildBottom - 80) return false;
     const minimum = TOWER_FOOTPRINT * 1.6;
     for (const tower of this.placed) {
       if (tower.id === ignoreId) continue;

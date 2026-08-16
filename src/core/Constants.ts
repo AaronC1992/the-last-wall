@@ -20,7 +20,7 @@ export const TUNING = {
   ballistaRange: 500,
   projectileSpeed: 660,
   projectileLifetime: 1.5,
-  maxEnemies: 12000,
+  maxEnemies: 100000,
   maxProjectiles: 2048,
   spatialCellSize: 64,
   fixedStep: 1 / 60,

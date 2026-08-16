@@ -2,8 +2,8 @@ import { EnemyType } from '../enemies/EnemyTypes';
 import type { EnemyTypeId } from '../enemies/EnemyTypes';
 
 export class WaveDirector {
-  private readonly queueType = new Uint8Array(12000);
-  private readonly queueElite = new Uint8Array(12000);
+  private readonly queueType = new Uint8Array(100000);
+  private readonly queueElite = new Uint8Array(100000);
   private queueHead = 0;
   private queueTail = 0;
   private spawnTimer = 0;
@@ -16,7 +16,7 @@ export class WaveDirector {
     this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer > 0) return;
-    const burst = Math.min(this.queueTail - this.queueHead, Math.min(70, 8 + this.wave * 3));
+    const burst = Math.min(this.queueTail - this.queueHead, Math.min(200, 8 + this.wave * 3));
     for (let index = 0; index < burst; index++) {
       spawn(this.queueType[this.queueHead] as EnemyTypeId, this.queueElite[this.queueHead] !== 0);
       this.queueHead++;
