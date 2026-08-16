@@ -110,7 +110,7 @@ export class ChaosSystem {
     return true;
   }
 
-  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, quality: GraphicsQuality = 'high'): void {
+  update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, onKill: (reward: number) => void, quality: GraphicsQuality = 'high', showAbilityEffects = true): void {
     this.gameTime += deltaTime;
 
     for (let index = 0; index < this.cooldowns.length; index++) {
@@ -139,7 +139,7 @@ export class ChaosSystem {
       const curY = this.strikeStartY[index] + (this.strikeY[index] - this.strikeStartY[index]) * progress;
 
       // Spawn falling trail particles
-      if (quality !== 'low' && Math.random() < 0.6) {
+      if (showAbilityEffects && quality !== 'low' && Math.random() < 0.6) {
         this.addParticle(curX + (Math.random() - 0.5) * 10, curY + (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 20, -30 - Math.random() * 30, 0.4, 8, 0);
         this.addParticle(curX, curY, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, 0.3, 4, 1);
       }
@@ -174,7 +174,7 @@ export class ChaosSystem {
       const groundY = this.dragonY;
 
       // Dragon breath particle stream
-      for (let i = 0; quality !== 'low' && i < 3; i++) {
+      for (let i = 0; showAbilityEffects && quality !== 'low' && i < 3; i++) {
         const angle = 0.6 + (Math.random() - 0.5) * 0.4;
         const speed = 250 + Math.random() * 120;
         this.addParticle(dx + 28, dy + 6, Math.cos(angle) * speed, Math.sin(angle) * speed, 0.35 + Math.random() * 0.25, 8 + Math.random() * 12, 0);
@@ -192,7 +192,7 @@ export class ChaosSystem {
       this.deathBeamTick -= deltaTime;
 
       // Plasma sparks along beam
-      if (quality !== 'low' && Math.random() < 0.8) {
+      if (showAbilityEffects && quality !== 'low' && Math.random() < 0.8) {
         const sy = Math.random() * (this.height * 0.85);
         this.addParticle(this.deathBeamX + (Math.random() - 0.5) * 50, sy, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, 0.25, 6, 3);
       }
@@ -209,7 +209,7 @@ export class ChaosSystem {
     }
   }
 
-  render(context: CanvasRenderingContext2D, quality: GraphicsQuality = 'high'): void {
+  render(context: CanvasRenderingContext2D, quality: GraphicsQuality = 'high', showAbilityEffects = true): void {
     const time = this.gameTime;
 
     // Apocalypse sky tint
@@ -456,7 +456,7 @@ export class ChaosSystem {
     // Render Particles
     context.save();
     context.globalCompositeOperation = 'screen';
-    const particleLimit = quality === 'low' ? 0 : quality === 'medium' ? Math.floor(PARTICLE_CAPACITY * 0.45) : PARTICLE_CAPACITY;
+    const particleLimit = !showAbilityEffects || quality === 'low' ? 0 : quality === 'medium' ? Math.floor(PARTICLE_CAPACITY * 0.45) : PARTICLE_CAPACITY;
     for (let index = 0; index < particleLimit; index++) {
       if (this.plife[index] <= 0) continue;
       const alpha = this.plife[index] / this.pmaxLife[index];

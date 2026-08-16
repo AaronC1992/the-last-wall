@@ -105,6 +105,7 @@ export class Game implements BattlefieldActions {
   updateSimulation(deltaTime: number): void {
     if (this.phase !== 'battle' || this.gameOver || this.menuOpen) return;
     const simulationDelta = deltaTime * this.gameSpeed;
+    const graphicsQuality = this.progression.settings.graphicsQuality;
     this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
     this.elapsed += simulationDelta;
     this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
@@ -117,14 +118,14 @@ export class Game implements BattlefieldActions {
     this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
       this.registerKill();
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
-    }, this.flowField, this.terrain, this.congestion, this.threatMap, this.grid);
+    }, this.flowField, this.terrain, this.congestion, this.threatMap, graphicsQuality === 'low' ? undefined : this.grid);
     this.grid.rebuild(this.enemies);
     this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, () => this.registerKill());
     this.projectiles.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => {
       this.damageArea(x, y, damage, radius);
       this.renderer.addExplosionDecal(x, y, radius);
     }, this.terrain);
-    this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), this.progression.settings.graphicsQuality);
+    this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), this.progression.settings.graphicsQuality, this.progression.settings.showAbilityEffects);
     this.enemies.compact();
     this.feedback.update(simulationDelta);
     if (this.waveDirector.isWaveCleared(this.enemies.count)) this.endRun();
@@ -145,6 +146,11 @@ export class Game implements BattlefieldActions {
       damageNumbers: this.progression.settings.damageNumbers,
       screenShake: this.progression.settings.screenShake,
       graphicsQuality: this.progression.settings.graphicsQuality,
+      showDecals: this.progression.settings.showDecals,
+      showTowerEffects: this.progression.settings.showTowerEffects,
+      showAbilityEffects: this.progression.settings.showAbilityEffects,
+      animateGateTorches: this.progression.settings.animateGateTorches,
+      detailedEnemies: this.progression.settings.detailedEnemies,
       camera: this.camera,
       buildPhase: this.phase === 'build',
       selectedTowerId: this.selectedId,

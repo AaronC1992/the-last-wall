@@ -39,6 +39,11 @@ export interface RenderState {
   damageNumbers: boolean;
   screenShake: boolean;
   graphicsQuality: GraphicsQuality;
+  showDecals: boolean;
+  showTowerEffects: boolean;
+  showAbilityEffects: boolean;
+  animateGateTorches: boolean;
+  detailedEnemies: boolean;
   camera: Camera;
   buildPhase: boolean;
   selectedTowerId: number;
@@ -72,15 +77,15 @@ export class Renderer {
 
     this.map.renderBackground(context, state.graphicsQuality);
     if (state.showThreatMap && state.graphicsQuality === 'high') state.threatMap.render(context);
-    if (state.graphicsQuality === 'high') this.decals.render(context);
-    else if (state.graphicsQuality === 'medium') this.decals.render(context, 20);
-    this.renderEnemies(context, state.enemies, state.graphicsQuality);
+    if (state.showDecals && state.graphicsQuality === 'high') this.decals.render(context);
+    else if (state.showDecals && state.graphicsQuality === 'medium') this.decals.render(context, 20);
+    this.renderEnemies(context, state.enemies, state.graphicsQuality, state.detailedEnemies);
     this.renderProjectiles(context, state.projectiles, state.graphicsQuality);
-    state.chaos.render(context, state.graphicsQuality);
+    state.chaos.render(context, state.graphicsQuality, state.showAbilityEffects);
     state.feedback.render(context, state.damageNumbers);
-    this.map.renderDefenseLine(context, state.wallHp, state.wallMaxHp, state.graphicsQuality !== 'low');
-    if (state.graphicsQuality !== 'low') this.renderFireStreams(context, state);
-    if (state.graphicsQuality !== 'low') this.renderLasers(context, state);
+    this.map.renderDefenseLine(context, state.wallHp, state.wallMaxHp, state.animateGateTorches && state.graphicsQuality !== 'low');
+    if (state.showTowerEffects && state.graphicsQuality !== 'low') this.renderFireStreams(context, state);
+    if (state.showTowerEffects && state.graphicsQuality !== 'low') this.renderLasers(context, state);
     this.renderTowers(context, state);
     this.renderAbilityTarget(context, state.abilityTarget);
     this.renderGhost(context, state);
@@ -100,8 +105,8 @@ export class Renderer {
     this.decals.clear();
   }
 
-  private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality): void {
-    if (quality !== 'high') {
+  private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality, detailed: boolean): void {
+    if (quality !== 'high' || !detailed) {
       this.renderEfficientEnemies(context, enemies, quality);
       return;
     }

@@ -138,6 +138,17 @@ button { font: inherit; }
 .menu-panel label { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #d4ddd5; font: 13px Verdana, sans-serif; }
 .settings-inline { display: inline-flex; align-items: center; gap: 8px; }
 .menu-panel select { min-width: 190px; padding: 7px 9px; border: 1px solid #6b5a3c; background: #161b19; color: #efe9dc; font: 12px Verdana, sans-serif; }
+.settings-feature-button { width: 100%; padding: 12px; border: 1px solid #6b8c87; background: #1d302e; color: #c8f1e8; cursor: pointer; font-weight: bold; }
+.settings-feature-button:hover { background: #29453f; }
+.graphics-menu { width: min(680px, calc(100% - 28px)); }
+.graphics-summary { margin: 0; color: #aebdb7; font: 12px/1.45 Verdana, sans-serif; }
+.graphics-menu > label { padding: 10px 0; border-bottom: 1px solid #2e403d; }
+.graphics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.graphics-grid label { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 46px; padding: 10px 12px; border: 1px solid #3d514c; background: #14201f; color: #d5e2dd; font: 11px Verdana, sans-serif; }
+.graphics-grid input { width: 18px; height: 18px; accent-color: #55c7b5; }
+.graphics-actions { display: flex; justify-content: center; gap: 8px; padding-top: 8px; }
+.graphics-actions button { padding: 9px 12px; border: 1px solid #4f8179; background: #1d302e; color: #c8f1e8; cursor: pointer; font: 11px Verdana, sans-serif; }
+.graphics-actions button:hover { background: #29453f; }
 .cheat-button { width: 22px; height: 22px; padding: 0; border: 1px solid #52655d; background: #1b2426; color: #f2c46d; cursor: pointer; font: bold 12px Verdana, sans-serif; }
 .cheat-button:hover { background: #2d3637; }
 .settings-danger { display: grid; gap: 6px; margin-top: 12px; padding-top: 14px; border-top: 1px solid #543c3c; }
@@ -176,6 +187,8 @@ button { font: inherit; }
 	.main-menu p { font-size: 14px; }
 	.skill-legend { top: 70px; bottom: auto; left: 8px; max-width: 230px; max-height: 210px; overflow-y: auto; padding: 8px 9px; font-size: 9px; }
 	.skill-legend small { font-size: 9px; }
+	.graphics-grid { grid-template-columns: 1fr; }
+	.graphics-actions { flex-wrap: wrap; }
 }
 .menu-panel input[type="range"] { accent-color: #f2c46d; }
 .statistics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }

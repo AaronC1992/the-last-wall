@@ -9,6 +9,7 @@ export class MenuViews {
   private readonly audio: AudioSystem;
   private readonly main = document.querySelector<HTMLElement>('#main-menu')!;
   private readonly settings = document.querySelector<HTMLElement>('#settings-menu')!;
+  private readonly graphicsMenu = document.querySelector<HTMLElement>('#graphics-menu')!;
   private readonly statistics = document.querySelector<HTMLElement>('#statistics-menu')!;
   private readonly armory = document.querySelector<HTMLElement>('#armory-menu')!;
   private readonly master = document.querySelector<HTMLInputElement>('#setting-master')!;
@@ -17,6 +18,13 @@ export class MenuViews {
   private readonly shake = document.querySelector<HTMLInputElement>('#setting-shake')!;
   private readonly damageNumbers = document.querySelector<HTMLInputElement>('#setting-damage-numbers')!;
   private readonly graphics = document.querySelector<HTMLSelectElement>('#setting-graphics')!;
+  private readonly graphicsShake = document.querySelector<HTMLInputElement>('#setting-shake-graphics')!;
+  private readonly graphicsDamageNumbers = document.querySelector<HTMLInputElement>('#setting-damage-numbers-graphics')!;
+  private readonly decals = document.querySelector<HTMLInputElement>('#setting-decals')!;
+  private readonly towerEffects = document.querySelector<HTMLInputElement>('#setting-tower-effects')!;
+  private readonly abilityEffects = document.querySelector<HTMLInputElement>('#setting-ability-effects')!;
+  private readonly gateTorches = document.querySelector<HTMLInputElement>('#setting-gate-torches')!;
+  private readonly enemyDetail = document.querySelector<HTMLInputElement>('#setting-enemy-detail')!;
   private readonly campaign = document.querySelector<HTMLElement>('#campaign-menu')!;
   private readonly customMaps = document.querySelector<HTMLElement>('#custom-maps-menu')!;
   private settingsReturn: 'main' | 'build' = 'main';
@@ -37,6 +45,8 @@ export class MenuViews {
       onUpgrades();
     });
     document.querySelector<HTMLButtonElement>('#menu-settings')!.addEventListener('click', () => this.showSettings());
+    document.querySelector<HTMLButtonElement>('#open-graphics')!.addEventListener('click', () => this.showGraphics());
+    document.querySelector<HTMLButtonElement>('#graphics-close')!.addEventListener('click', () => { this.graphicsMenu.hidden = true; this.settings.hidden = false; });
     document.querySelector<HTMLButtonElement>('#menu-statistics')?.addEventListener('click', () => this.showStatistics());
     document.querySelector<HTMLButtonElement>('#menu-armory')?.addEventListener('click', () => this.showArmory());
     document.querySelector<HTMLButtonElement>('#settings-close')!.addEventListener('click', () => this.closeSettings());
@@ -50,7 +60,10 @@ export class MenuViews {
     this.sfxCheat.addEventListener('click', () => this.activateSfxCheat());
     this.shake.addEventListener('change', () => this.saveSettings());
     this.damageNumbers.addEventListener('change', () => this.saveSettings());
-    this.graphics.addEventListener('change', () => this.saveSettings());
+    this.graphics.addEventListener('change', () => this.saveGraphicsSettings());
+    for (const input of [this.graphicsShake, this.graphicsDamageNumbers, this.decals, this.towerEffects, this.abilityEffects, this.gateTorches, this.enemyDetail]) input.addEventListener('change', () => this.saveGraphicsSettings());
+    document.querySelector<HTMLButtonElement>('#graphics-low')!.addEventListener('click', () => this.setGraphicsPreset('low'));
+    document.querySelector<HTMLButtonElement>('#graphics-high')!.addEventListener('click', () => this.setGraphicsPreset('high'));
     document.querySelector<HTMLButtonElement>('#settings-reset')!.addEventListener('click', () => {
       if (window.confirm('Reset all progress and start over? This cannot be undone.')) onReset();
     });
@@ -93,8 +106,22 @@ export class MenuViews {
     this.sfx.value = settings.sfxVolume.toString();
     this.shake.checked = settings.screenShake;
     this.damageNumbers.checked = settings.damageNumbers;
-    this.graphics.value = settings.graphicsQuality;
     this.settings.hidden = false;
+  }
+
+  private showGraphics(): void {
+    const settings = this.progression.settings;
+    this.main.hidden = true;
+    this.settings.hidden = true;
+    this.graphics.value = settings.graphicsQuality;
+    this.graphicsShake.checked = settings.screenShake;
+    this.graphicsDamageNumbers.checked = settings.damageNumbers;
+    this.decals.checked = settings.showDecals;
+    this.towerEffects.checked = settings.showTowerEffects;
+    this.abilityEffects.checked = settings.showAbilityEffects;
+    this.gateTorches.checked = settings.animateGateTorches;
+    this.enemyDetail.checked = settings.detailedEnemies;
+    this.graphicsMenu.hidden = false;
   }
 
   showInGameSettings(): void {
@@ -130,8 +157,28 @@ export class MenuViews {
   private saveSettings(): void {
     const masterVolume = Number(this.master.value);
     const sfxVolume = Number(this.sfx.value);
-    this.progression.updateSettings({ masterVolume, sfxVolume, screenShake: this.shake.checked, damageNumbers: this.damageNumbers.checked, graphicsQuality: this.graphics.value as 'low' | 'medium' | 'high' });
+    this.progression.updateSettings({ masterVolume, sfxVolume, screenShake: this.shake.checked, damageNumbers: this.damageNumbers.checked });
     this.audio.setSettings({ masterVolume, sfxVolume });
+  }
+
+  private saveGraphicsSettings(): void {
+    this.graphicsShake.checked = this.graphicsShake.checked;
+    this.shake.checked = this.graphicsShake.checked;
+    this.damageNumbers.checked = this.graphicsDamageNumbers.checked;
+    this.progression.updateSettings({ graphicsQuality: this.graphics.value as 'low' | 'medium' | 'high', screenShake: this.graphicsShake.checked, damageNumbers: this.graphicsDamageNumbers.checked, showDecals: this.decals.checked, showTowerEffects: this.towerEffects.checked, showAbilityEffects: this.abilityEffects.checked, animateGateTorches: this.gateTorches.checked, detailedEnemies: this.enemyDetail.checked });
+  }
+
+  private setGraphicsPreset(preset: 'low' | 'high'): void {
+    this.graphics.value = preset;
+    const enabled = preset === 'high';
+    this.graphicsShake.checked = enabled;
+    this.graphicsDamageNumbers.checked = enabled;
+    this.decals.checked = enabled;
+    this.towerEffects.checked = enabled;
+    this.abilityEffects.checked = enabled;
+    this.gateTorches.checked = enabled;
+    this.enemyDetail.checked = enabled;
+    this.saveGraphicsSettings();
   }
 
   private activateSfxCheat(): void {
