@@ -2,7 +2,7 @@ export class Camera {
   x: number;
   y: number;
   zoom = 0.82;
-  readonly minZoom = 0.62;
+  readonly minZoom = 0.15;
   readonly maxZoom = 3.5;
 
   constructor(
@@ -52,6 +52,16 @@ export class Camera {
 
   reset(): void {
     this.zoom = 0.82;
+    this.x = this.worldWidth / 2;
+    this.y = this.worldHeight / 2;
+    this.clamp();
+  }
+
+  fitToView(): void {
+    const zoomWidth = (this.viewportWidth / 2) / (this.worldWidth / 2);
+    const zoomHeight = (this.viewportHeight / 2) / (this.worldHeight / 2);
+    this.zoom = Math.min(zoomWidth, zoomHeight);
+    this.zoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoom));
     this.x = this.worldWidth / 2;
     this.y = this.worldHeight / 2;
     this.clamp();
