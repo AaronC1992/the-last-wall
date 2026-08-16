@@ -265,6 +265,12 @@ export class Game implements BattlefieldActions {
     return this.phase;
   }
 
+  endRound(): void {
+    if (this.phase !== 'battle' || this.gameOver) return;
+    this.wallHp = 0;
+    this.endRun();
+  }
+
   buildSlotStates(): readonly BuildSlotState[] {
     return TOWER_CONFIG.map((config) => ({
       kind: config.kind,

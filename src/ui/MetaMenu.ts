@@ -12,6 +12,9 @@ export class MetaMenu {
   private readonly context = this.canvas.getContext('2d')!;
   private readonly tooltip = document.querySelector<HTMLElement>('#skill-tooltip')!;
   private readonly tokenValue = document.querySelector<HTMLElement>('#tokens-value')!;
+  private readonly metaButton = document.querySelector<HTMLButtonElement>('#meta-button')!;
+  private inBattle = false;
+  private endRoundAction = (): void => undefined;
   private offsetX = VIEW_WIDTH / 2;
   private offsetY = VIEW_HEIGHT / 2;
   private zoom = 1;
@@ -30,7 +33,10 @@ export class MetaMenu {
     this.backAction = onCloseToMenu;
     this.canvas.width = VIEW_WIDTH;
     this.canvas.height = VIEW_HEIGHT;
-    document.querySelector<HTMLButtonElement>('#meta-button')!.addEventListener('click', () => this.show());
+    this.metaButton.addEventListener('click', () => {
+      if (this.inBattle) this.endRoundAction();
+      else this.show();
+    });
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
     document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => { this.hide(); this.backAction(); });
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
@@ -42,6 +48,12 @@ export class MetaMenu {
     this.canvas.addEventListener('pointerleave', () => this.hideTooltip());
     this.canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false });
     this.canvas.addEventListener('click', (event) => this.onClick(event));
+  }
+
+  setBattleMode(inBattle: boolean, onEndRound: () => void): void {
+    this.inBattle = inBattle;
+    this.endRoundAction = onEndRound;
+    this.metaButton.textContent = inBattle ? 'End Round' : 'Upgrades';
   }
 
   show(backAction: () => void = this.onCloseToMenu): void {
