@@ -101,6 +101,10 @@ export class Renderer {
   }
 
   private renderEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality): void {
+    if (quality !== 'high') {
+      this.renderEfficientEnemies(context, enemies, quality);
+      return;
+    }
     for (let index = 0; index < enemies.count; index++) {
       if (enemies.active[index] === 0) continue;
       const x = enemies.x[index];
@@ -116,7 +120,7 @@ export class Renderer {
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
 
-      if (isBurning && quality !== 'low') {
+      if (isBurning) {
         this.renderBurningEffect(context, x, y, radius, index);
       }
 
@@ -152,6 +156,32 @@ export class Renderer {
         context.strokeRect(x - radius - 3, y - radius - 3, radius * 2 + 6, radius * 2 + 6);
       }
     }
+  }
+
+  private renderEfficientEnemies(context: CanvasRenderingContext2D, enemies: EnemyManager, quality: GraphicsQuality): void {
+    for (let type = 0; type <= EnemyType.Boss; type++) {
+      for (let burning = 0; burning <= 1; burning++) {
+        context.fillStyle = burning === 1 ? '#ffffff' : this.enemyColor(type as EnemyTypeId);
+        context.beginPath();
+        for (let index = 0; index < enemies.count; index++) {
+          if (enemies.active[index] === 0 || enemies.type[index] !== type || (enemies.burnTime[index] > 0 ? 1 : 0) !== burning) continue;
+          const x = enemies.x[index];
+          const y = enemies.y[index];
+          const radius = enemies.radius[index];
+          if (quality === 'low') {
+            context.rect(x - radius, y - radius, radius * 2, radius * 2);
+          } else {
+            context.moveTo(x + radius, y);
+            context.arc(x, y, radius, 0, Math.PI * 2);
+          }
+        }
+        context.fill();
+      }
+    }
+  }
+
+  private enemyColor(enemyType: EnemyTypeId): string {
+    return enemyType === EnemyType.Grunt ? '#d84b48' : enemyType === EnemyType.Runner ? '#ee9a4d' : enemyType === EnemyType.Brute ? '#a6465d' : enemyType === EnemyType.Armored ? '#8a97a5' : enemyType === EnemyType.Exploder ? '#e5c553' : '#8753b4';
   }
 
   drawPixelGrunt(context: CanvasRenderingContext2D, r: number, time: number, index: number, isElite: boolean): void {
