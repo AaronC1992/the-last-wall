@@ -94,6 +94,8 @@ export class BattlefieldInput {
     if (this.actions.selectedTowerId() > 0 && !this.actions.armedKind()) {
       this.dragMode = 'aim';
       this.draggedTowerId = this.actions.selectedTowerId();
+    } else if (!this.actions.armedKind()) {
+      this.dragMode = 'pan';
     }
   }
 
@@ -164,5 +166,10 @@ export class BattlefieldInput {
       this.actions.selectTower(0);
       this.actions.useAbilityAt(-1, -1);
     }
+    const panAmount = 80;
+    if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') this.camera.panByScreen(-panAmount, 0);
+    if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') this.camera.panByScreen(panAmount, 0);
+    if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') this.camera.panByScreen(0, -panAmount);
+    if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') this.camera.panByScreen(0, panAmount);
   }
 }
