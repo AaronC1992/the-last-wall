@@ -15,6 +15,7 @@ export interface PermanentBonuses {
   tokenMultiplier: number;
   ballistaSpeedMultiplier: number;
   flatTokenBonus: number;
+  abilityHaste: number;
   towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number };
 }
 
@@ -101,19 +102,20 @@ export class MetaProgression {
 
   get bonuses(): PermanentBonuses {
     return {
-      damageMultiplier: 1 + this.getLevel('globalDamage') * 0.1,
-      wallMaxHp: 100 + this.getLevel('wallIntegrity') * 20,
-      wallArmor: this.getLevel('wallArmor'),
-      startingBuildPoints: 400 + this.getLevel('startingGold') * 10,
-      tokenMultiplier: 1 + this.getLevel('tokenBonus') * 0.15,
+      damageMultiplier: 1 + this.getLevel('globalDamage') * 0.1 + this.getLevel('globalDamageII') * 0.15,
+      wallMaxHp: 100 + this.getLevel('wallIntegrity') * 20 + this.getLevel('wallIntegrityII') * 35,
+      wallArmor: this.getLevel('wallArmor') + this.getLevel('wallArmorII'),
+      startingBuildPoints: 400 + this.getLevel('startingGold') * 10 + this.getLevel('startingGoldII') * 15,
+      tokenMultiplier: 1 + this.getLevel('tokenBonus') * 0.15 + this.getLevel('tokenBonusII') * 0.2,
       ballistaSpeedMultiplier: 1 + this.getLevel('ballistaMastery') * 0.08,
       flatTokenBonus: this.getLevel('bonusResources') * 3,
+      abilityHaste: this.getLevel('abilityHaste') * 0.06,
       towerSlots: {
-        ballista: this.getLevel('ballistaSlots'),
-        cannon: this.getLevel('cannonSlots'),
-        fireTower: this.getLevel('fireSlots'),
-        lightningTower: this.getLevel('lightningSlots'),
-        mortar: this.getLevel('mortarSlots'),
+        ballista: this.getLevel('ballistaSlots') + this.getLevel('ballistaSlotsII'),
+        cannon: this.getLevel('cannonSlots') + this.getLevel('cannonSlotsII'),
+        fireTower: this.getLevel('fireSlots') + this.getLevel('fireSlotsII'),
+        lightningTower: this.getLevel('lightningSlots') + this.getLevel('lightningSlotsII'),
+        mortar: this.getLevel('mortarSlots') + this.getLevel('mortarSlotsII'),
       },
     };
   }

@@ -526,6 +526,10 @@ export class ChaosSystem {
     this.cooldownMultiplier *= 0.88;
   }
 
+  setCooldownHaste(haste: number): void {
+    this.cooldownMultiplier = Math.max(0.4, 1 - haste);
+  }
+
   private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number, kind: number, targetX: number, targetY: number): void {
     if (targetX !== this.width / 2 || targetY !== this.height * 0.42) {
       this.queueStrike(targetX, targetY, delay, radius, damage, kind);

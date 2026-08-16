@@ -557,6 +557,7 @@ export class Game implements BattlefieldActions {
     const bonuses = this.progression.bonuses;
     this.wallMaxHp = bonuses.wallMaxHp;
     this.wallArmor = bonuses.wallArmor;
+    this.chaos.setCooldownHaste(bonuses.abilityHaste);
     this.weapons.setPermanentBonuses(bonuses.damageMultiplier, bonuses.ballistaSpeedMultiplier);
     for (const config of TOWER_CONFIG) this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
     this.wallHp = this.wallMaxHp;
