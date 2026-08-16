@@ -216,6 +216,29 @@ export class Game implements BattlefieldActions {
     this.waveDirector.startWave(this.map.enemySettings.enemyCount);
   }
 
+  returnToMainMenu(): void {
+    if (this.phase === 'idle') return;
+    this.gameOver = false;
+    this.phase = 'idle';
+    this.weapons.reset();
+    this.enemies.clear();
+    this.projectiles.count = 0;
+    this.selectedId = 0;
+    this.hoveredId = 0;
+    this.armed = null;
+    this.kills = 0;
+    this.elapsed = 0;
+    this.waveDirector.reset();
+    this.chaos.reset();
+    this.feedback.reset();
+    this.renderer.clearDecals();
+    this.camera.reset();
+    this.mapIntroTimer = 0;
+    this.highestCombo = 0;
+    this.selectedId = 0;
+    this.threatMap.rebuild(this.weapons.towers);
+  }
+
   get currentPhase(): GamePhase {
     return this.phase;
   }

@@ -169,6 +169,12 @@ export class MetaProgression {
     this.persist();
   }
 
+  grantWarTokens(amount: number): void {
+    if (amount <= 0) return;
+    this.data.warTokens += amount;
+    this.persist();
+  }
+
   reset(): void {
     this.saveSystem.reset();
   }

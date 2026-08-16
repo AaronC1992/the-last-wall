@@ -13,6 +13,7 @@ export class MenuViews {
   private readonly armory = document.querySelector<HTMLElement>('#armory-menu')!;
   private readonly master = document.querySelector<HTMLInputElement>('#setting-master')!;
   private readonly sfx = document.querySelector<HTMLInputElement>('#setting-sfx')!;
+  private readonly sfxCheat = document.querySelector<HTMLButtonElement>('#sfx-cheat')!;
   private readonly shake = document.querySelector<HTMLInputElement>('#setting-shake')!;
   private readonly damageNumbers = document.querySelector<HTMLInputElement>('#setting-damage-numbers')!;
   private readonly campaign = document.querySelector<HTMLElement>('#campaign-menu')!;
@@ -43,6 +44,7 @@ export class MenuViews {
     document.querySelector<HTMLButtonElement>('#custom-maps-close')!.addEventListener('click', () => this.closeToMain(this.customMaps));
     this.master.addEventListener('input', () => this.saveSettings());
     this.sfx.addEventListener('input', () => this.saveSettings());
+    this.sfxCheat.addEventListener('click', () => this.activateSfxCheat());
     this.shake.addEventListener('change', () => this.saveSettings());
     this.damageNumbers.addEventListener('change', () => this.saveSettings());
     document.querySelector<HTMLButtonElement>('#settings-reset')!.addEventListener('click', () => {
@@ -113,6 +115,11 @@ export class MenuViews {
     const sfxVolume = Number(this.sfx.value);
     this.progression.updateSettings({ masterVolume, sfxVolume, screenShake: this.shake.checked, damageNumbers: this.damageNumbers.checked });
     this.audio.setSettings({ masterVolume, sfxVolume });
+  }
+
+  private activateSfxCheat(): void {
+    this.progression.grantWarTokens(1000);
+    window.alert('Cheat activated: +1,000 War Tokens');
   }
 
   private closeToMain(panel: HTMLElement): void {

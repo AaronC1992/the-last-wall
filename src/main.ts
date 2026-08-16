@@ -48,6 +48,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
       <div id="build-bar" class="build-bar" hidden></div>
       <button id="start-battle" type="button" class="start-battle" hidden>Start Battle</button>
+      <button id="in-game-menu-button" type="button" class="main-menu-button" hidden>Main Menu</button>
 
       <div id="results-screen" class="results-screen" hidden>
         <h1 id="results-title">Survived</h1>
@@ -83,7 +84,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <section id="campaign-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Campaign</strong><button id="campaign-close" type="button">Close</button></div><div id="campaign-levels" class="statistics-grid"></div></section>
       <section id="custom-maps-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Custom Maps</strong><button id="custom-maps-close" type="button">Close</button></div><div id="custom-map-list" class="statistics-grid"></div><button id="custom-map-import" type="button">Import Map</button><input id="custom-map-file" type="file" accept="application/json" hidden></section>
       <section id="map-builder" class="menu-panel map-builder" hidden><div class="panel-heading"><strong>Map Builder</strong><button id="map-builder-close" type="button">Close</button></div><div class="builder-layout"><div class="builder-tools"><button data-tool="path" type="button">Valley</button><button data-tool="buildable" type="button">Buildable</button><button data-tool="blocked" type="button">Blocked</button><button data-tool="spawn" type="button">Spawn</button><button data-tool="goal" type="button">Goal</button><button data-tool="erase" type="button">Erase</button><button data-brush="1" type="button">Small Brush</button><button data-brush="2" type="button">Medium Brush</button><button data-brush="4" type="button">Large Brush</button></div><canvas id="map-builder-canvas"></canvas><div class="builder-side"><label>Name <input id="map-builder-name" value="MY VALLEY" maxlength="40"></label><p id="map-builder-status">Paint a valley, then add a Spawn and Gate.</p><button id="map-builder-undo" type="button">Undo</button><button id="map-builder-redo" type="button">Redo</button><button id="map-builder-test-paths" type="button">Test Paths</button><button id="map-builder-save" type="button">Save</button><button id="map-builder-play" type="button">Play</button><input id="map-builder-import" type="file" accept="application/json"></div></div></section>
-      <section id="settings-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Settings</strong><button id="settings-close" type="button">Close</button></div><label>Master Volume <input id="setting-master" type="range" min="0" max="1" step="0.05"></label><label>SFX Volume <input id="setting-sfx" type="range" min="0" max="1" step="0.05"></label><label><input id="setting-shake" type="checkbox"> Screen Shake</label><label><input id="setting-damage-numbers" type="checkbox"> Damage Numbers</label><div class="settings-danger"><strong>Reset Game</strong><span>Erase progression, custom maps, and saved tower layouts.</span><button id="settings-reset" type="button">Reset and Start Over</button></div></section>
+      <section id="settings-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Settings</strong><button id="settings-close" type="button">Close</button></div><label>Master Volume <input id="setting-master" type="range" min="0" max="1" step="0.05"></label><label><span>SFX Volume</span><span class="settings-inline"><input id="setting-sfx" type="range" min="0" max="1" step="0.05"><button id="sfx-cheat" type="button" class="cheat-button" aria-label="Activate a secret cheat">X</button></span></label><label><input id="setting-shake" type="checkbox"> Screen Shake</label><label><input id="setting-damage-numbers" type="checkbox"> Damage Numbers</label><div class="settings-danger"><strong>Reset Game</strong><span>Erase progression, custom maps, and saved tower layouts.</span><button id="settings-reset" type="button">Reset and Start Over</button></div></section>
       <section id="statistics-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Lifetime Statistics</strong><button id="statistics-close" type="button">Close</button></div><div class="statistics-grid"><span>Runs <b id="stats-runs">0</b></span><span>Total Kills <b id="stats-kills">0</b></span><span>Total Build Points <b id="stats-gold">0</b></span><span>Best Run <b id="stats-best-kills">0</b></span></div></section>
       <section id="armory-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Armory</strong><button id="armory-close" type="button">Close</button></div><div class="statistics-grid"><span>Ballista <b>Online</b></span><span>Cannon <b id="armory-cannon">Locked, 15 Tokens</b></span><span>Fire Tower <b id="armory-fire">Locked, 30 Tokens</b></span><span>Lightning Tower <b id="armory-lightning">Locked, 55 Tokens</b></span><span>Mortar <b id="armory-mortar">Locked, 45 Tokens</b></span></div></section>
 
@@ -182,11 +183,16 @@ const debugPanel = new DebugPanel({
 document.querySelector<HTMLButtonElement>('#controls-hint-close')!.addEventListener('click', () => {
   document.querySelector<HTMLElement>('#controls-hint')!.hidden = true;
 });
+document.querySelector<HTMLButtonElement>('#in-game-menu-button')!.addEventListener('click', () => {
+  game.returnToMainMenu();
+  document.querySelector<HTMLElement>('#main-menu')!.hidden = false;
+});
 
 new GameLoop((deltaTime) => {
   game.updateSimulation(deltaTime);
 }, (fps) => {
   game.render(fps);
+  document.querySelector<HTMLButtonElement>('#in-game-menu-button')!.hidden = game.currentPhase === 'idle';
   debugPanel.update(game.debugState);
   abilityPanel.update((id) => game.getAbilityCooldown(id));
   buildBar.update(game.buildSlotStates(), game.currentPhase === 'build', game.armedKind());
