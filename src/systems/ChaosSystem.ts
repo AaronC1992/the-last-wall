@@ -18,8 +18,8 @@ const STRIKE_CAPACITY = 24;
 const PARTICLE_CAPACITY = 300;
 
 export class ChaosSystem {
-  private readonly width: number;
-  private readonly height: number;
+  private width: number;
+  private height: number;
   private readonly cooldowns = new Float32Array(5);
   private cooldownMultiplier = 1;
   private damageMultiplier = 1;
@@ -73,6 +73,11 @@ export class ChaosSystem {
   private chainBudget = 0;
 
   constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+  }
+
+  setWorldBounds(width: number, height: number): void {
     this.width = width;
     this.height = height;
   }

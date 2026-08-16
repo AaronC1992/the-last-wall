@@ -8,6 +8,8 @@ export const GAME_TEXT = {
 export const TUNING = {
   logicalWidth: 1200,
   logicalHeight: 760,
+  worldWidth: 2400,
+  worldHeight: 1440,
   wallHeight: 58,
   wallMaxHp: 100,
   enemyBaseHp: 10,

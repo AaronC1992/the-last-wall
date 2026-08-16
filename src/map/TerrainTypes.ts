@@ -34,8 +34,8 @@ export interface MapDefinition {
   modifiedDate?: string;
 }
 
-export const DEFAULT_MAP_WIDTH = 60;
-export const DEFAULT_MAP_HEIGHT = 36;
+export const DEFAULT_MAP_WIDTH = 120;
+export const DEFAULT_MAP_HEIGHT = 72;
 export const MAX_CUSTOM_MAP_CELLS = 80 * 60;
 export const DEFAULT_MAP_CELL_SIZE = 20;
 

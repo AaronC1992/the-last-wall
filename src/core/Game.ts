@@ -37,7 +37,7 @@ export class Game implements BattlefieldActions {
   private readonly hud: HUD;
   private readonly enemies = new EnemyManager();
   private readonly projectiles = new ProjectileManager();
-  private readonly grid = new SpatialGrid(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.spatialCellSize, TUNING.maxEnemies);
+  private grid = new SpatialGrid(TUNING.worldWidth, TUNING.worldHeight, TUNING.spatialCellSize, TUNING.maxEnemies);
   private renderer: Renderer;
   private weapons: WeaponManager;
   private readonly waveDirector = new WaveDirector();
@@ -50,7 +50,7 @@ export class Game implements BattlefieldActions {
   private mapSpawns: MapSpawnSystem;
   private congestion: CongestionGrid;
   private threatMap: ThreatMap;
-  private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.logicalWidth, TUNING.logicalHeight);
+  private readonly camera = new Camera(TUNING.logicalWidth, TUNING.logicalHeight, TUNING.worldWidth, TUNING.worldHeight);
   private readonly onRunEnd: (breakdown: TokenBreakdown, survived: boolean) => void;
   private wallHp: number = TUNING.wallMaxHp;
   private buildPoints = 0;
@@ -93,8 +93,8 @@ export class Game implements BattlefieldActions {
     this.threatMap = new ThreatMap(this.terrain);
     this.mapSpawns = new MapSpawnSystem(this.map);
     this.renderer = new Renderer(canvas.getContext('2d')!, this.map);
-    this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth, this.terrain);
-    this.chaos = new ChaosSystem(TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight);
+    this.weapons = new WeaponManager(TUNING.worldHeight - TUNING.wallHeight, TUNING.worldWidth, this.terrain);
+    this.chaos = new ChaosSystem(TUNING.worldWidth, TUNING.worldHeight - TUNING.wallHeight);
     this.applyPermanentBonuses();
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -115,7 +115,7 @@ export class Game implements BattlefieldActions {
     });
     this.grid.rebuild(this.enemies);
     this.congestion.rebuild(this.enemies);
-    this.enemies.update(simulationDelta, TUNING.logicalWidth, TUNING.logicalHeight - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
+    this.enemies.update(simulationDelta, this.map.width * this.map.cellSize, this.map.height * this.map.cellSize - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
       this.registerKill();
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
     }, this.flowField, this.terrain, this.congestion, this.threatMap, graphicsQuality === 'low' ? undefined : this.grid);
@@ -216,7 +216,12 @@ export class Game implements BattlefieldActions {
     this.threatMap = new ThreatMap(this.terrain);
     this.mapSpawns = new MapSpawnSystem(map);
     this.renderer = new Renderer(this.canvas.getContext('2d')!, map);
-    this.weapons = new WeaponManager(TUNING.logicalHeight - TUNING.wallHeight, TUNING.logicalWidth, this.terrain);
+    const worldWidth = map.width * map.cellSize;
+    const worldHeight = map.height * map.cellSize;
+    this.grid = new SpatialGrid(worldWidth, worldHeight, TUNING.spatialCellSize, TUNING.maxEnemies);
+    this.camera.setWorldBounds(worldWidth, worldHeight);
+    this.chaos.setWorldBounds(worldWidth, worldHeight - TUNING.wallHeight);
+    this.weapons = new WeaponManager(worldHeight - TUNING.wallHeight, worldWidth, this.terrain);
     this.restart();
   }
 

@@ -16,8 +16,8 @@ export class MapRenderer {
     this.grid = new TerrainGrid(definition);
     this.random = new SeededRandom(definition.seed);
     this.cache = document.createElement('canvas');
-    this.cache.width = TUNING.logicalWidth;
-    this.cache.height = TUNING.logicalHeight;
+    this.cache.width = definition.width * definition.cellSize;
+    this.cache.height = definition.height * definition.cellSize;
     this.cachedContext = this.cache.getContext('2d')!;
     this.generateStaticTerrain();
   }
@@ -26,12 +26,12 @@ export class MapRenderer {
     context.drawImage(this.cache, 0, 0);
     if (quality === 'low') {
       context.fillStyle = 'rgba(5, 8, 10, 0.16)';
-      context.fillRect(0, 0, TUNING.logicalWidth, TUNING.logicalHeight);
+      context.fillRect(0, 0, this.cache.width, this.cache.height);
     }
   }
 
   renderDefenseLine(context: CanvasRenderingContext2D, wallHp: number, wallMaxHp: number, animateTorches = true): void {
-    const wallY = TUNING.logicalHeight - TUNING.wallHeight;
+    const wallY = this.definition.height * this.definition.cellSize - TUNING.wallHeight;
     const goal = this.grid.cellToWorld(this.definition.goalCell.x, this.definition.goalCell.y);
     const gateX = goal.x;
 
@@ -41,7 +41,7 @@ export class MapRenderer {
   }
 
   private drawPixelWall(context: CanvasRenderingContext2D, wallY: number, gateX: number): void {
-    const width = TUNING.logicalWidth;
+    const width = this.definition.width * this.definition.cellSize;
     const wallHeight = TUNING.wallHeight + 10;
 
     context.fillStyle = 'rgba(15, 12, 10, 0.4)';
@@ -845,7 +845,7 @@ export class MapRenderer {
 
   private generateStaticTerrain(): void {
     const context = this.cachedContext;
-    context.fillStyle = '#a0875d'; context.fillRect(0, 0, TUNING.logicalWidth, TUNING.logicalHeight);
+    context.fillStyle = '#a0875d'; context.fillRect(0, 0, this.cache.width, this.cache.height);
     for (let y = 0; y < this.grid.height; y++) for (let x = 0; x < this.grid.width; x++) {
       const cell = this.grid.get(x, y); const left = x * this.grid.cellSize; const top = y * this.grid.cellSize;
       if (cell === TerrainCell.Blocked) {

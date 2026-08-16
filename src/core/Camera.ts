@@ -8,11 +8,17 @@ export class Camera {
   constructor(
     private readonly viewportWidth: number,
     private readonly viewportHeight: number,
-    private readonly worldWidth: number,
-    private readonly worldHeight: number,
+    private worldWidth: number,
+    private worldHeight: number,
   ) {
     this.x = worldWidth / 2;
     this.y = worldHeight / 2;
+  }
+
+  setWorldBounds(worldWidth: number, worldHeight: number): void {
+    this.worldWidth = worldWidth;
+    this.worldHeight = worldHeight;
+    this.clamp();
   }
 
   apply(context: CanvasRenderingContext2D): void {
