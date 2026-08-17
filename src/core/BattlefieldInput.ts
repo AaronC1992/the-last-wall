@@ -202,6 +202,7 @@ export class BattlefieldInput {
             this.actions.moveTower(this.actions.selectedTowerId(), world.x, world.y);
           } else {
             this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
+            this.actions.selectTower(0);
           }
         } else {
           this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
