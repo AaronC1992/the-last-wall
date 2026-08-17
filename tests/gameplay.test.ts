@@ -58,8 +58,8 @@ describe('campaign encounters', () => {
     expect(CAMPAIGN_MAPS[4].encounter?.groups.some((group) => group.type === EnemyType.Armored)).toBe(true);
   });
 
-  it('includes bosses on the first boss level', () => {
-    expect(CAMPAIGN_MAPS[8].encounter?.groups.some((group) => group.type === EnemyType.Boss)).toBe(true);
+  it('includes exactly one boss on the first boss level', () => {
+    expect(CAMPAIGN_MAPS[8].encounter?.groups.filter((group) => group.type === EnemyType.Boss).reduce((sum, group) => sum + group.count, 0)).toBe(1);
   });
 
   it('uses every enemy category in the final assault', () => {
@@ -80,8 +80,11 @@ describe('campaign encounters', () => {
     expect(validateCampaignEncounters()).toEqual([]);
   });
 
-  it('gives Level 5 two spawn routes for the Armored introduction', () => {
-    expect(CAMPAIGN_MAPS[4].spawnCells.length).toBeGreaterThanOrEqual(2);
+  it('gives Level 5 one shared spawn and no forced Armored lane', () => {
+    expect(CAMPAIGN_MAPS[4].spawnCells).toHaveLength(1);
+    const armored = CAMPAIGN_MAPS[4].encounter?.groups.find((group) => group.type === EnemyType.Armored);
+    expect(armored?.spawnPreference).toBeUndefined();
+    expect(CAMPAIGN_MAPS[4].spawnLabels?.center).toBe(0);
   });
 
   it('paces Bosses as single arrivals', () => {
@@ -145,6 +148,14 @@ describe('progression effects', () => {
     const cannon = new Cannon(0, 0);
     cannon.setAim(0, 300);
     expect(cannon.threatAtPoint(0, 300)).toBeGreaterThan(cannon.threatAtPoint(0, 150));
+  });
+
+  it('adds distinct Cannon threat zones for special explosions', () => {
+    const cannon = new Cannon(0, 0);
+    cannon.setTowerBonuses(1, 1, 1);
+    cannon.setTowerSpecialBonuses({ penetration: 0, projectiles: 0, clusterShells: true, doubleBarrel: true, carpetBombardment: true, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, sniperPenetration: 0 });
+    cannon.reset();
+    expect(cannon.getBlastPoints()).toHaveLength(5);
   });
 
   it('increases threat strength when Ballista is upgraded', () => {

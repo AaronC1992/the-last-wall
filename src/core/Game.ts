@@ -260,6 +260,7 @@ export class Game implements BattlefieldActions {
   startBattle(): void {
     if (this.phase !== 'build' || this.gameOver) return;
     if (!this.weapons.allAimed()) return;
+    this.commitNavigation();
     this.phase = 'battle';
     this.selectedId = 0;
     if (this.map.encounter) this.waveDirector.startCampaign(this.map.encounter);

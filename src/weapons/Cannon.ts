@@ -3,6 +3,12 @@ import { SpatialGrid } from '../systems/SpatialGrid';
 import { TowerBase } from './TowerBase';
 import { ProjectileManager } from './ProjectileManager';
 
+interface CannonBlastPoint {
+  distance: number;
+  radius: number;
+  damageMultiplier: number;
+}
+
 export class Cannon extends TowerBase {
   private cooldown = 1.8;
   private cooldownDuration = 1.8;
@@ -25,8 +31,12 @@ export class Cannon extends TowerBase {
   }
 
   threatAtPoint(x: number, y: number, cellPadding = 0): number {
-    const blastRadius = this.radius + cellPadding;
-    if (Math.hypot(x - this.aimX, y - this.aimY) <= blastRadius) return this.getThreatStrength() * 2.2;
+    const direction = this.direction();
+    for (const blast of this.getBlastPoints()) {
+      const pointX = this.x + direction.x * blast.distance;
+      const pointY = this.y + direction.y * blast.distance;
+      if (Math.hypot(x - pointX, y - pointY) <= blast.radius + cellPadding) return this.getThreatStrength() * (1 + blast.damageMultiplier);
+    }
     return super.threatAtPoint(x, y, cellPadding);
   }
 
@@ -40,14 +50,19 @@ export class Cannon extends TowerBase {
     if (this.cooldown > 0) return;
     if (!this.hasAim) return;
     const direction = this.direction();
-    projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, this.targeting.distance, this.radius);
-    if (this.clusterShells) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.6, 340, Math.max(30, this.targeting.distance - 42), this.radius * 0.62);
-    if (this.carpetBombardment) {
-      projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.65, 340, Math.max(30, this.targeting.distance - 84), this.radius * 0.7);
-      projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.65, 340, Math.min(this.targeting.maxDistance, this.targeting.distance + 52), this.radius * 0.7);
-    }
-    if (this.doubleBarrel) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, Math.min(this.targeting.maxDistance, this.targeting.distance + 26), this.radius);
+    for (const blast of this.getBlastPoints()) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * blast.damageMultiplier, 340, blast.distance, blast.radius);
     this.cooldown = this.cooldownDuration;
+  }
+
+  getBlastPoints(): readonly CannonBlastPoint[] {
+    const points: CannonBlastPoint[] = [{ distance: this.targeting.distance, radius: this.radius, damageMultiplier: 1 }];
+    if (this.clusterShells) points.push({ distance: Math.max(30, this.targeting.distance - 42), radius: this.radius * 0.62, damageMultiplier: 0.6 });
+    if (this.carpetBombardment) {
+      points.push({ distance: Math.max(30, this.targeting.distance - 84), radius: this.radius * 0.7, damageMultiplier: 0.65 });
+      points.push({ distance: Math.min(this.targeting.maxDistance, this.targeting.distance + 52), radius: this.radius * 0.7, damageMultiplier: 0.65 });
+    }
+    if (this.doubleBarrel) points.push({ distance: Math.min(this.targeting.maxDistance, this.targeting.distance + 26), radius: this.radius, damageMultiplier: 1 });
+    return points;
   }
 
   reset(): void {

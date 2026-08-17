@@ -15,11 +15,18 @@ export class MapSpawnSystem {
   nextSpawn(spawnPreference: number | string | 'random' | 'all' = 'random'): { x: number; y: number; targetX: number } {
     if (this.burstRemaining <= 0) this.burstRemaining = 8 + Math.floor(this.random.next() * 10);
     this.burstRemaining--;
-    const namedIndex = typeof spawnPreference === 'string' ? this.definition.spawnLabels?.[spawnPreference] : undefined;
+    const namedIndex = typeof spawnPreference === 'string' && spawnPreference !== 'random' && spawnPreference !== 'all' ? this.definition.spawnLabels?.[spawnPreference] : undefined;
+    if (typeof spawnPreference === 'string' && spawnPreference !== 'random' && spawnPreference !== 'all' && namedIndex === undefined) return this.spawnAtIndex(0);
     const spawnIndex = (typeof spawnPreference === 'number' || namedIndex !== undefined) && this.definition.spawnCells.length > 0
       ? Math.max(0, Math.min(this.definition.spawnCells.length - 1, namedIndex ?? spawnPreference as number))
       : Math.floor(this.random.next() * this.definition.spawnCells.length);
     const source = this.definition.spawnCells[spawnIndex];
+    const point = this.grid.cellToWorld(source.x, source.y);
+    return { x: point.x + this.random.range(-8, 8), y: point.y + this.random.range(-8, 8), targetX: point.x };
+  }
+
+  private spawnAtIndex(index: number): { x: number; y: number; targetX: number } {
+    const source = this.definition.spawnCells[Math.max(0, Math.min(this.definition.spawnCells.length - 1, index))];
     const point = this.grid.cellToWorld(source.x, source.y);
     return { x: point.x + this.random.range(-8, 8), y: point.y + this.random.range(-8, 8), targetX: point.x };
   }
