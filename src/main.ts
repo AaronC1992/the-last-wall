@@ -168,6 +168,20 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <small>All purchases use blue War Tokens earned from completed runs. Branch colors show what a node improves.</small>
         </div>
         <div id="skill-tooltip" class="skill-tooltip" hidden></div>
+        <div id="skill-mobile-dialog" class="skill-mobile-dialog" hidden>
+          <div class="skill-mobile-dialog-card">
+            <header>
+              <strong id="skill-mobile-title"></strong>
+              <span id="skill-mobile-level"></span>
+            </header>
+            <p id="skill-mobile-description"></p>
+            <footer id="skill-mobile-status"></footer>
+            <div class="skill-mobile-actions">
+              <button id="skill-mobile-buy" type="button" aria-label="Buy selected upgrade">Buy</button>
+              <button id="skill-mobile-close" type="button">Close</button>
+            </div>
+          </div>
+        </div>
         <div id="skill-hints" class="controls-hint skill-hints">
           <button id="skill-hints-close" type="button" aria-label="Dismiss controls">X</button>
           <div id="skill-hints-content"></div>
