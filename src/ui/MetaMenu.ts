@@ -26,6 +26,13 @@ export class MetaMenu {
   private readonly legend = document.querySelector<HTMLElement>('#skill-legend')!;
   private readonly legendToggle = document.querySelector<HTMLButtonElement>('#skill-legend-toggle')!;
   private readonly tooltip = document.querySelector<HTMLElement>('#skill-tooltip')!;
+  private readonly mobileDialog = document.querySelector<HTMLElement>('#skill-mobile-dialog')!;
+  private readonly mobileDialogTitle = document.querySelector<HTMLElement>('#skill-mobile-title')!;
+  private readonly mobileDialogLevel = document.querySelector<HTMLElement>('#skill-mobile-level')!;
+  private readonly mobileDialogDescription = document.querySelector<HTMLElement>('#skill-mobile-description')!;
+  private readonly mobileDialogStatus = document.querySelector<HTMLElement>('#skill-mobile-status')!;
+  private readonly mobileDialogBuy = document.querySelector<HTMLButtonElement>('#skill-mobile-buy')!;
+  private readonly mobileDialogClose = document.querySelector<HTMLButtonElement>('#skill-mobile-close')!;
   private readonly tokenValue = document.querySelector<HTMLElement>('#tokens-value')!;
   private readonly metaButton = document.querySelector<HTMLButtonElement>('#meta-button')!;
   private inBattle = false;
@@ -41,6 +48,7 @@ export class MetaMenu {
   private readonly activePointers = new Map<number, { x: number; y: number }>();
   private lastPinchDistance = 0;
   private backAction: () => void;
+  private selectedNode: SkillNode | null = null;
 
   constructor(
     private readonly progression: MetaProgression,
@@ -60,6 +68,8 @@ export class MetaMenu {
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
     });
+    this.mobileDialogBuy.addEventListener('click', () => this.purchaseSelectedNode());
+    this.mobileDialogClose.addEventListener('click', () => this.hideMobileDialog());
     this.canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event));
     window.addEventListener('pointermove', (event) => this.onPointerMove(event));
     window.addEventListener('pointerup', (event) => this.onPointerUp(event));
@@ -86,6 +96,7 @@ export class MetaMenu {
   hide(): void {
     this.panel.hidden = true;
     this.hideTooltip();
+    this.hideMobileDialog();
     this.dragging = false;
     this.activePointers.clear();
     this.lastPinchDistance = 0;
@@ -206,10 +217,45 @@ export class MetaMenu {
     const tree = this.toTree(event);
     const node = this.nodeAt(tree.x, tree.y);
     if (!node || node.kind === 'core') return;
+    if (this.isCompactLayout()) {
+      this.showMobileDialog(node);
+      return;
+    }
     if (this.progression.purchaseNode(node.id)) {
       this.render();
       this.showTooltip(node, this.toCanvas(event).x, this.toCanvas(event).y);
     }
+  }
+
+  private showMobileDialog(node: SkillNode): void {
+    this.selectedNode = node;
+    const level = this.progression.nodeLevel(node.id);
+    const cost = this.progression.nodeCost(node.id);
+    const locked = !this.progression.isNodeUnlocked(node.id);
+    const capped = level >= node.maxLevel;
+    const affordable = this.progression.warTokens >= cost;
+    this.mobileDialogTitle.textContent = node.title;
+    this.mobileDialogLevel.textContent = `${level}/${node.maxLevel}`;
+    this.mobileDialogDescription.textContent = node.description;
+    this.mobileDialogStatus.textContent = locked ? 'Locked, unlock the previous node' : capped ? 'Complete' : affordable ? `${cost} War Tokens` : `Need ${cost} War Tokens`;
+    this.mobileDialogBuy.disabled = locked || capped || !affordable;
+    this.mobileDialog.hidden = false;
+  }
+
+  private hideMobileDialog(): void {
+    this.mobileDialog.hidden = true;
+    this.selectedNode = null;
+  }
+
+  private purchaseSelectedNode(): void {
+    const node = this.selectedNode;
+    if (!node) return;
+    if (this.progression.purchaseNode(node.id)) {
+      this.render();
+      this.hideMobileDialog();
+      return;
+    }
+    this.showMobileDialog(node);
   }
 
   private showTooltip(node: SkillNode, screenX: number, screenY: number): void {

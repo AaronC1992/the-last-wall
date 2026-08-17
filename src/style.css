@@ -290,10 +290,26 @@ button { font: inherit; }
 .skill-tooltip header span { color: #9fd0ff; font: 12px Verdana, sans-serif; }
 .skill-tooltip p { margin: 8px 0 6px; color: #cfdae4; font: 12px/1.5 Verdana, sans-serif; }
 .skill-tooltip footer { color: #9fb3c6; font: 11px Verdana, sans-serif; }
+.skill-mobile-dialog { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 16px; background: rgba(2, 4, 8, .78); }
+.skill-mobile-dialog[hidden] { display: none; }
+.skill-mobile-dialog-card { width: min(420px, 100%); display: grid; gap: 10px; padding: 14px; border: 1px solid #3e6c9e; background: rgba(12, 20, 30, .98); }
+.skill-mobile-dialog-card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid #33506c; }
+.skill-mobile-dialog-card strong { color: #f3f7fb; font-size: 17px; }
+.skill-mobile-dialog-card header span { color: #9fd0ff; font: 12px Verdana, sans-serif; }
+.skill-mobile-dialog-card p { margin: 0; color: #cfdae4; font: 12px/1.5 Verdana, sans-serif; }
+.skill-mobile-dialog-card footer { color: #9fb3c6; font: 11px Verdana, sans-serif; }
+.skill-mobile-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.skill-mobile-actions button { padding: 10px 12px; border: 1px solid #5d768e; background: #1a2733; color: #e8eff6; font: 12px Verdana, sans-serif; }
+.skill-mobile-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.skill-mobile-actions button:hover:not(:disabled) { background: #24384a; }
 .skill-hints { right: 14px; bottom: 70px; left: auto; background: rgba(10, 13, 16, .88); }
 .skill-close { position: absolute; top: 12px; right: 14px; padding: 8px 14px; border: 1px solid #55636d; background: #141b21; color: #dfe7ee; cursor: pointer; }
 .skill-play { position: absolute; right: 18px; bottom: 18px; padding: 12px 30px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 26px; }
 .skill-play:hover { background: #253039; }
+
+@media (min-width: 761px) and (pointer: fine) {
+  .skill-mobile-dialog { display: none; }
+}
 
 /* Corner controls */
 .corner-button { position: absolute; top: 12px; left: 14px; padding: 7px 12px; border: 1px solid #55636d; background: rgba(20, 27, 33, .86); color: #dfe7ee; cursor: pointer; font: 12px Verdana, sans-serif; }
