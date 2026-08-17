@@ -35,13 +35,15 @@ Normal enemies flow toward the gate efficiently. Armored enemies and Bosses can 
 
 ## Towers
 
-Every tower uses a fixed firing setup selected during Build Mode. Towers do not rotate toward enemies or search the battlefield for targets.
+Most towers use a fixed firing setup selected during Build Mode. Tesla Coil provides an automatic local defense zone, and Sniper Tower selects high priority targets inside its manually aimed sector.
 
 * **Ballista** fires fast, penetrating bolts down a fixed straight line. It is strongest on long firing lanes.
 * **Cannon** fires heavy shells along a fixed line and detonates at a chosen distance. It is strongest against dense lines and choke points.
 * **Mortar** repeatedly bombards one selected target area with delayed shells and scatter. It is strongest at merges and pileups.
 * **Fire Tower** applies burn inside a fixed cone. It is strongest near narrow bends and close corridors.
 * **Lightning Tower** starts chains only inside a fixed target zone. It is strongest against localized groups.
+* **Tesla Coil** automatically attacks nearby enemies inside its local zone.
+* **Sniper Tower** automatically prioritizes Bosses and Elite enemies inside its selected sector.
 
 ### Tower setup
 
@@ -65,20 +67,30 @@ The game currently has six enemy types:
 
 ## Campaign
 
-There are ten campaign levels using the same physical terrain engine:
+There are twenty campaign levels using the same physical terrain engine and intentional enemy encounters:
 
-1. **The First Approach** introduces a winding valley.
-2. **The Bend** teaches long lanes and repeated turns.
-3. **The Fork** introduces route splitting and merging.
-4. **The Crossroads** uses multiple spawn streams.
-5. **The Bottleneck** creates a central pressure point.
-6. **Twin Ravines** separates the early routes before a late merge.
-7. **The Serpent** uses a long sequence of turns.
-8. **Three Ways** offers multiple route choices.
-9. **The Flood** combines branches and a large horde.
-10. **The Last Valley** combines multiple spawns, routes, turns, and final convergence.
+1. **The Long Approach** teaches Ballista placement and aiming.
+2. **The Wide Bend** introduces Runners.
+3. **The Watchtower Road** increases Runner pressure.
+4. **The Serpent Road** introduces Brutes.
+5. **The Gateway** introduces Armored route choices.
+6. **The Forked Road** splits the assault across lanes.
+7. **The Three Bridges** introduces Exploders.
+8. **The Outer Ring** adds mixed forces and early Elites.
+9. **The Crossing** brings the first Boss.
+10. **The Four Winds** creates a major mixed assault.
+11. **The Braided Valley** adds elite mixed streams.
+12. **The Split Canyon** specializes Armored lanes.
+13. **The Five Lanterns** increases route pressure.
+14. **The Deep Maze** combines smart route choices.
+15. **The Siegeworks** begins the elite siege.
+16. **The Storm Front** assigns enemy types by lane.
+17. **The Five Fangs** increases lane specialization.
+18. **The Mirror Pass** adds another Boss push.
+19. **The Last Labyrinth** fields multiple Bosses.
+20. **The Twentyfold Wall** uses every enemy category.
 
-Campaign waves contain 1,000 enemies on Level 1, increasing by 1,000 per level to 10,000 on Level 10. Enemies are released in controlled bursts so the browser can process the horde without spawning every unit in one frame.
+Campaign encounters introduce Runners, Brutes, Armored enemies, Exploders, Elites, and Bosses progressively. Later levels specialize enemy groups by spawn lane and release them in controlled bursts.
 
 ## Map Builder
 
@@ -108,11 +120,15 @@ War Tokens are spent in the permanent Tech Tree. The tree controls:
 
 * Tower unlocks
 * Tower placement slots
-* Ballista damage and fire rate
-* Cannon, Fire Tower, Lightning Tower, and Mortar improvements
+* Tower damage, fire rate, range, and build cost
+* Ballista penetration and multishot
+* Cannon cluster shells, double barrel, and carpet bombardment
+* Fire Tower wildfire
+* Mortar double salvo
+* Tesla shock and chain split
+* Sniper piercing rounds
 * Wall health and armor
-* Starting Gold
-* Enemy rewards
+* Starting Build Points and salvage resources
 * War Token rewards
 * Ability unlocks
 
@@ -123,7 +139,7 @@ The Settings menu includes **Reset and Start Over**, which clears progression, c
 * Click **Play Campaign** to choose a campaign level.
 * Click **Custom Maps** to play, edit, delete, import, or export maps.
 * Click **Map Builder** to create a valley map.
-* Press `1` through `5` to select towers during Build Mode.
+* Press `1` through `7` to select towers during Build Mode.
 * Click to place or select a tower.
 * Drag a selected tower to set its aim.
 * Right click a tower to remove it during Build Mode.
@@ -133,6 +149,7 @@ The Settings menu includes **Reset and Start Over**, which clears progression, c
 * Use the mouse wheel to zoom and the middle mouse button to pan.
 * Press `F2` to open the performance monitor.
 * Press `T` to toggle the defense threat map.
+* Click the speed control or press `+` and `-` to change game speed.
 
 ## Local development
 

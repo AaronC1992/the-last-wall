@@ -13,24 +13,12 @@ export class ThreatMap {
     this.values.fill(0);
     for (const tower of towers) {
       if (!tower.instance.hasAim) continue;
-      const targeting = tower.instance.targeting;
       const baseThreat = tower.kind === 'ballista' ? 1.3 : tower.kind === 'cannon' ? 2.1 : tower.kind === 'mortar' ? 2.4 : tower.kind === 'fireTower' ? 1.6 : 1.8;
       for (let y = 0; y < this.terrain.height; y++) for (let x = 0; x < this.terrain.width; x++) {
         const cell = this.terrain.get(x, y);
         if (cell !== TerrainCell.Path && cell !== TerrainCell.Spawn && cell !== TerrainCell.Goal) continue;
         const point = this.terrain.cellToWorld(x, y);
-        let contribution = 0;
-        if (targeting.mode === 'line') {
-          const along = (point.x - tower.instance.x) * Math.cos(targeting.angle) + (point.y - tower.instance.y) * Math.sin(targeting.angle);
-          const across = Math.abs((point.x - tower.instance.x) * Math.sin(targeting.angle) - (point.y - tower.instance.y) * Math.cos(targeting.angle));
-          if (along >= 0 && along <= targeting.distance && across <= targeting.width + this.terrain.cellSize * 0.45) contribution = baseThreat;
-          if (tower.kind === 'cannon' && Math.hypot(point.x - tower.instance.aimX, point.y - tower.instance.aimY) <= 90) contribution += baseThreat;
-        } else if (targeting.mode === 'cone') {
-          contribution = tower.instance.isInFixedCone(point.x, point.y) ? baseThreat : 0;
-        } else {
-          const radius = targeting.radius + this.terrain.cellSize * 0.5;
-          contribution = Math.hypot(point.x - targeting.targetX, point.y - targeting.targetY) <= radius ? baseThreat : 0;
-        }
+        const contribution = tower.instance.isPointThreatened(point.x, point.y, this.terrain.cellSize * 0.45) ? baseThreat : 0;
         this.values[this.terrain.index(x, y)] += contribution;
       }
     }

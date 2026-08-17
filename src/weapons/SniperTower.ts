@@ -16,6 +16,10 @@ export class SniperTower extends TowerBase {
     super(x, y, 'line', 820);
   }
 
+  isPointThreatened(x: number, y: number): boolean {
+    return this.isInFixedCone(x, y, this.rangeValue);
+  }
+
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0 || !this.hasAim) return;
@@ -34,7 +38,7 @@ export class SniperTower extends TowerBase {
     this.cooldownDuration = 1.8;
     this.projectileSpeed = 720;
     this.rangeValue = 820 * this.towerRangeMultiplier;
-    this.penetration = 1;
+    this.penetration = 1 + this.towerSpecialBonuses.sniperPenetration;
     this.targeting.maxDistance = this.rangeValue;
     this.targeting.distance = this.rangeValue;
   }

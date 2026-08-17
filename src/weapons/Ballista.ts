@@ -45,10 +45,10 @@ export class Ballista extends TowerBase {
     this.targeting.maxDistance = this.rangeValue;
     this.targeting.distance = this.rangeValue;
     this.projectileSpeed = TUNING.projectileSpeed;
-    this.projectileCount = 1;
+    this.projectileCount = 1 + this.towerSpecialBonuses.projectiles;
     this.criticalChance = 0;
     this.criticalDamage = 2;
-    this.penetration = 0;
+    this.penetration = this.towerSpecialBonuses.penetration;
   }
 
   setPermanentBonuses(damageMultiplier: number, speedMultiplier: number): void {

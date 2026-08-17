@@ -8,7 +8,8 @@ import { Mortar } from './Mortar';
 import { SniperTower } from './SniperTower';
 import { TeslaCoil } from './TeslaCoil';
 import { ProjectileManager } from './ProjectileManager';
-import { TowerBase } from './TowerBase';
+import { EMPTY_TOWER_SPECIAL_BONUSES, TowerBase } from './TowerBase';
+import type { TowerSpecialBonuses } from './TowerBase';
 import { towerConfig } from './TowerConfig';
 import type { TowerKind } from './TowerConfig';
 import type { TerrainGrid } from '../map/TerrainGrid';
@@ -36,6 +37,7 @@ export class WeaponManager {
   private readonly towerDamageBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly towerSpeedBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly towerRangeBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
+  private readonly towerSpecialBonus: Record<TowerKind, TowerSpecialBonuses> = { ballista: EMPTY_TOWER_SPECIAL_BONUSES, cannon: EMPTY_TOWER_SPECIAL_BONUSES, fireTower: EMPTY_TOWER_SPECIAL_BONUSES, lightningTower: EMPTY_TOWER_SPECIAL_BONUSES, mortar: EMPTY_TOWER_SPECIAL_BONUSES, teslaCoil: EMPTY_TOWER_SPECIAL_BONUSES, sniperTower: EMPTY_TOWER_SPECIAL_BONUSES };
   private readonly towerCostMultiplier: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly buildTop: number;
   private readonly buildBottom: number;
@@ -179,6 +181,11 @@ export class WeaponManager {
     this.towerCostMultiplier[kind] = multiplier;
   }
 
+  setTowerSpecialBonuses(kind: TowerKind, bonuses: TowerSpecialBonuses): void {
+    this.towerSpecialBonus[kind] = bonuses;
+    for (const tower of this.placed) if (tower.kind === kind) tower.instance.setTowerSpecialBonuses(bonuses);
+  }
+
   reset(): void {
     this.placed.length = 0;
     this.nextId = 1;
@@ -247,6 +254,7 @@ export class WeaponManager {
     else if (kind === 'sniperTower') instance = new SniperTower(x, y);
     else instance = new Ballista(x, y);
     instance.setTowerBonuses(this.towerDamageBonus[kind], this.towerSpeedBonus[kind], this.towerRangeBonus[kind]);
+    instance.setTowerSpecialBonuses(this.towerSpecialBonus[kind]);
     instance.reset();
     if (instance instanceof Ballista) {
       const ballista = instance;

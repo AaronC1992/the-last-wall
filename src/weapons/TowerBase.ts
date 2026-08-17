@@ -1,6 +1,21 @@
 import { createTargeting } from './TowerTargeting';
 import type { TowerTargetMode, TowerTargetingConfig } from './TowerTargeting';
 
+export interface TowerSpecialBonuses {
+  penetration: number;
+  projectiles: number;
+  clusterShells: boolean;
+  doubleBarrel: boolean;
+  carpetBombardment: boolean;
+  wildfire: boolean;
+  teslaShock: boolean;
+  teslaChains: number;
+  mortarBarrage: number;
+  sniperPenetration: number;
+}
+
+export const EMPTY_TOWER_SPECIAL_BONUSES: TowerSpecialBonuses = { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, sniperPenetration: 0 };
+
 export abstract class TowerBase {
   x: number;
   y: number;
@@ -11,6 +26,7 @@ export abstract class TowerBase {
   protected towerDamageMultiplier = 1;
   protected towerSpeedMultiplier = 1;
   protected towerRangeMultiplier = 1;
+  protected towerSpecialBonuses: TowerSpecialBonuses = EMPTY_TOWER_SPECIAL_BONUSES;
   readonly targeting: TowerTargetingConfig;
 
   constructor(x: number, y: number, mode: TowerTargetMode, distance: number, radius = 0, coneAngle = 0.7) {
@@ -66,6 +82,10 @@ export abstract class TowerBase {
     this.towerRangeMultiplier = rangeMultiplier;
   }
 
+  setTowerSpecialBonuses(specialBonuses: TowerSpecialBonuses): void {
+    this.towerSpecialBonuses = specialBonuses;
+  }
+
   get range(): number {
     return this.targeting.distance;
   }
@@ -85,5 +105,16 @@ export abstract class TowerBase {
     if (distance > range) return false;
     const difference = Math.atan2(Math.sin(Math.atan2(deltaY, deltaX) - this.targeting.angle), Math.cos(Math.atan2(deltaY, deltaX) - this.targeting.angle));
     return Math.abs(difference) <= this.targeting.coneAngle * 0.5;
+  }
+
+  isPointThreatened(x: number, y: number, cellPadding = 0): boolean {
+    if (this.targeting.mode === 'line') {
+      const along = (x - this.x) * Math.cos(this.targeting.angle) + (y - this.y) * Math.sin(this.targeting.angle);
+      const across = Math.abs((x - this.x) * Math.sin(this.targeting.angle) - (y - this.y) * Math.cos(this.targeting.angle));
+      return along >= 0 && along <= this.targeting.distance && across <= this.targeting.width + cellPadding;
+    }
+    if (this.targeting.mode === 'cone') return this.isInFixedCone(x, y);
+    const radius = this.targeting.radius + cellPadding;
+    return Math.hypot(x - this.targeting.targetX, y - this.targeting.targetY) <= radius;
   }
 }

@@ -6,6 +6,24 @@ export enum TerrainCell {
   Goal = 4,
 }
 
+import type { EnemyTypeId } from '../enemies/EnemyTypes';
+
+export interface CampaignEnemyGroup {
+  type: EnemyTypeId;
+  count: number;
+  eliteChance?: number;
+  startDelay?: number;
+  spawnInterval?: number;
+  burstSize?: number;
+  spawnPreference?: number | 'random' | 'all';
+}
+
+export interface CampaignEncounter {
+  groups: readonly CampaignEnemyGroup[];
+  hpMultiplier?: number;
+  speedMultiplier?: number;
+}
+
 export interface MapPoint {
   x: number;
   y: number;
@@ -31,6 +49,9 @@ export interface MapDefinition {
   goalCell: MapPoint;
   seed: number;
   enemySettings: MapEnemySettings;
+  encounter?: CampaignEncounter;
+  baseBuildPointBonus?: number;
+  firstClearReward?: number;
   custom: boolean;
   createdDate?: string;
   modifiedDate?: string;

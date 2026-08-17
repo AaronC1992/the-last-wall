@@ -11,6 +11,7 @@ export interface DebugState {
   maximumEnemyY: number;
   invincible: boolean;
   gameSpeed: number;
+  timings: { enemy: number; grid: number; congestion: number; towers: number; projectiles: number; compact: number };
 }
 
 export interface DebugActions {
@@ -68,7 +69,8 @@ export class DebugPanel {
     this.spawned.textContent = state.totalSpawned.toLocaleString();
     this.effects.textContent = state.activeEffects.toString();
     this.stuck.textContent = state.stuckRecoveries.toString();
-    this.mode.textContent = `Speed ${state.gameSpeed}x  Invincible ${state.invincible ? 'On' : 'Off'}  Enemy Y ${Math.round(state.minimumEnemyY)} to ${Math.round(state.maximumEnemyY)}`;
+    const timings = state.timings;
+    this.mode.textContent = `Speed ${state.gameSpeed}x  Enemy ${timings.enemy.toFixed(1)}ms  Grid ${timings.grid.toFixed(1)}ms  Congestion ${timings.congestion.toFixed(1)}ms  Towers ${timings.towers.toFixed(1)}ms  Projectiles ${timings.projectiles.toFixed(1)}ms  Compact ${timings.compact.toFixed(1)}ms  Invincible ${state.invincible ? 'On' : 'Off'}`;
   }
 
   private bind(id: string, action: () => void): void {

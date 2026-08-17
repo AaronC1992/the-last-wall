@@ -18,7 +18,8 @@ export class BuildBar {
   constructor(private readonly onArm: (kind: TowerKind | null) => void) {
     let markup = '';
     for (const config of TOWER_CONFIG) {
-      markup += `<button type="button" class="build-slot" data-kind="${config.kind}" style="--slot-color:${config.accent}"><span class="slot-key">${config.hotkey}</span><span class="slot-glyph">${config.glyph}</span><span class="slot-count">0/${config.limit}</span><span class="slot-cost">${config.cost}</span></button>`;
+      const role = config.kind === 'teslaCoil' ? 'Automatic Local Defense' : config.kind === 'sniperTower' ? 'Smart Targeting Sector' : 'Fixed Geometry';
+      markup += `<button type="button" class="build-slot" data-kind="${config.kind}" title="${config.name}: ${role}" aria-label="${config.name}, ${role}" style="--slot-color:${config.accent}"><span class="slot-key">${config.hotkey}</span><span class="slot-glyph">${config.glyph}</span><span class="slot-count">0/${config.limit}</span><span class="slot-cost">${config.cost}</span></button>`;
     }
     this.root.innerHTML = markup;
     for (const config of TOWER_CONFIG) {

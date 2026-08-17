@@ -75,6 +75,7 @@ export class Game implements BattlefieldActions {
   private showThreatMap = false;
   private hudFrame = 0;
   private pendingAbility: AbilityIdValue | null = null;
+  private readonly timings = { enemy: 0, grid: 0, congestion: 0, towers: 0, projectiles: 0, compact: 0 };
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -108,25 +109,42 @@ export class Game implements BattlefieldActions {
     const graphicsQuality = this.progression.settings.graphicsQuality;
     this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
     this.elapsed += simulationDelta;
-    this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite) => {
-      const spawn = this.mapSpawns.nextSpawn();
+    this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite, spawnPreference) => {
+      const spawn = this.mapSpawns.nextSpawn(spawnPreference < 0 ? 'random' : spawnPreference);
       const bonuses = this.progression.bonuses;
-      this.enemies.spawnAt(spawn.x, spawn.y, (1 + this.waveDirector.currentWave * 0.012) * bonuses.enemySpeedMultiplier, 1 + this.waveDirector.currentWave * 0.018, type, elite, spawn.targetX);
+      const encounter = this.map.encounter;
+      const speedMultiplier = encounter ? encounter.speedMultiplier ?? 1 : 1 + this.waveDirector.currentWave * 0.012;
+      const hpMultiplier = encounter ? encounter.hpMultiplier ?? 1 : 1 + this.waveDirector.currentWave * 0.018;
+      this.enemies.spawnAt(spawn.x, spawn.y, speedMultiplier * bonuses.enemySpeedMultiplier, hpMultiplier, type, elite, spawn.targetX);
     });
+    let timingStart = performance.now();
     this.grid.rebuild(this.enemies);
+    this.timings.grid = performance.now() - timingStart;
+    timingStart = performance.now();
     this.congestion.rebuild(this.enemies);
+    this.timings.congestion = performance.now() - timingStart;
+    timingStart = performance.now();
     this.enemies.update(simulationDelta, this.map.width * this.map.cellSize, this.map.height * this.map.cellSize - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
       this.registerKill();
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
     }, this.flowField, this.terrain, this.congestion, this.threatMap, graphicsQuality === 'low' ? undefined : this.grid);
+    this.timings.enemy = performance.now() - timingStart;
+    timingStart = performance.now();
     this.grid.rebuild(this.enemies);
+    this.timings.grid = this.timings.grid + performance.now() - timingStart;
+    timingStart = performance.now();
     this.weapons.update(simulationDelta, this.enemies, this.grid, this.projectiles, () => this.registerKill());
+    this.timings.towers = performance.now() - timingStart;
+    timingStart = performance.now();
     this.projectiles.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), (x, y, damage) => this.feedback.registerDamage(x, y, damage, this.progression.settings.damageNumbers), (x, y, damage, radius) => {
       this.damageArea(x, y, damage, radius);
       this.renderer.addExplosionDecal(x, y, radius);
     }, this.terrain);
+    this.timings.projectiles = performance.now() - timingStart;
     this.chaos.update(simulationDelta, this.enemies, this.grid, () => this.registerKill(), this.progression.settings.graphicsQuality, this.progression.settings.showAbilityEffects);
+    timingStart = performance.now();
     this.enemies.compact();
+    this.timings.compact = performance.now() - timingStart;
     this.feedback.update(simulationDelta);
     if (this.waveDirector.isWaveCleared(this.enemies.count)) this.endRun();
   }
@@ -188,7 +206,7 @@ export class Game implements BattlefieldActions {
     this.weapons.importLayout(savedLayout);
     this.threatMap.rebuild(this.weapons.towers);
     this.wallHp = this.wallMaxHp;
-    this.buildPoints = Math.max(0, this.progression.bonuses.startingBuildPoints - this.weapons.totalCost());
+    this.buildPoints = Math.max(0, this.progression.bonuses.startingBuildPoints + (this.map.baseBuildPointBonus ?? 0) - this.weapons.totalCost());
     this.kills = 0;
     this.elapsed = 0;
     this.gameOver = false;
@@ -236,7 +254,8 @@ export class Game implements BattlefieldActions {
     if (!this.weapons.allAimed()) return;
     this.phase = 'battle';
     this.selectedId = 0;
-    this.waveDirector.startWave(this.map.enemySettings.enemyCount, this.map.enemySettings);
+    if (this.map.encounter) this.waveDirector.startCampaign(this.map.encounter);
+    else this.waveDirector.startWave(this.map.enemySettings.enemyCount, this.map.enemySettings);
   }
 
   returnToMainMenu(): void {
@@ -482,6 +501,7 @@ export class Game implements BattlefieldActions {
       maximumEnemyY: this.enemies.maximumY,
       invincible: this.invincible,
       gameSpeed: this.gameSpeed,
+      timings: this.timings,
     };
   }
 
@@ -574,8 +594,13 @@ export class Game implements BattlefieldActions {
     this.gameOver = true;
     this.phase = 'idle';
     const survived = this.wallHp > 0;
-    if (survived && !this.map.custom) this.progression.completeCampaign(this.map.id);
-    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom && this.kills >= 3);
+    const rating = survived && !this.map.custom ? this.wallHp >= this.wallMaxHp * 0.8 ? 3 : this.wallHp >= this.wallMaxHp * 0.5 ? 2 : 1 : 0;
+    let firstClearBonus = 0;
+    if (survived && !this.map.custom) {
+      this.progression.completeCampaign(this.map.id);
+      firstClearBonus = this.progression.claimFirstClearReward(this.map.id, this.map.firstClearReward ?? 0);
+    }
+    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom && this.kills >= 3, firstClearBonus, rating);
     this.onRunEnd(breakdown, survived);
   }
 
@@ -591,6 +616,12 @@ export class Game implements BattlefieldActions {
       this.weapons.setTowerBonuses(config.kind, bonuses.towerDamage[config.kind], bonuses.towerSpeed[config.kind], bonuses.towerRange[config.kind]);
       this.weapons.setTowerCostMultiplier(config.kind, bonuses.towerCost[config.kind]);
     }
+    this.weapons.setTowerSpecialBonuses('ballista', { penetration: bonuses.towerSpecials.ballista.penetration, projectiles: bonuses.towerSpecials.ballista.projectiles, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, sniperPenetration: 0 });
+    this.weapons.setTowerSpecialBonuses('cannon', { penetration: 0, projectiles: 0, ...bonuses.towerSpecials.cannon, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, sniperPenetration: 0 });
+    this.weapons.setTowerSpecialBonuses('fireTower', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, ...bonuses.towerSpecials.fireTower, teslaShock: false, teslaChains: 0, mortarBarrage: 0, sniperPenetration: 0 });
+    this.weapons.setTowerSpecialBonuses('mortar', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, ...bonuses.towerSpecials.mortar, sniperPenetration: 0 });
+    this.weapons.setTowerSpecialBonuses('teslaCoil', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, ...bonuses.towerSpecials.teslaCoil, mortarBarrage: 0, sniperPenetration: 0 });
+    this.weapons.setTowerSpecialBonuses('sniperTower', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, ...bonuses.towerSpecials.sniperTower });
     this.wallHp = this.wallMaxHp;
   }
 

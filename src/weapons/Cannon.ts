@@ -20,6 +20,10 @@ export class Cannon extends TowerBase {
     return this.targeting.maxDistance;
   }
 
+  isPointThreatened(x: number, y: number, cellPadding = 0): boolean {
+    return super.isPointThreatened(x, y, cellPadding) || Math.hypot(x - this.aimX, y - this.aimY) <= this.radius + cellPadding;
+  }
+
   update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, _onKill: (reward: number) => void, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;
@@ -31,7 +35,7 @@ export class Cannon extends TowerBase {
       projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.65, 340, Math.max(30, this.targeting.distance - 84), this.radius * 0.7);
       projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage * 0.65, 340, Math.min(this.targeting.maxDistance, this.targeting.distance + 52), this.radius * 0.7);
     }
-    if (this.doubleBarrel) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, Math.min(620, this.targeting.distance + 26), this.radius);
+    if (this.doubleBarrel) projectiles.fireShell(this.x, this.y, direction.x, direction.y, this.damage, 340, Math.min(this.targeting.maxDistance, this.targeting.distance + 26), this.radius);
     this.cooldown = this.cooldownDuration;
   }
 
@@ -40,9 +44,9 @@ export class Cannon extends TowerBase {
     this.cooldownDuration = 1.8 / this.towerSpeedMultiplier;
     this.damage = 32 * this.towerDamageMultiplier;
     this.radius = 70;
-    this.clusterShells = false;
-    this.doubleBarrel = false;
-    this.carpetBombardment = false;
+    this.clusterShells = this.towerSpecialBonuses.clusterShells;
+    this.doubleBarrel = this.towerSpecialBonuses.doubleBarrel;
+    this.carpetBombardment = this.towerSpecialBonuses.carpetBombardment;
     this.targeting.maxDistance = 620 * this.towerRangeMultiplier;
     this.targeting.distance = this.targeting.maxDistance;
   }

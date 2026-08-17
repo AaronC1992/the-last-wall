@@ -8,12 +8,22 @@ import { CustomMapStorage } from '../map/CustomMapStorage';
 
 const EDITOR_CELL_SIZE = 14;
 
+export interface MapEditorSnapshot {
+  terrain: number[];
+  spawns: MapPoint[];
+  goal: MapPoint;
+}
+
+export function cloneMapEditorSnapshot(snapshot: MapEditorSnapshot): MapEditorSnapshot {
+  return { terrain: [...snapshot.terrain], spawns: snapshot.spawns.map((point) => ({ ...point })), goal: { ...snapshot.goal } };
+}
+
 export class MapBuilder {
   private readonly root = document.querySelector<HTMLElement>('#map-builder')!;
   private readonly canvas = document.querySelector<HTMLCanvasElement>('#map-builder-canvas')!;
   private readonly context = this.canvas.getContext('2d')!;
   private readonly storage = new CustomMapStorage();
-  private readonly history: number[][] = [];
+  private readonly history: MapEditorSnapshot[] = [];
   private historyIndex = -1;
   private terrain = new Uint8Array(DEFAULT_MAP_WIDTH * DEFAULT_MAP_HEIGHT).fill(TerrainCell.Buildable);
   private spawns: MapPoint[] = [];
@@ -87,8 +97,8 @@ export class MapBuilder {
   }
 
   private commitHistory(): void { this.pushHistory(); }
-  private pushHistory(): void { this.history.splice(this.historyIndex + 1); this.history.push(Array.from(this.terrain)); this.historyIndex = this.history.length - 1; }
-  private restore(index: number): void { if (index < 0 || index >= this.history.length) return; this.historyIndex = index; this.terrain = Uint8Array.from(this.history[index]); this.render(); }
+  private pushHistory(): void { this.history.splice(this.historyIndex + 1); this.history.push(cloneMapEditorSnapshot({ terrain: Array.from(this.terrain), spawns: this.spawns, goal: this.goal })); this.historyIndex = this.history.length - 1; }
+  private restore(index: number): void { if (index < 0 || index >= this.history.length) return; this.historyIndex = index; const snapshot = this.history[index]; this.terrain = Uint8Array.from(snapshot.terrain); this.spawns = snapshot.spawns.map((point) => ({ ...point })); this.goal = { ...snapshot.goal }; this.render(); }
 
   private createDraft(): MapDefinition { return { version: 1, id: `custom-${Date.now()}`, name: 'MY VALLEY', width: DEFAULT_MAP_WIDTH, height: DEFAULT_MAP_HEIGHT, cellSize: DEFAULT_MAP_CELL_SIZE, terrain: Array.from(this.terrain), spawnCells: [], goalCell: this.goal, seed: Date.now(), enemySettings: { difficulty: 'normal', enemyCount: 500, variety: 'mixed', spawnBurst: 80, spawnInterval: 0.14 }, custom: true }; }
 

@@ -12,10 +12,13 @@ export class MapSpawnSystem {
     this.grid = new TerrainGrid(definition);
   }
 
-  nextSpawn(): { x: number; y: number; targetX: number } {
+  nextSpawn(spawnPreference: number | 'random' | 'all' = 'random'): { x: number; y: number; targetX: number } {
     if (this.burstRemaining <= 0) this.burstRemaining = 8 + Math.floor(this.random.next() * 10);
     this.burstRemaining--;
-    const source = this.definition.spawnCells[Math.floor(this.random.next() * this.definition.spawnCells.length)];
+    const spawnIndex = typeof spawnPreference === 'number' && this.definition.spawnCells.length > 0
+      ? Math.max(0, Math.min(this.definition.spawnCells.length - 1, spawnPreference))
+      : Math.floor(this.random.next() * this.definition.spawnCells.length);
+    const source = this.definition.spawnCells[spawnIndex];
     const point = this.grid.cellToWorld(source.x, source.y);
     return { x: point.x + this.random.range(-8, 8), y: point.y + this.random.range(-8, 8), targetX: point.x };
   }

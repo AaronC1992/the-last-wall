@@ -1,4 +1,4 @@
-export type MetaUpgradeId = 'globalDamage' | 'globalDamageII' | 'wallIntegrity' | 'wallIntegrityII' | 'wallArmor' | 'wallArmorII' | 'startingGold' | 'startingGoldII' | 'bounty' | 'tokenBonus' | 'tokenBonusII' | 'ballistaMastery' | 'bonusResources' | 'abilityHaste' | 'ballistaSlots' | 'ballistaSlotsII' | 'cannonSlots' | 'cannonSlotsII' | 'fireSlots' | 'fireSlotsII' | 'lightningSlots' | 'lightningSlotsII' | 'mortarSlots' | 'mortarSlotsII' | 'teslaSlots' | 'teslaSlotsII' | 'sniperSlots' | 'sniperSlotsII' | 'abilityPower' | 'repairMastery' | 'fieldMedics' | 'enemySuppression' | 'veteranReserve' | 'warDrums' | 'commandSlots' | 'ballistaDamage' | 'ballistaSpeed' | 'ballistaRange' | 'ballistaDiscount' | 'cannonDamage' | 'cannonSpeed' | 'cannonRange' | 'cannonDiscount' | 'fireDamage' | 'fireSpeed' | 'fireRange' | 'fireDiscount' | 'lightningDamage' | 'lightningSpeed' | 'lightningRange' | 'lightningDiscount' | 'mortarDamage' | 'mortarSpeed' | 'mortarRange' | 'mortarDiscount' | 'teslaDamage' | 'teslaSpeed' | 'teslaRange' | 'teslaDiscount' | 'sniperDamage' | 'sniperSpeed' | 'sniperRange' | 'sniperDiscount';
+export type MetaUpgradeId = 'globalDamage' | 'globalDamageII' | 'wallIntegrity' | 'wallIntegrityII' | 'wallArmor' | 'wallArmorII' | 'startingGold' | 'startingGoldII' | 'bounty' | 'tokenBonus' | 'tokenBonusII' | 'ballistaMastery' | 'bonusResources' | 'abilityHaste' | 'ballistaSlots' | 'ballistaSlotsII' | 'cannonSlots' | 'cannonSlotsII' | 'fireSlots' | 'fireSlotsII' | 'lightningSlots' | 'lightningSlotsII' | 'mortarSlots' | 'mortarSlotsII' | 'teslaSlots' | 'teslaSlotsII' | 'sniperSlots' | 'sniperSlotsII' | 'abilityPower' | 'repairMastery' | 'fieldMedics' | 'enemySuppression' | 'veteranReserve' | 'warDrums' | 'commandSlots' | 'ballistaDamage' | 'ballistaSpeed' | 'ballistaRange' | 'ballistaPenetration' | 'ballistaMultishot' | 'ballistaDiscount' | 'cannonDamage' | 'cannonSpeed' | 'cannonRange' | 'cannonCluster' | 'cannonDoubleBarrel' | 'cannonCarpetBombardment' | 'cannonDiscount' | 'fireDamage' | 'fireSpeed' | 'fireRange' | 'fireWildfire' | 'fireDiscount' | 'lightningDamage' | 'lightningSpeed' | 'lightningRange' | 'lightningDiscount' | 'mortarDamage' | 'mortarSpeed' | 'mortarRange' | 'mortarDoubleSalvo' | 'mortarDiscount' | 'teslaDamage' | 'teslaSpeed' | 'teslaRange' | 'teslaShock' | 'teslaChainSplit' | 'teslaDiscount' | 'sniperDamage' | 'sniperSpeed' | 'sniperRange' | 'sniperPiercing' | 'sniperDiscount';
 
 export interface MetaUpgradeDefinition {
   id: MetaUpgradeId;
@@ -10,7 +10,7 @@ export interface MetaUpgradeDefinition {
 }
 
 export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
-  { id: 'globalDamage', category: 'Damage', title: 'Siege Doctrine', description: 'All Ballista damage gains 10 percent each level.', maxLevel: 10, baseCost: 1 },
+  { id: 'globalDamage', category: 'Damage', title: 'Ballista Siege Doctrine', description: 'Ballista damage gains 10 percent each level.', maxLevel: 10, baseCost: 1 },
   { id: 'globalDamageII', category: 'Damage', title: 'Grand Battery', description: 'All Ballista damage gains 15 percent each level.', maxLevel: 10, baseCost: 4 },
   { id: 'wallIntegrity', category: 'Defense', title: 'Reinforced Wall', description: 'Wall maximum health gains 20 each level.', maxLevel: 10, baseCost: 1 },
   { id: 'wallIntegrityII', category: 'Defense', title: 'Citadel Core', description: 'Wall maximum health gains 35 each level.', maxLevel: 8, baseCost: 4 },
@@ -18,7 +18,7 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'wallArmorII', category: 'Defense', title: 'Bastion Runes', description: 'Wall damage taken is reduced by 1 more each level.', maxLevel: 6, baseCost: 5 },
   { id: 'startingGold', category: 'Economy', title: 'Build Reserve', description: 'Each level grants 10 Build Points at the start of a run.', maxLevel: 8, baseCost: 1 },
   { id: 'startingGoldII', category: 'Economy', title: 'Quartermaster Corps', description: 'Each level grants 15 Build Points at the start of a run.', maxLevel: 8, baseCost: 4 },
-  { id: 'bounty', category: 'Economy', title: 'Bounty Orders', description: 'Enemy rewards gain 10 percent each level.', maxLevel: 8, baseCost: 2 },
+  { id: 'bounty', category: 'Economy', title: 'Salvage Contracts', description: 'Start each battle with 10 additional Build Points per level.', maxLevel: 8, baseCost: 2 },
   { id: 'tokenBonus', category: 'Economy', title: 'Victory Ledger', description: 'War Token rewards gain 15 percent each level.', maxLevel: 6, baseCost: 3 },
   { id: 'tokenBonusII', category: 'Economy', title: 'Imperial Treasury', description: 'War Token rewards gain 20 percent each level.', maxLevel: 6, baseCost: 6 },
   { id: 'ballistaMastery', category: 'Weapons', title: 'Ballista Mastery', description: 'Ballista attack speed gains 8 percent each level.', maxLevel: 8, baseCost: 2 },
@@ -48,14 +48,20 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'ballistaDamage', category: 'Damage', title: 'Ballista Warheads', description: 'Ballista damage gains 8 percent each level.', maxLevel: 8, baseCost: 3 },
   { id: 'ballistaSpeed', category: 'Weapons', title: 'Ballista Drills', description: 'Ballista attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 3 },
   { id: 'ballistaRange', category: 'Weapons', title: 'Ballista Spotters', description: 'Ballista range gains 8 percent each level.', maxLevel: 8, baseCost: 4 },
+  { id: 'ballistaPenetration', category: 'Damage', title: 'Piercing Bolts', description: 'Ballista bolts pass through two additional enemies.', maxLevel: 1, baseCost: 8 },
+  { id: 'ballistaMultishot', category: 'Damage', title: 'Multishot', description: 'Ballista fires one additional parallel bolt.', maxLevel: 1, baseCost: 12 },
   { id: 'ballistaDiscount', category: 'Economy', title: 'Timber Contracts', description: 'Ballista Build Point cost falls 4 percent each level.', maxLevel: 6, baseCost: 4 },
   { id: 'cannonDamage', category: 'Damage', title: 'Siege Charges', description: 'Cannon damage gains 10 percent each level.', maxLevel: 8, baseCost: 4 },
   { id: 'cannonSpeed', category: 'Weapons', title: 'Rapid Breeches', description: 'Cannon attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 4 },
   { id: 'cannonRange', category: 'Weapons', title: 'Forward Observers', description: 'Cannon range gains 8 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'cannonCluster', category: 'Damage', title: 'Cluster Shells', description: 'Cannon shells create a smaller secondary blast.', maxLevel: 1, baseCost: 10 },
+  { id: 'cannonDoubleBarrel', category: 'Damage', title: 'Double Barrel', description: 'Cannon fires a second shell down its line.', maxLevel: 1, baseCost: 16 },
+  { id: 'cannonCarpetBombardment', category: 'Damage', title: 'Carpet Bombardment', description: 'Cannon adds two extra detonation points.', maxLevel: 1, baseCost: 24 },
   { id: 'cannonDiscount', category: 'Economy', title: 'Foundry Recycling', description: 'Cannon Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 5 },
   { id: 'fireDamage', category: 'Damage', title: 'White Hot Fuel', description: 'Fire Tower burn damage gains 10 percent each level.', maxLevel: 8, baseCost: 4 },
   { id: 'fireSpeed', category: 'Weapons', title: 'Pressure Valves', description: 'Fire Tower attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 4 },
   { id: 'fireRange', category: 'Weapons', title: 'Long Flame', description: 'Fire Tower range gains 8 percent each level.', maxLevel: 8, baseCost: 5 },
+  { id: 'fireWildfire', category: 'Damage', title: 'Wildfire', description: 'Burning enemies ignite nearby enemies when they die.', maxLevel: 1, baseCost: 12 },
   { id: 'fireDiscount', category: 'Economy', title: 'Fuel Reclamation', description: 'Fire Tower Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 5 },
   { id: 'lightningDamage', category: 'Damage', title: 'Laser Capacitors', description: 'Laser Tower damage gains 10 percent each level.', maxLevel: 8, baseCost: 5 },
   { id: 'lightningSpeed', category: 'Weapons', title: 'Optical Overclock', description: 'Laser Tower attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 5 },
@@ -64,13 +70,17 @@ export const META_UPGRADES: readonly MetaUpgradeDefinition[] = [
   { id: 'mortarDamage', category: 'Damage', title: 'Bunker Busters', description: 'Mortar damage gains 10 percent each level.', maxLevel: 8, baseCost: 5 },
   { id: 'mortarSpeed', category: 'Weapons', title: 'Autoloaders', description: 'Mortar attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 5 },
   { id: 'mortarRange', category: 'Weapons', title: 'High Arc Charts', description: 'Mortar range gains 8 percent each level.', maxLevel: 8, baseCost: 6 },
+  { id: 'mortarDoubleSalvo', category: 'Damage', title: 'Double Salvo', description: 'Mortar fires a second shell in each barrage.', maxLevel: 1, baseCost: 14 },
   { id: 'mortarDiscount', category: 'Economy', title: 'Shell Salvage', description: 'Mortar Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 6 },
   { id: 'teslaDamage', category: 'Damage', title: 'Induction Cells', description: 'Tesla Coil damage gains 10 percent each level.', maxLevel: 8, baseCost: 6 },
   { id: 'teslaSpeed', category: 'Weapons', title: 'Rapid Discharge', description: 'Tesla Coil attack speed gains 5 percent each level.', maxLevel: 8, baseCost: 6 },
   { id: 'teslaRange', category: 'Weapons', title: 'Relay Spires', description: 'Tesla Coil range gains 8 percent each level.', maxLevel: 8, baseCost: 7 },
+  { id: 'teslaShock', category: 'Damage', title: 'Shock', description: 'Tesla pulses can briefly stun enemies.', maxLevel: 1, baseCost: 12 },
+  { id: 'teslaChainSplit', category: 'Damage', title: 'Chain Split', description: 'Tesla pulses chain to two more enemies.', maxLevel: 2, baseCost: 10 },
   { id: 'teslaDiscount', category: 'Economy', title: 'Copper Recovery', description: 'Tesla Coil Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 7 },
   { id: 'sniperDamage', category: 'Damage', title: 'Precision Rounds', description: 'Sniper Tower damage gains 10 percent each level.', maxLevel: 8, baseCost: 7 },
   { id: 'sniperSpeed', category: 'Weapons', title: 'Veteran Spotters', description: 'Sniper Tower reload speed gains 5 percent each level.', maxLevel: 8, baseCost: 7 },
   { id: 'sniperRange', category: 'Weapons', title: 'Long Glass', description: 'Sniper Tower range gains 8 percent each level.', maxLevel: 8, baseCost: 8 },
+  { id: 'sniperPiercing', category: 'Damage', title: 'Piercing Round', description: 'Sniper rounds pass through one additional enemy.', maxLevel: 1, baseCost: 14 },
   { id: 'sniperDiscount', category: 'Economy', title: 'Rifle Contracts', description: 'Sniper Tower Build Point cost falls 5 percent each level.', maxLevel: 6, baseCost: 8 },
 ] as const;

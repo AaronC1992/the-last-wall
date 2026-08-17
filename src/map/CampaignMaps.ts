@@ -1,12 +1,36 @@
 import { createMapDefinition } from './MapFactory';
-import type { MapDefinition, MapEnemySettings, MapPoint } from './TerrainTypes';
+import { EnemyType } from '../enemies/EnemyTypes';
+import type { EnemyTypeId } from '../enemies/EnemyTypes';
+import type { CampaignEncounter, MapDefinition, MapEnemySettings, MapPoint } from './TerrainTypes';
 
 const route = (...points: MapPoint[]) => points;
 
 const settings = (difficulty: MapEnemySettings['difficulty'], enemyCount: number, variety: MapEnemySettings['variety'] = 'mixed'): MapEnemySettings => ({ difficulty, enemyCount: Math.max(400, Math.round(enemyCount / 25)), variety, spawnBurst: difficulty === 'easy' ? 110 : difficulty === 'normal' ? 220 : 320, spawnInterval: difficulty === 'easy' ? 0.12 : difficulty === 'normal' ? 0.075 : difficulty === 'hard' ? 0.05 : 0.035 });
 const goal = { x: 40, y: 46 };
 
-export const CAMPAIGN_MAPS: readonly MapDefinition[] = [
+const campaignEncounter = (level: number): CampaignEncounter => {
+  const group = (type: EnemyTypeId, count: number, eliteChance = 0, spawnPreference?: number): CampaignEncounter['groups'][number] => ({ type, count, eliteChance, spawnPreference });
+  const scale = 140 + level * 24;
+  if (level === 1) return { groups: [group(EnemyType.Grunt, scale)], hpMultiplier: 1, speedMultiplier: 1 };
+  if (level === 2) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.8)), group(EnemyType.Runner, Math.round(scale * 0.2))], hpMultiplier: 1.03, speedMultiplier: 1.01 };
+  if (level === 3) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.65)), group(EnemyType.Runner, Math.round(scale * 0.35))], hpMultiplier: 1.06, speedMultiplier: 1.02 };
+  if (level === 4) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.65)), group(EnemyType.Runner, Math.round(scale * 0.2)), group(EnemyType.Brute, Math.round(scale * 0.15))], hpMultiplier: 1.09, speedMultiplier: 1.03 };
+  if (level === 5) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.55)), group(EnemyType.Runner, Math.round(scale * 0.2)), group(EnemyType.Brute, Math.round(scale * 0.15)), group(EnemyType.Armored, Math.round(scale * 0.1))], hpMultiplier: 1.12, speedMultiplier: 1.04 };
+  if (level === 6) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.45)), group(EnemyType.Runner, Math.round(scale * 0.2)), group(EnemyType.Armored, Math.round(scale * 0.2), 0, 0), group(EnemyType.Brute, Math.round(scale * 0.15), 0, 1)], hpMultiplier: 1.15, speedMultiplier: 1.05 };
+  if (level === 7) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.45)), group(EnemyType.Runner, Math.round(scale * 0.2)), group(EnemyType.Armored, Math.round(scale * 0.15)), group(EnemyType.Brute, Math.round(scale * 0.1)), group(EnemyType.Exploder, Math.round(scale * 0.1))], hpMultiplier: 1.18, speedMultiplier: 1.06 };
+  if (level === 8) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.4), 0.03), group(EnemyType.Runner, Math.round(scale * 0.2), 0.05), group(EnemyType.Brute, Math.round(scale * 0.15), 0.04), group(EnemyType.Armored, Math.round(scale * 0.15), 0.04), group(EnemyType.Exploder, Math.round(scale * 0.1), 0.03)], hpMultiplier: 1.21, speedMultiplier: 1.07 };
+  if (level === 9) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.35)), group(EnemyType.Runner, Math.round(scale * 0.2)), group(EnemyType.Brute, Math.round(scale * 0.15)), group(EnemyType.Armored, Math.round(scale * 0.15)), group(EnemyType.Exploder, Math.round(scale * 0.1)), group(EnemyType.Boss, 1)], hpMultiplier: 1.24, speedMultiplier: 1.08 };
+  if (level === 10) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.3)), group(EnemyType.Runner, Math.round(scale * 0.15)), group(EnemyType.Armored, Math.round(scale * 0.25)), group(EnemyType.Exploder, Math.round(scale * 0.15)), group(EnemyType.Brute, Math.round(scale * 0.14), 0.08), group(EnemyType.Boss, 1)], hpMultiplier: 1.28, speedMultiplier: 1.09 };
+  if (level <= 14) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.25), 0.08), group(EnemyType.Runner, Math.round(scale * 0.2), 0.15), group(EnemyType.Brute, Math.round(scale * 0.15), 0.14), group(EnemyType.Armored, Math.round(scale * 0.2), 0.15), group(EnemyType.Exploder, Math.round(scale * 0.2), 0.12)], hpMultiplier: 1.3 + (level - 11) * 0.04, speedMultiplier: 1.1 + (level - 11) * 0.015 };
+  if (level === 15) return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.2), 0.2), group(EnemyType.Runner, Math.round(scale * 0.15), 0.25), group(EnemyType.Brute, Math.round(scale * 0.2), 0.3), group(EnemyType.Armored, Math.round(scale * 0.2), 0.3), group(EnemyType.Exploder, Math.round(scale * 0.15), 0.25), group(EnemyType.Boss, 1, 0.2)], hpMultiplier: 1.5, speedMultiplier: 1.16 };
+  if (level === 16) return { groups: [group(EnemyType.Armored, Math.round(scale * 0.22), 0.25, 0), group(EnemyType.Brute, Math.round(scale * 0.18), 0.25, 0), group(EnemyType.Runner, Math.round(scale * 0.2), 0.2, 1), group(EnemyType.Exploder, Math.round(scale * 0.15), 0.2, 1), group(EnemyType.Grunt, Math.round(scale * 0.25), 0.15, 2)], hpMultiplier: 1.58, speedMultiplier: 1.18 };
+  if (level === 17) return { groups: [group(EnemyType.Armored, Math.round(scale * 0.25), 0.3, 0), group(EnemyType.Brute, Math.round(scale * 0.15), 0.3, 0), group(EnemyType.Runner, Math.round(scale * 0.2), 0.25, 1), group(EnemyType.Exploder, Math.round(scale * 0.2), 0.25, 1), group(EnemyType.Grunt, Math.round(scale * 0.2), 0.2, 2)], hpMultiplier: 1.66, speedMultiplier: 1.2 };
+  if (level === 18) return { groups: [group(EnemyType.Armored, Math.round(scale * 0.2), 0.32, 0), group(EnemyType.Brute, Math.round(scale * 0.15), 0.3, 2), group(EnemyType.Runner, Math.round(scale * 0.2), 0.3, 1), group(EnemyType.Exploder, Math.round(scale * 0.2), 0.3, 1), group(EnemyType.Grunt, Math.round(scale * 0.2), 0.2, 2), group(EnemyType.Boss, 1, 0.2, 0)], hpMultiplier: 1.74, speedMultiplier: 1.22 };
+  if (level === 19) return { groups: [group(EnemyType.Armored, Math.round(scale * 0.25), 0.35, 0), group(EnemyType.Brute, Math.round(scale * 0.15), 0.35, 2), group(EnemyType.Runner, Math.round(scale * 0.2), 0.35, 1), group(EnemyType.Exploder, Math.round(scale * 0.2), 0.35, 1), group(EnemyType.Grunt, Math.round(scale * 0.15), 0.25, 2), group(EnemyType.Boss, 2, 0.25)], hpMultiplier: 1.82, speedMultiplier: 1.24 };
+  return { groups: [group(EnemyType.Grunt, Math.round(scale * 0.18), 0.3), group(EnemyType.Runner, Math.round(scale * 0.18), 0.4, 1), group(EnemyType.Brute, Math.round(scale * 0.16), 0.4, 0), group(EnemyType.Armored, Math.round(scale * 0.18), 0.4, 0), group(EnemyType.Exploder, Math.round(scale * 0.18), 0.4, 1), group(EnemyType.Boss, 3, 0.35)], hpMultiplier: 1.95, speedMultiplier: 1.28 };
+};
+
+const CAMPAIGN_MAPS_BASE: readonly MapDefinition[] = [
   createMapDefinition('campaign-01', 'THE LONG APPROACH', [route({ x: 40, y: 1 }, { x: 20, y: 8 }, { x: 58, y: 17 }, { x: 28, y: 27 }, { x: 52, y: 37 }, goal)], [{ x: 40, y: 1 }], goal, settings('easy', 10000, 'basic'), 201),
 
   createMapDefinition('campaign-02', 'THE WIDE BEND', [route({ x: 14, y: 1 }, { x: 14, y: 12 }, { x: 66, y: 22 }, { x: 22, y: 32 }, goal)], [{ x: 14, y: 1 }], goal, settings('normal', 20000, 'basic'), 202),
@@ -29,5 +53,12 @@ export const CAMPAIGN_MAPS: readonly MapDefinition[] = [
   createMapDefinition('campaign-19', 'THE LAST LABYRINTH', [route({ x: 6, y: 1 }, { x: 6, y: 12 }, { x: 70, y: 23 }, { x: 16, y: 35 }, goal), route({ x: 22, y: 1 }, { x: 22, y: 16 }, { x: 58, y: 27 }, goal), route({ x: 58, y: 1 }, { x: 58, y: 16 }, { x: 22, y: 27 }, goal), route({ x: 74, y: 1 }, { x: 74, y: 12 }, { x: 10, y: 23 }, { x: 64, y: 35 }, goal)], [{ x: 6, y: 1 }, { x: 22, y: 1 }, { x: 58, y: 1 }, { x: 74, y: 1 }], goal, settings('insane', 190000, 'elite'), 219),
   createMapDefinition('campaign-20', 'THE TWENTYFOLD WALL', [route({ x: 6, y: 1 }, { x: 6, y: 14 }, { x: 28, y: 25 }, { x: 12, y: 36 }, goal), route({ x: 22, y: 1 }, { x: 22, y: 12 }, { x: 42, y: 24 }, { x: 30, y: 36 }, goal), route({ x: 40, y: 1 }, { x: 40, y: 12 }, { x: 40, y: 24 }, { x: 40, y: 36 }, goal), route({ x: 58, y: 1 }, { x: 58, y: 12 }, { x: 38, y: 24 }, { x: 50, y: 36 }, goal), route({ x: 74, y: 1 }, { x: 74, y: 14 }, { x: 52, y: 25 }, { x: 68, y: 36 }, goal)], [{ x: 6, y: 1 }, { x: 22, y: 1 }, { x: 40, y: 1 }, { x: 58, y: 1 }, { x: 74, y: 1 }], goal, settings('insane', 200000, 'elite'), 220),
 ];
+
+export const CAMPAIGN_MAPS: readonly MapDefinition[] = CAMPAIGN_MAPS_BASE.map((map, index) => ({
+  ...map,
+  encounter: campaignEncounter(index + 1),
+  baseBuildPointBonus: index * 10,
+  firstClearReward: 3 + index * 2,
+}));
 
 export const DEFAULT_CAMPAIGN_MAP = CAMPAIGN_MAPS[0];

@@ -29,7 +29,7 @@ export class Mortar extends TowerBase {
     this.damage = 42 * this.towerDamageMultiplier;
     this.blastRadius = 82;
     this.flightTime = 0.72;
-    this.barrageCount = 1;
+    this.barrageCount = 1 + this.towerSpecialBonuses.mortarBarrage;
     this.targeting.maxDistance = 460 * this.towerRangeMultiplier;
     this.targeting.distance = this.targeting.maxDistance;
     this.targeting.radius = 82;

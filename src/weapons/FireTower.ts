@@ -33,7 +33,7 @@ export class FireTower extends TowerBase {
     this.tickTimer = 0;
     this.isFiring = false;
     this.burnDamage = 9 * this.towerDamageMultiplier; this.burnDuration = 2.5; this.targeting.maxDistance = 125 * this.towerRangeMultiplier; this.targeting.distance = this.targeting.maxDistance; this.targeting.coneAngle = 0.6;
-    this.wildfire = false;
+    this.wildfire = this.towerSpecialBonuses.wildfire;
   }
 
   spreadFromDeath(x: number, y: number, enemies: EnemyManager, grid: SpatialGrid): void {

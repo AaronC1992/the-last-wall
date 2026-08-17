@@ -12,7 +12,6 @@ export interface PermanentBonuses {
   wallArmor: number;
   startingBuildPoints: number;
   tokenMultiplier: number;
-  ballistaSpeedMultiplier: number;
   flatTokenBonus: number;
   abilityHaste: number;
   abilityPower: number;
@@ -24,6 +23,14 @@ export interface PermanentBonuses {
   towerDamage: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
   towerSpeed: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
   towerRange: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
+  towerSpecials: {
+    ballista: { penetration: number; projectiles: number };
+    cannon: { clusterShells: boolean; doubleBarrel: boolean; carpetBombardment: boolean };
+    fireTower: { wildfire: boolean };
+    teslaCoil: { teslaShock: boolean; teslaChains: number };
+    mortar: { mortarBarrage: number };
+    sniperTower: { sniperPenetration: number };
+  };
   towerCost: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
   towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
 }
@@ -35,6 +42,8 @@ export interface TokenBreakdown {
   percentLabel: string;
   flatBonus: number;
   total: number;
+  firstClearBonus: number;
+  rating: number;
 }
 
 export class MetaProgression {
@@ -86,12 +95,12 @@ export class MetaProgression {
     return true;
   }
 
-  awardTokens(kills: number, elapsed: number, buildPoints: number, highestCombo: number, awardCurrency = true): TokenBreakdown {
+  awardTokens(kills: number, elapsed: number, buildPoints: number, highestCombo: number, awardCurrency = true, firstClearBonus = 0, rating = 0): TokenBreakdown {
     const bonuses = this.bonuses;
     const base = awardCurrency ? Math.max(1, Math.floor(kills / 20 + elapsed / 90)) : 0;
     const percentBonus = awardCurrency ? Math.floor(base * (bonuses.tokenMultiplier - 1)) : 0;
     const flatBonus = awardCurrency ? bonuses.flatTokenBonus : 0;
-    const total = awardCurrency ? base + percentBonus + flatBonus : 0;
+    const total = awardCurrency ? base + percentBonus + flatBonus + firstClearBonus : 0;
     this.data.warTokens += total;
     this.data.statistics.totalKills += kills;
     this.data.statistics.totalRuns++;
@@ -99,7 +108,7 @@ export class MetaProgression {
     this.data.statistics.highestKills = Math.max(this.data.statistics.highestKills, kills);
     this.data.statistics.highestLifetimeCombo = Math.max(this.data.statistics.highestLifetimeCombo, highestCombo);
     this.persist();
-    return { kills, base, percentBonus, percentLabel: `${((bonuses.tokenMultiplier - 1) * 100).toFixed(1)}%`, flatBonus, total };
+    return { kills, base, percentBonus, percentLabel: `${((bonuses.tokenMultiplier - 1) * 100).toFixed(1)}%`, flatBonus, total, firstClearBonus, rating };
   }
 
   get bonuses(): PermanentBonuses {
@@ -107,9 +116,8 @@ export class MetaProgression {
       damageMultiplier: 1 + this.getLevel('globalDamage') * 0.1 + this.getLevel('globalDamageII') * 0.15,
       wallMaxHp: 100 + this.getLevel('wallIntegrity') * 20 + this.getLevel('wallIntegrityII') * 35,
       wallArmor: this.getLevel('wallArmor') + this.getLevel('wallArmorII'),
-      startingBuildPoints: 400 + this.getLevel('startingGold') * 10 + this.getLevel('startingGoldII') * 15 + this.getLevel('veteranReserve') * 25,
+      startingBuildPoints: 60 + this.getLevel('startingGold') * 10 + this.getLevel('startingGoldII') * 15 + this.getLevel('veteranReserve') * 25 + this.getLevel('bounty') * 10,
       tokenMultiplier: 1 + this.getLevel('tokenBonus') * 0.15 + this.getLevel('tokenBonusII') * 0.2,
-      ballistaSpeedMultiplier: 1 + this.getLevel('ballistaMastery') * 0.08 + this.getLevel('warDrums') * 0.03,
       flatTokenBonus: this.getLevel('bonusResources') * 3,
       abilityHaste: this.getLevel('abilityHaste') * 0.06,
       abilityPower: 1 + this.getLevel('abilityPower') * 0.12,
@@ -128,22 +136,30 @@ export class MetaProgression {
         sniperTower: 1 + this.getLevel('sniperDamage') * 0.1,
       },
       towerSpeed: {
-        ballista: 1 + this.getLevel('ballistaSpeed') * 0.05,
-        cannon: 1 + this.getLevel('cannonSpeed') * 0.05,
-        fireTower: 1 + this.getLevel('fireSpeed') * 0.05,
-        lightningTower: 1 + this.getLevel('lightningSpeed') * 0.05,
-        mortar: 1 + this.getLevel('mortarSpeed') * 0.05,
-        teslaCoil: 1 + this.getLevel('teslaSpeed') * 0.05,
-        sniperTower: 1 + this.getLevel('sniperSpeed') * 0.05,
+        ballista: 1 + this.getLevel('ballistaMastery') * 0.08 + this.getLevel('ballistaSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
+        cannon: 1 + this.getLevel('cannonSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
+        fireTower: 1 + this.getLevel('fireSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
+        lightningTower: 1 + this.getLevel('lightningSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
+        mortar: 1 + this.getLevel('mortarSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
+        teslaCoil: 1 + this.getLevel('teslaSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
+        sniperTower: 1 + this.getLevel('sniperSpeed') * 0.05 + this.getLevel('warDrums') * 0.03,
       },
       towerRange: {
         ballista: 1 + this.getLevel('ballistaRange') * 0.08,
         cannon: 1 + this.getLevel('cannonRange') * 0.08,
-        fireTower: 1 + this.getLevel('fireRange') * 0.08,
+        fireTower: 1 + this.getLevel('fireRange') * 0.06,
         lightningTower: 1 + this.getLevel('lightningRange') * 0.08,
         mortar: 1 + this.getLevel('mortarRange') * 0.08,
         teslaCoil: 1 + this.getLevel('teslaRange') * 0.08,
-        sniperTower: 1 + this.getLevel('sniperRange') * 0.08,
+        sniperTower: 1 + this.getLevel('sniperRange') * 0.1,
+      },
+      towerSpecials: {
+        ballista: { penetration: this.getLevel('ballistaPenetration') * 2, projectiles: this.getLevel('ballistaMultishot') },
+        cannon: { clusterShells: this.getLevel('cannonCluster') > 0, doubleBarrel: this.getLevel('cannonDoubleBarrel') > 0, carpetBombardment: this.getLevel('cannonCarpetBombardment') > 0 },
+        fireTower: { wildfire: this.getLevel('fireWildfire') > 0 },
+        teslaCoil: { teslaShock: this.getLevel('teslaShock') > 0, teslaChains: this.getLevel('teslaChainSplit') * 2 },
+        mortar: { mortarBarrage: this.getLevel('mortarDoubleSalvo') },
+        sniperTower: { sniperPenetration: this.getLevel('sniperPiercing') },
       },
       towerCost: {
         ballista: Math.max(0.5, 1 - this.getLevel('ballistaDiscount') * 0.04),
@@ -210,6 +226,13 @@ export class MetaProgression {
       this.data.completedCampaign.push(id);
       this.persist();
     }
+  }
+
+  claimFirstClearReward(id: string, amount: number): number {
+    if (!this.data.firstClearRewards || this.data.firstClearRewards[id] || amount <= 0) return 0;
+    this.data.firstClearRewards[id] = true;
+    this.persist();
+    return amount;
   }
 
   unlockAllCampaigns(ids: readonly string[]): void {

@@ -1,10 +1,11 @@
 import { EnemyType } from '../enemies/EnemyTypes';
 import type { EnemyTypeId } from '../enemies/EnemyTypes';
-import type { MapEnemySettings } from '../map/TerrainTypes';
+import type { CampaignEncounter, MapEnemySettings } from '../map/TerrainTypes';
 
 export class WaveDirector {
   private readonly queueType = new Uint8Array(200000);
   private readonly queueElite = new Uint8Array(200000);
+  private readonly queueSpawnPreference = new Int16Array(200000);
   private queueHead = 0;
   private queueTail = 0;
   private spawnTimer = 0;
@@ -14,13 +15,13 @@ export class WaveDirector {
   private waveBudget = 0;
   private mapSettings: MapEnemySettings | null = null;
 
-  update(deltaTime: number, _activeEnemies: number, spawn: (type: EnemyTypeId, elite: boolean) => void): void {
+  update(deltaTime: number, _activeEnemies: number, spawn: (type: EnemyTypeId, elite: boolean, spawnPreference: number) => void): void {
     this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer > 0) return;
     const burst = Math.min(this.queueTail - this.queueHead, Math.min(this.mapSettings?.spawnBurst ?? 400, 60 + this.wave * 10));
     for (let index = 0; index < burst; index++) {
-      spawn(this.queueType[this.queueHead] as EnemyTypeId, this.queueElite[this.queueHead] !== 0);
+      spawn(this.queueType[this.queueHead] as EnemyTypeId, this.queueElite[this.queueHead] !== 0, this.queueSpawnPreference[this.queueHead]);
       this.queueHead++;
     }
     this.spawnTimer = Math.max(0.025, (this.mapSettings?.spawnInterval ?? 0.14) - this.wave * 0.003);
@@ -52,6 +53,23 @@ export class WaveDirector {
   startWave(enemyCount?: number, mapSettings?: MapEnemySettings): void {
     this.mapSettings = mapSettings ?? null;
     this.beginWave(enemyCount);
+  }
+
+  startCampaign(encounter: CampaignEncounter): void {
+    this.reset();
+    this.wave = 1;
+    this.announcementText = encounter.groups.some((group) => group.type === EnemyType.Boss) ? 'BOSS APPROACHING' : 'THE HORDE IS COMING';
+    this.announcementTimer = 2.5;
+    for (const group of encounter.groups) {
+      const count = Math.max(0, Math.floor(group.count));
+      const spawnPreference = typeof group.spawnPreference === 'number' ? group.spawnPreference : -1;
+      for (let index = 0; index < count && this.queueTail < this.queueType.length; index++) {
+        this.queueType[this.queueTail] = group.type;
+        this.queueElite[this.queueTail] = Math.random() < Math.max(0, Math.min(1, group.eliteChance ?? 0)) ? 1 : 0;
+        this.queueSpawnPreference[this.queueTail] = spawnPreference;
+        this.queueTail++;
+      }
+    }
   }
 
   isWaveCleared(activeEnemies: number): boolean {
@@ -116,6 +134,7 @@ export class WaveDirector {
   private enqueue(type: EnemyTypeId, elite: boolean): void {
     this.queueType[this.queueTail] = type;
     this.queueElite[this.queueTail] = elite ? 1 : 0;
+    this.queueSpawnPreference[this.queueTail] = -1;
     this.queueTail++;
   }
 }
