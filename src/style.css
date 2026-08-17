@@ -267,7 +267,7 @@ button { font: inherit; }
 /* Skill tree */
 .meta-menu { position: absolute; inset: 0; z-index: 11; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #05070a; }
 .meta-menu[hidden] { display: none; }
-#skill-tree-canvas { display: block; width: min(100%, calc(100vh * 1280 / 760)); max-width: 100%; height: auto; max-height: 100%; aspect-ratio: 1280 / 760; cursor: grab; }
+#skill-tree-canvas { display: block; width: min(100%, calc(100vh * 1280 / 760)); max-width: 100%; height: auto; max-height: 100%; aspect-ratio: 1280 / 760; cursor: grab; touch-action: none; }
 #skill-tree-canvas:active { cursor: grabbing; }
 .skill-currency { position: absolute; top: 12px; left: 14px; display: grid; gap: 6px; pointer-events: none; }
 .skill-legend-toggle { display: none; position: absolute; top: 12px; right: 110px; z-index: 3; padding: 8px 12px; border: 1px solid #55636d; background: rgba(20, 27, 33, .9); color: #dfe7ee; cursor: pointer; font: 11px Verdana, sans-serif; }

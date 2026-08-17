@@ -51,7 +51,9 @@ export class BattlefieldInput {
     window.addEventListener('pointermove', (event) => this.onPointerMove(event));
     window.addEventListener('pointerup', (event) => this.onPointerUp(event));
     canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false });
-    canvas.addEventListener('pointerleave', () => this.actions.setPointer(0, 0, false));
+    canvas.addEventListener('pointerleave', (event) => {
+      if (!this.activePointers.has(event.pointerId)) this.actions.setPointer(0, 0, false);
+    });
     window.addEventListener('keydown', (event) => this.onKeyDown(event));
   }
 
@@ -121,6 +123,7 @@ export class BattlefieldInput {
   }
 
   private onPointerMove(event: PointerEvent): void {
+    if (!this.activePointers.has(event.pointerId)) return;
     const screen = this.toLogical(event);
     this.activePointers.set(event.pointerId, { x: screen.x, y: screen.y });
 
@@ -161,6 +164,7 @@ export class BattlefieldInput {
   }
 
   private onPointerUp(event: PointerEvent): void {
+    if (!this.activePointers.has(event.pointerId)) return;
     this.activePointers.delete(event.pointerId);
     this.lastPinchDistance = 0;
     if (this.activePointers.size > 0) {
