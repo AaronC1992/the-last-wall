@@ -74,6 +74,10 @@ button { font: inherit; }
 .start-battle { position: absolute; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 12px 22px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 20px; }
 .start-battle[hidden] { display: none; }
 .start-battle:hover { background: #253039; }
+.move-mode-button { position: absolute; right: 274px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 10px 14px; border: 1px solid #7aa7b9; background: rgba(21, 28, 31, .9); color: #d7eef6; cursor: pointer; font-size: 15px; }
+.move-mode-button[hidden] { display: none; }
+.move-mode-button:hover { background: #243943; }
+.move-mode-button.active { border-color: #8ddfff; background: #284b5a; color: #eefbff; }
 .remove-mode-button { position: absolute; right: 154px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 10px 14px; border: 1px solid #b97a7a; background: rgba(31, 21, 21, .9); color: #f6d2d2; cursor: pointer; font-size: 15px; }
 .remove-mode-button[hidden] { display: none; }
 .remove-mode-button:hover { background: #432626; }
@@ -228,8 +232,9 @@ button { font: inherit; }
 	.build-bar { padding-left: 10px; padding-right: 10px; justify-content: flex-start; scrollbar-width: thin; }
 	.build-slot { width: 50px; height: 50px; flex: 0 0 50px; }
 	.start-battle { top: 166px; right: 8px; bottom: auto; padding: 8px 12px; font-size: 14px; }
-	.remove-mode-button { top: 166px; right: 107px; bottom: auto; padding: 8px 10px; font-size: 12px; }
-	.build-settings-button { top: 166px; right: 208px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.move-mode-button { top: 166px; right: 194px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.remove-mode-button { top: 166px; right: 100px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.build-settings-button { top: 166px; right: 287px; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.main-menu-button { top: 166px; left: 8px; right: auto; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.ability-strip { left: 8px; right: 8px; bottom: 78px; display: flex; gap: 5px; overflow-x: auto; }
 	.ability-button { min-width: 108px; flex: 0 0 108px; padding: 5px 7px; font-size: 10px; }
@@ -306,6 +311,11 @@ button { font: inherit; }
 .skill-close { position: absolute; top: 12px; right: 14px; padding: 8px 14px; border: 1px solid #55636d; background: #141b21; color: #dfe7ee; cursor: pointer; }
 .skill-play { position: absolute; right: 18px; bottom: 18px; padding: 12px 30px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 26px; }
 .skill-play:hover { background: #253039; }
+
+@media (max-width: 760px), (pointer: coarse) {
+	.meta-menu { align-items: stretch; justify-content: stretch; }
+	#skill-tree-canvas { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; aspect-ratio: auto; }
+}
 
 /* Corner controls */
 .corner-button { position: absolute; top: 12px; left: 14px; padding: 7px 12px; border: 1px solid #55636d; background: rgba(20, 27, 33, .86); color: #dfe7ee; cursor: pointer; font: 12px Verdana, sans-serif; }

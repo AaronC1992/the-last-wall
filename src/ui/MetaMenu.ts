@@ -307,7 +307,8 @@ export class MetaMenu {
     const height = TREE_BOUNDS.maxY - TREE_BOUNDS.minY;
     const zoomX = (VIEW_WIDTH - TREE_PADDING) / width;
     const zoomY = (VIEW_HEIGHT - TREE_PADDING) / height;
-    this.zoom = Math.min(1, zoomX, zoomY);
+    const fitZoom = Math.min(1, zoomX, zoomY);
+    this.zoom = this.isCompactLayout() ? Math.min(1.35, Math.max(1.15, fitZoom * 1.9)) : fitZoom;
     const centerX = (TREE_BOUNDS.minX + TREE_BOUNDS.maxX) / 2;
     const centerY = (TREE_BOUNDS.minY + TREE_BOUNDS.maxY) / 2;
     this.offsetX = VIEW_WIDTH / 2 - centerX * this.zoom;
