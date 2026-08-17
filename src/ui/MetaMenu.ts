@@ -184,7 +184,7 @@ export class MetaMenu {
   }
 
   private isCompactLayout(): boolean {
-    return window.matchMedia('(max-width: 760px)').matches || navigator.maxTouchPoints > 0;
+    return window.matchMedia('(max-width: 760px)').matches || window.matchMedia('(pointer: coarse)').matches;
   }
 
   private setLegendVisible(visible: boolean): void {
