@@ -19,6 +19,8 @@ export interface BattlefieldActions {
   useAbilityAt(x: number, y: number): void;
   removeModeEnabled(): boolean;
   setRemoveMode(enabled: boolean): void;
+  moveModeEnabled(): boolean;
+  setMoveMode(enabled: boolean): void;
 }
 
 type DragMode = 'none' | 'pan' | 'move' | 'aim';
@@ -110,8 +112,14 @@ export class BattlefieldInput {
 
     this.pressedTowerId = towerId;
     if (towerId > 0) {
-      this.dragMode = towerId === this.actions.selectedTowerId() ? 'aim' : 'move';
-      this.draggedTowerId = towerId;
+      if (this.prefersTouch || event.pointerType === 'touch') {
+        this.dragMode = towerId === this.actions.selectedTowerId()
+          ? 'aim'
+          : this.actions.moveModeEnabled() ? 'move' : 'none';
+      } else {
+        this.dragMode = towerId === this.actions.selectedTowerId() ? 'aim' : 'move';
+      }
+      this.draggedTowerId = this.dragMode === 'none' ? 0 : towerId;
       return;
     }
     if (this.actions.selectedTowerId() > 0 && !this.actions.armedKind()) {
@@ -190,7 +198,12 @@ export class BattlefieldInput {
         this.actions.placeTower(world.x, world.y);
       } else if (this.actions.selectedTowerId() > 0) {
         if (this.prefersTouch || event.pointerType === 'touch') {
-          this.actions.moveTower(this.actions.selectedTowerId(), world.x, world.y);
+          if (this.actions.moveModeEnabled()) {
+            this.actions.moveTower(this.actions.selectedTowerId(), world.x, world.y);
+          } else {
+            this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
+            this.actions.selectTower(0);
+          }
         } else {
           this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
           this.actions.selectTower(0);
@@ -219,6 +232,7 @@ export class BattlefieldInput {
     if (event.key === 'Escape') {
       this.actions.selectTower(0);
       this.actions.setRemoveMode(false);
+      this.actions.setMoveMode(false);
       this.actions.useAbilityAt(-1, -1);
     }
     if (event.key === 'z' || event.key === 'Z') {
