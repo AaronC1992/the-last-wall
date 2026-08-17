@@ -77,6 +77,7 @@ export class Game implements BattlefieldActions {
   private showThreatMap = false;
   private hudFrame = 0;
   private pendingAbility: AbilityIdValue | null = null;
+  private removeMode = false;
   private readonly timings = { enemy: 0, grid: 0, congestion: 0, towers: 0, projectiles: 0, compact: 0, threat: 0, armoredFlow: 0, bossFlow: 0 };
   private navigationDirty = false;
   private navigationRebuildCount = 0;
@@ -225,6 +226,7 @@ export class Game implements BattlefieldActions {
     this.selectedId = 0;
     this.hoveredId = 0;
     this.pendingAbility = null;
+    this.removeMode = false;
     this.mapIntroTimer = 2;
     this.highestCombo = 0;
     this.phase = 'build';
@@ -262,6 +264,7 @@ export class Game implements BattlefieldActions {
     if (!this.weapons.allAimed()) return;
     this.commitNavigation();
     this.phase = 'battle';
+    this.removeMode = false;
     this.selectedId = 0;
     if (this.map.encounter) this.waveDirector.startCampaign(this.map.encounter);
     else this.waveDirector.startWave(this.map.enemySettings.enemyCount, this.map.enemySettings);
@@ -278,6 +281,7 @@ export class Game implements BattlefieldActions {
     this.hoveredId = 0;
     this.armed = null;
     this.pendingAbility = null;
+    this.removeMode = false;
     this.kills = 0;
     this.elapsed = 0;
     this.waveDirector.reset();
@@ -314,6 +318,7 @@ export class Game implements BattlefieldActions {
 
   setArmedKind(kind: TowerKind | null): void {
     this.armed = kind;
+    if (kind) this.removeMode = false;
     if (kind) this.selectedId = 0;
   }
 
@@ -379,6 +384,22 @@ export class Game implements BattlefieldActions {
     return this.phase === 'build' ? this.armed : null;
   }
 
+  removeModeEnabled(): boolean {
+    return this.phase === 'build' && this.removeMode;
+  }
+
+  setRemoveMode(enabled: boolean): void {
+    this.removeMode = this.phase === 'build' ? enabled : false;
+    if (this.removeMode) {
+      this.armed = null;
+      this.selectedId = 0;
+    }
+  }
+
+  toggleRemoveMode(): void {
+    this.setRemoveMode(!this.removeMode);
+  }
+
   placeTower(x: number, y: number): void {
     if (this.phase !== 'build' || !this.armed) return;
     const cost = this.weapons.costOf(this.armed);
@@ -389,6 +410,7 @@ export class Game implements BattlefieldActions {
     this.buildPoints -= cost;
     this.selectedId = placed.id;
     this.armed = null;
+    this.removeMode = false;
     const aimTargetX = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerX : spot.x;
     const aimTargetY = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerY : spot.y - 100;
     this.weapons.aimTower(placed.id, aimTargetX, aimTargetY);
@@ -402,7 +424,10 @@ export class Game implements BattlefieldActions {
 
   selectTower(id: number): void {
     this.selectedId = id;
-    if (id > 0) this.armed = null;
+    if (id > 0) {
+      this.armed = null;
+      this.removeMode = false;
+    }
   }
 
   selectedTowerId(): number {

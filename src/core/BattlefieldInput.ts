@@ -17,6 +17,8 @@ export interface BattlefieldActions {
   commitNavigation(): void;
   abilityTargeting(): boolean;
   useAbilityAt(x: number, y: number): void;
+  removeModeEnabled(): boolean;
+  setRemoveMode(enabled: boolean): void;
 }
 
 type DragMode = 'none' | 'pan' | 'move' | 'aim';
@@ -96,6 +98,11 @@ export class BattlefieldInput {
       return;
     }
     if (event.button !== 0) return;
+    if (this.actions.removeModeEnabled()) {
+      if (towerId > 0) this.actions.removeTower(towerId);
+      this.moved = true;
+      return;
+    }
 
     this.pressedTowerId = towerId;
     if (towerId > 0) {
@@ -201,6 +208,7 @@ export class BattlefieldInput {
     }
     if (event.key === 'Escape') {
       this.actions.selectTower(0);
+      this.actions.setRemoveMode(false);
       this.actions.useAbilityAt(-1, -1);
     }
     if (event.key === 'z' || event.key === 'Z') {
