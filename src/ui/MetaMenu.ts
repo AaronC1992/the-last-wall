@@ -38,6 +38,8 @@ export class MetaMenu {
   private moved = false;
   private lastX = 0;
   private lastY = 0;
+  private readonly activePointers = new Map<number, { x: number; y: number }>();
+  private lastPinchDistance = 0;
   private backAction: () => void;
 
   constructor(
@@ -59,9 +61,9 @@ export class MetaMenu {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
     });
     this.canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event));
-    this.canvas.addEventListener('pointermove', (event) => this.onPointerMove(event));
-    window.addEventListener('pointerup', () => this.onPointerUp());
-    this.canvas.addEventListener('pointerleave', () => this.hideTooltip());
+    window.addEventListener('pointermove', (event) => this.onPointerMove(event));
+    window.addEventListener('pointerup', (event) => this.onPointerUp(event));
+    this.canvas.addEventListener('pointerleave', () => { if (!this.dragging && this.activePointers.size === 0) this.hideTooltip(); });
     this.canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false });
     this.canvas.addEventListener('click', (event) => this.onClick(event));
   }
@@ -84,6 +86,9 @@ export class MetaMenu {
   hide(): void {
     this.panel.hidden = true;
     this.hideTooltip();
+    this.dragging = false;
+    this.activePointers.clear();
+    this.lastPinchDistance = 0;
     this.onVisibilityChange(false);
   }
 
@@ -109,24 +114,60 @@ export class MetaMenu {
   }
 
   private onPointerDown(event: PointerEvent): void {
+    const point = this.toCanvas(event);
+    this.activePointers.set(event.pointerId, point);
+
+    if (this.activePointers.size >= 2) {
+      this.dragging = false;
+      this.moved = true;
+      this.lastPinchDistance = 0;
+      return;
+    }
+
     this.dragging = true;
     this.moved = false;
-    const point = this.toCanvas(event);
     this.lastX = point.x;
     this.lastY = point.y;
   }
 
   private onPointerMove(event: PointerEvent): void {
     const point = this.toCanvas(event);
-    if (this.dragging) {
-      if (Math.abs(point.x - this.lastX) > 2 || Math.abs(point.y - this.lastY) > 2) this.moved = true;
-      this.offsetX += point.x - this.lastX;
-      this.offsetY += point.y - this.lastY;
-      this.lastX = point.x;
-      this.lastY = point.y;
-      this.render();
-      return;
+
+    if (this.activePointers.has(event.pointerId)) {
+      this.activePointers.set(event.pointerId, point);
+
+      if (this.activePointers.size >= 2) {
+        const [a, b] = Array.from(this.activePointers.values());
+        const dist = Math.hypot(b.x - a.x, b.y - a.y);
+        if (this.lastPinchDistance > 0 && dist > 0) {
+          const midX = (a.x + b.x) / 2;
+          const midY = (a.y + b.y) / 2;
+          const beforeX = (midX - this.offsetX) / this.zoom;
+          const beforeY = (midY - this.offsetY) / this.zoom;
+          this.zoom = Math.min(2.2, Math.max(0.45, this.zoom * (dist / this.lastPinchDistance)));
+          this.offsetX = midX - beforeX * this.zoom;
+          this.offsetY = midY - beforeY * this.zoom;
+          this.render();
+        }
+        this.lastPinchDistance = dist;
+        return;
+      }
+      this.lastPinchDistance = 0;
+
+      if (this.dragging) {
+        if (Math.abs(point.x - this.lastX) > 2 || Math.abs(point.y - this.lastY) > 2) this.moved = true;
+        this.offsetX += point.x - this.lastX;
+        this.offsetY += point.y - this.lastY;
+        this.lastX = point.x;
+        this.lastY = point.y;
+        this.render();
+        return;
+      }
+    } else {
+      const bounds = this.canvas.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) return;
     }
+
     const tree = this.toTree(event);
     const node = this.nodeAt(tree.x, tree.y);
     if (node !== this.hovered) {
@@ -137,7 +178,16 @@ export class MetaMenu {
     else this.hideTooltip();
   }
 
-  private onPointerUp(): void {
+  private onPointerUp(event: PointerEvent): void {
+    this.activePointers.delete(event.pointerId);
+    this.lastPinchDistance = 0;
+    if (this.activePointers.size > 0) {
+      const remaining = this.activePointers.values().next().value!;
+      this.lastX = remaining.x;
+      this.lastY = remaining.y;
+      this.dragging = true;
+      return;
+    }
     this.dragging = false;
   }
 
@@ -167,12 +217,17 @@ export class MetaMenu {
     const cost = node.kind === 'core' ? 0 : this.progression.nodeCost(node.id);
     const locked = !this.progression.isNodeUnlocked(node.id);
     const capped = level >= node.maxLevel;
-    const bounds = this.canvas.getBoundingClientRect();
-    const scale = bounds.width / VIEW_WIDTH;
+    const canvasBounds = this.canvas.getBoundingClientRect();
+    const panelBounds = this.panel.getBoundingClientRect();
+    const scale = canvasBounds.width / VIEW_WIDTH;
+    const offsetLeft = canvasBounds.left - panelBounds.left;
+    const offsetTop = canvasBounds.top - panelBounds.top;
     this.tooltip.innerHTML = `<header><strong>${node.title}</strong><span>${node.kind === 'core' ? '' : `${level}/${node.maxLevel}`}</span></header><p>${node.description}</p><footer>${locked ? 'Locked, unlock the previous node' : capped ? 'Complete' : `${cost} War Tokens`}</footer>`;
     this.tooltip.hidden = false;
-    this.tooltip.style.left = `${screenX * scale + 20}px`;
-    this.tooltip.style.top = `${screenY * scale - 10}px`;
+    const x = screenX * scale + offsetLeft + 20;
+    const y = screenY * scale + offsetTop - 10;
+    this.tooltip.style.left = `${Math.min(x, panelBounds.width - this.tooltip.offsetWidth - 4)}px`;
+    this.tooltip.style.top = `${Math.max(0, Math.min(y, panelBounds.height - this.tooltip.offsetHeight - 4))}px`;
   }
 
   private hideTooltip(): void {
