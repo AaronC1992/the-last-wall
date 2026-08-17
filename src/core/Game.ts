@@ -588,7 +588,7 @@ export class Game implements BattlefieldActions {
     this.weapons.setPermanentBonuses(bonuses.damageMultiplier, 1);
     for (const config of TOWER_CONFIG) {
       this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
-      this.weapons.setTowerBonuses(config.kind, bonuses.towerDamage[config.kind], bonuses.towerSpeed[config.kind]);
+      this.weapons.setTowerBonuses(config.kind, bonuses.towerDamage[config.kind], bonuses.towerSpeed[config.kind], bonuses.towerRange[config.kind]);
       this.weapons.setTowerCostMultiplier(config.kind, bonuses.towerCost[config.kind]);
     }
     this.wallHp = this.wallMaxHp;

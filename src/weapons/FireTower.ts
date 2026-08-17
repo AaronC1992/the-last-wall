@@ -32,7 +32,7 @@ export class FireTower extends TowerBase {
   reset(): void {
     this.tickTimer = 0;
     this.isFiring = false;
-    this.burnDamage = 9 * this.towerDamageMultiplier; this.burnDuration = 2.5; this.targeting.maxDistance = 125; this.targeting.distance = 125; this.targeting.coneAngle = 0.6;
+    this.burnDamage = 9 * this.towerDamageMultiplier; this.burnDuration = 2.5; this.targeting.maxDistance = 125 * this.towerRangeMultiplier; this.targeting.distance = this.targeting.maxDistance; this.targeting.coneAngle = 0.6;
     this.wildfire = false;
   }
 

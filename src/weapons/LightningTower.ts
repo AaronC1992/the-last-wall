@@ -61,7 +61,7 @@ export class LightningTower extends TowerBase {
     this.isFiring = false;
     this.primaryTarget = null;
     this.chainedTargets.length = 0;
-    this.damage = 42 * this.towerDamageMultiplier; this.beamWidth = 0.09; this.rangeValue = 560; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; this.targeting.coneAngle = this.beamWidth;
+    this.damage = 42 * this.towerDamageMultiplier; this.beamWidth = 0.09; this.rangeValue = 560 * this.towerRangeMultiplier; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; this.targeting.coneAngle = this.beamWidth;
   }
 
 }

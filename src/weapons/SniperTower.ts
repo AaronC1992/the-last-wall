@@ -33,7 +33,7 @@ export class SniperTower extends TowerBase {
     this.damage = 180 * this.towerDamageMultiplier;
     this.cooldownDuration = 1.8;
     this.projectileSpeed = 720;
-    this.rangeValue = 820;
+    this.rangeValue = 820 * this.towerRangeMultiplier;
     this.penetration = 1;
     this.targeting.maxDistance = this.rangeValue;
     this.targeting.distance = this.rangeValue;

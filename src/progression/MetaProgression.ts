@@ -23,6 +23,7 @@ export interface PermanentBonuses {
   commandSlots: number;
   towerDamage: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
   towerSpeed: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
+  towerRange: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
   towerCost: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
   towerSlots: { ballista: number; cannon: number; fireTower: number; lightningTower: number; mortar: number; teslaCoil: number; sniperTower: number };
 }
@@ -135,6 +136,15 @@ export class MetaProgression {
         teslaCoil: 1 + this.getLevel('teslaSpeed') * 0.05,
         sniperTower: 1 + this.getLevel('sniperSpeed') * 0.05,
       },
+      towerRange: {
+        ballista: 1 + this.getLevel('ballistaRange') * 0.08,
+        cannon: 1 + this.getLevel('cannonRange') * 0.08,
+        fireTower: 1 + this.getLevel('fireRange') * 0.08,
+        lightningTower: 1 + this.getLevel('lightningRange') * 0.08,
+        mortar: 1 + this.getLevel('mortarRange') * 0.08,
+        teslaCoil: 1 + this.getLevel('teslaRange') * 0.08,
+        sniperTower: 1 + this.getLevel('sniperRange') * 0.08,
+      },
       towerCost: {
         ballista: Math.max(0.5, 1 - this.getLevel('ballistaDiscount') * 0.04),
         cannon: Math.max(0.5, 1 - this.getLevel('cannonDiscount') * 0.05),
@@ -200,6 +210,11 @@ export class MetaProgression {
       this.data.completedCampaign.push(id);
       this.persist();
     }
+  }
+
+  unlockAllCampaigns(ids: readonly string[]): void {
+    for (const id of ids) if (!this.data.completedCampaign.includes(id)) this.data.completedCampaign.push(id);
+    this.persist();
   }
 
   updateSettings(settings: Partial<SaveData['settings']>): void {

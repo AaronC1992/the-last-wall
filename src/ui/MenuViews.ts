@@ -203,7 +203,8 @@ export class MenuViews {
 
   private activateSfxCheat(): void {
     this.progression.grantWarTokens(1000);
-    window.alert('Cheat activated: +1,000 War Tokens');
+    this.progression.unlockAllCampaigns(CAMPAIGN_MAPS.map((map) => map.id));
+    window.alert('Cheat activated: +1,000 War Tokens and all maps unlocked');
   }
 
   private closeToMain(panel: HTMLElement): void {

@@ -10,6 +10,7 @@ export abstract class TowerBase {
   facing = -Math.PI / 2;
   protected towerDamageMultiplier = 1;
   protected towerSpeedMultiplier = 1;
+  protected towerRangeMultiplier = 1;
   readonly targeting: TowerTargetingConfig;
 
   constructor(x: number, y: number, mode: TowerTargetMode, distance: number, radius = 0, coneAngle = 0.7) {
@@ -59,9 +60,10 @@ export abstract class TowerBase {
     this.hasAim = false;
   }
 
-  setTowerBonuses(damageMultiplier: number, speedMultiplier: number): void {
+  setTowerBonuses(damageMultiplier: number, speedMultiplier: number, rangeMultiplier = 1): void {
     this.towerDamageMultiplier = damageMultiplier;
     this.towerSpeedMultiplier = speedMultiplier;
+    this.towerRangeMultiplier = rangeMultiplier;
   }
 
   get range(): number {

@@ -144,8 +144,9 @@ button { font: inherit; }
 .graphics-actions { display: flex; justify-content: center; gap: 8px; padding-top: 8px; }
 .graphics-actions button { padding: 9px 12px; border: 1px solid #4f8179; background: #1d302e; color: #c8f1e8; cursor: pointer; font: 11px Verdana, sans-serif; }
 .graphics-actions button:hover { background: #29453f; }
-.cheat-button { width: 22px; height: 22px; padding: 0; border: 1px solid #52655d; background: #1b2426; color: #f2c46d; cursor: pointer; font: bold 12px Verdana, sans-serif; }
-.cheat-button:hover { background: #2d3637; }
+.sfx-label { display: inline-flex; align-items: center; }
+.cheat-button { width: auto; height: auto; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; cursor: default; font: inherit; }
+.cheat-button:hover { color: #f2c46d; }
 .settings-danger { display: grid; gap: 6px; margin-top: 12px; padding-top: 14px; border-top: 1px solid #543c3c; }
 .settings-danger strong { color: #e68178; font-size: 15px; }
 .settings-danger span { color: #a99a96; font: 11px Verdana, sans-serif; }

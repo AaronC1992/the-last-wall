@@ -73,11 +73,11 @@ export class TeslaCoil extends TowerBase {
     this.chainedTargets.length = 0;
     this.damage = 26 * this.towerDamageMultiplier;
     this.chains = 3;
-    this.chainRange = 82;
+    this.chainRange = 82 * this.towerRangeMultiplier;
     this.shock = false;
     this.targeting.maxDistance = 0;
     this.targeting.distance = 0;
-    this.targeting.radius = 130;
+    this.targeting.radius = 130 * this.towerRangeMultiplier;
     this.targeting.targetX = this.x;
     this.targeting.targetY = this.y;
     this.hasAim = true;

@@ -17,7 +17,7 @@ export class Cannon extends TowerBase {
   }
 
   get range(): number {
-    return 620;
+    return this.targeting.maxDistance;
   }
 
   update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, _onKill: (reward: number) => void, projectiles: ProjectileManager): void {
@@ -43,8 +43,8 @@ export class Cannon extends TowerBase {
     this.clusterShells = false;
     this.doubleBarrel = false;
     this.carpetBombardment = false;
-    this.targeting.maxDistance = 620;
-    this.targeting.distance = 620;
+    this.targeting.maxDistance = 620 * this.towerRangeMultiplier;
+    this.targeting.distance = this.targeting.maxDistance;
   }
 
 }

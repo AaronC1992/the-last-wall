@@ -8,7 +8,7 @@ export class Ballista extends TowerBase {
   private cooldown = 0;
   private damage: number = TUNING.ballistaDamage;
   private cooldownDuration: number = TUNING.ballistaCooldown;
-  private rangeValue = TUNING.ballistaRange;
+  private rangeValue: number = TUNING.ballistaRange;
   private projectileSpeed = TUNING.projectileSpeed;
   private projectileCount = 1;
   private criticalChance = 0;
@@ -41,7 +41,7 @@ export class Ballista extends TowerBase {
     this.cooldown = 0;
     this.damage = TUNING.ballistaDamage * this.permanentDamageMultiplier * this.towerDamageMultiplier;
     this.cooldownDuration = TUNING.ballistaCooldown / (this.permanentSpeedMultiplier * this.towerSpeedMultiplier);
-    this.rangeValue = TUNING.ballistaRange;
+    this.rangeValue = TUNING.ballistaRange * this.towerRangeMultiplier;
     this.targeting.maxDistance = this.rangeValue;
     this.targeting.distance = this.rangeValue;
     this.projectileSpeed = TUNING.projectileSpeed;

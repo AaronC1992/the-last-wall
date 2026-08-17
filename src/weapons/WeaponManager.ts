@@ -35,6 +35,7 @@ export class WeaponManager {
   private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0, mortar: 0, teslaCoil: 0, sniperTower: 0 };
   private readonly towerDamageBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly towerSpeedBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
+  private readonly towerRangeBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly towerCostMultiplier: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly buildTop: number;
   private readonly buildBottom: number;
@@ -165,11 +166,12 @@ export class WeaponManager {
     this.limitBonus[kind] = bonus;
   }
 
-  setTowerBonuses(kind: TowerKind, damageMultiplier: number, speedMultiplier: number): void {
+  setTowerBonuses(kind: TowerKind, damageMultiplier: number, speedMultiplier: number, rangeMultiplier: number): void {
     this.towerDamageBonus[kind] = damageMultiplier;
     this.towerSpeedBonus[kind] = speedMultiplier;
+    this.towerRangeBonus[kind] = rangeMultiplier;
     for (const tower of this.placed) {
-      if (tower.kind === kind) tower.instance.setTowerBonuses(damageMultiplier, speedMultiplier);
+      if (tower.kind === kind) tower.instance.setTowerBonuses(damageMultiplier, speedMultiplier, rangeMultiplier);
     }
   }
 
@@ -244,7 +246,7 @@ export class WeaponManager {
     else if (kind === 'teslaCoil') instance = new TeslaCoil(x, y);
     else if (kind === 'sniperTower') instance = new SniperTower(x, y);
     else instance = new Ballista(x, y);
-    instance.setTowerBonuses(this.towerDamageBonus[kind], this.towerSpeedBonus[kind]);
+    instance.setTowerBonuses(this.towerDamageBonus[kind], this.towerSpeedBonus[kind], this.towerRangeBonus[kind]);
     instance.reset();
     if (instance instanceof Ballista) {
       const ballista = instance;
