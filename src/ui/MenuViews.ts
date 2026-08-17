@@ -84,8 +84,9 @@ export class MenuViews {
     levels.innerHTML = CAMPAIGN_MAPS.map((map, index) => {
       const rating = this.progression.campaignRating(map.id);
       const stars = `${'★'.repeat(rating)}${'☆'.repeat(3 - rating)}`;
-      const enemies = [...new Set(map.encounter?.groups.map((group) => enemyNames[group.type]) ?? [])].join(', ');
-      const boss = map.encounter?.groups.some((group) => group.type === EnemyType.Boss) ? ' Boss present' : '';
+      const activeGroups = map.encounter?.groups.filter((group) => group.count > 0) ?? [];
+      const enemies = [...new Set(activeGroups.map((group) => enemyNames[group.type]))].join(', ');
+      const boss = activeGroups.some((group) => group.type === EnemyType.Boss) ? ' Boss present' : '';
       return `<button type="button" data-campaign="${map.id}" title="Enemies: ${enemies}.${boss}" ${this.progression.isCampaignUnlocked(index) ? '' : 'disabled'}>${index + 1}. ${map.name} ${stars}<small>${enemies}${boss}</small></button>`;
     }).join('');
     CAMPAIGN_MAPS.forEach((map) => levels.querySelector<HTMLButtonElement>(`[data-campaign="${map.id}"]`)!.addEventListener('click', () => onSelect(map)));

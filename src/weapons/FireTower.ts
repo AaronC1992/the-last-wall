@@ -13,6 +13,10 @@ export class FireTower extends TowerBase {
     super(x, y, 'cone', 125, 0, 0.6);
   }
 
+  getThreatStrength(): number {
+    return super.getThreatStrength() * (this.towerSpecialBonuses.wildfire ? 1.25 : 1);
+  }
+
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid): void {
     if (!this.hasAim) {
       this.isFiring = false;

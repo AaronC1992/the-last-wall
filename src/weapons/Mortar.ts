@@ -15,6 +15,10 @@ export class Mortar extends TowerBase {
     super(x, y, 'area', 460, 82);
   }
 
+  getThreatStrength(): number {
+    return super.getThreatStrength() * (1 + this.towerSpecialBonuses.mortarBarrage * 0.8);
+  }
+
   update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0 || !this.hasAim) return;

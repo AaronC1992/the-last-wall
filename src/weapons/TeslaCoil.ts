@@ -15,6 +15,10 @@ export class TeslaCoil extends TowerBase {
   primaryTarget: LaserTargetPoint | null = null;
   chainedTargets: LaserTargetPoint[] = [];
 
+  getThreatStrength(): number {
+    return super.getThreatStrength() * (this.towerSpecialBonuses.teslaShock ? 1.12 : 1);
+  }
+
   constructor(x: number, y: number) {
     super(x, y, 'zone', 0, 130);
     this.hasAim = true;

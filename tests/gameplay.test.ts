@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CAMPAIGN_MAPS } from '../src/map/CampaignMaps';
+import { CAMPAIGN_MAPS, validateCampaignEncounters } from '../src/map/CampaignMaps';
 import { validateMap } from '../src/map/MapValidator';
 import { EnemyType } from '../src/enemies/EnemyTypes';
 import { ENEMY_BEHAVIOR } from '../src/enemies/EnemyBehavior';
@@ -65,6 +65,30 @@ describe('campaign encounters', () => {
   it('uses every enemy category in the final assault', () => {
     const types = new Set(CAMPAIGN_MAPS[19].encounter?.groups.map((group) => group.type));
     expect([...types]).toEqual(expect.arrayContaining(Object.values(EnemyType)));
+  });
+
+  it('keeps Boss counts explicit and sane', () => {
+    const bossCount = (level: number) => CAMPAIGN_MAPS[level - 1].encounter?.groups.filter((group) => group.type === EnemyType.Boss).reduce((sum, group) => sum + group.count, 0) ?? 0;
+    expect(bossCount(9)).toBe(1);
+    expect(bossCount(15)).toBe(2);
+    expect(bossCount(20)).toBeGreaterThanOrEqual(1);
+    expect(bossCount(20)).toBeLessThanOrEqual(5);
+    expect(CAMPAIGN_MAPS.every((map) => bossCount(Number(map.id.slice(-2))) <= 5)).toBe(true);
+  });
+
+  it('validates every campaign encounter', () => {
+    expect(validateCampaignEncounters()).toEqual([]);
+  });
+
+  it('gives Level 5 two spawn routes for the Armored introduction', () => {
+    expect(CAMPAIGN_MAPS[4].spawnCells.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('paces Bosses as single arrivals', () => {
+    for (const map of CAMPAIGN_MAPS) for (const group of map.encounter?.groups ?? []) if (group.type === EnemyType.Boss && group.count > 0) {
+      expect(group.burstSize).toBe(1);
+      expect(group.spawnInterval).toBeGreaterThanOrEqual(8);
+    }
   });
 
   it('keeps every campaign spawn connected to its goal', () => {

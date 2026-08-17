@@ -14,6 +14,7 @@ export interface BattlefieldActions {
   removeAllTowers(): void;
   setPointer(x: number, y: number, overCanvas: boolean): void;
   setHoveredTower(id: number): void;
+  commitNavigation(): void;
   abilityTargeting(): boolean;
   useAbilityAt(x: number, y: number): void;
 }
@@ -149,6 +150,7 @@ export class BattlefieldInput {
     this.dragMode = 'none';
     this.draggedTowerId = 0;
     this.pressedTowerId = 0;
+    this.actions.commitNavigation();
   }
 
   private onWheel(event: WheelEvent): void {

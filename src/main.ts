@@ -7,7 +7,7 @@ import { DebugPanel } from './ui/DebugPanel';
 import { MetaProgression } from './progression/MetaProgression';
 import { MetaMenu } from './ui/MetaMenu';
 import { AbilityPanel } from './ui/AbilityPanel';
-import { CAMPAIGN_MAPS } from './map/CampaignMaps';
+import { CAMPAIGN_MAPS, validateCampaignEncounters } from './map/CampaignMaps';
 import { AudioSystem } from './systems/AudioSystem';
 import { MenuViews } from './ui/MenuViews';
 import { BuildBar } from './ui/BuildBar';
@@ -119,6 +119,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas')!;
 const progression = new MetaProgression();
+if (import.meta.env.DEV) {
+  const campaignErrors = validateCampaignEncounters(CAMPAIGN_MAPS);
+  if (campaignErrors.length > 0) console.warn('Campaign encounter validation failed', campaignErrors);
+}
 const audio = new AudioSystem();
 audio.setSettings(progression.settings);
 

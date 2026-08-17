@@ -30,6 +30,11 @@ export class Cannon extends TowerBase {
     return super.threatAtPoint(x, y, cellPadding);
   }
 
+  getThreatStrength(): number {
+    const specialMultiplier = 1 + (this.towerSpecialBonuses.clusterShells ? 0.45 : 0) + (this.towerSpecialBonuses.doubleBarrel ? 0.8 : 0) + (this.towerSpecialBonuses.carpetBombardment ? 1.1 : 0);
+    return super.getThreatStrength() * specialMultiplier;
+  }
+
   update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, _onKill: (reward: number) => void, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;

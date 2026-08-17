@@ -78,6 +78,8 @@ export class Game implements BattlefieldActions {
   private hudFrame = 0;
   private pendingAbility: AbilityIdValue | null = null;
   private readonly timings = { enemy: 0, grid: 0, congestion: 0, towers: 0, projectiles: 0, compact: 0, threat: 0, armoredFlow: 0, bossFlow: 0 };
+  private navigationDirty = false;
+  private navigationRebuildCount = 0;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -412,12 +414,18 @@ export class Game implements BattlefieldActions {
     this.weapons.moveTower(id, spot.x, spot.y);
     this.selectedId = id;
     this.saveLayout();
-    this.rebuildNavigationFields();
+    this.navigationDirty = true;
   }
 
   aimTower(id: number, x: number, y: number): void {
     if (this.phase === 'build') this.weapons.aimTower(id, x, y);
     this.saveLayout();
+    this.navigationDirty = true;
+  }
+
+  commitNavigation(): void {
+    if (!this.navigationDirty) return;
+    this.navigationDirty = false;
     this.rebuildNavigationFields();
   }
 
@@ -507,6 +515,7 @@ export class Game implements BattlefieldActions {
       maximumEnemyY: this.enemies.maximumY,
       invincible: this.invincible,
       gameSpeed: this.gameSpeed,
+      navigationRebuildCount: this.navigationRebuildCount,
       timings: this.timings,
     };
   }
@@ -633,6 +642,7 @@ export class Game implements BattlefieldActions {
   }
 
   private rebuildNavigationFields(): void {
+    this.navigationRebuildCount++;
     const start = performance.now();
     this.threatMap.rebuild(this.weapons.towers);
     this.timings.threat = performance.now() - start;

@@ -16,6 +16,10 @@ export class SniperTower extends TowerBase {
     super(x, y, 'line', 820);
   }
 
+  getThreatStrength(): number {
+    return super.getThreatStrength() * (1 + this.towerSpecialBonuses.sniperPenetration * 0.25);
+  }
+
   isPointThreatened(x: number, y: number): boolean {
     return this.isInFixedCone(x, y, this.rangeValue);
   }
