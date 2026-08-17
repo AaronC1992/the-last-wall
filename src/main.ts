@@ -43,6 +43,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </div>
 
       <div id="build-bar" class="build-bar" hidden></div>
+      <button id="remove-mode-button" type="button" class="remove-mode-button" hidden>Delete</button>
       <button id="start-battle" type="button" class="start-battle" hidden>Start Battle</button>
       <button id="build-settings-button" type="button" class="build-settings-button" hidden>Settings</button>
       <button id="in-game-menu-button" type="button" class="main-menu-button" hidden>Main Menu</button>
@@ -262,7 +263,7 @@ const debugPanel = new DebugPanel({
 
 const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
 document.querySelector<HTMLElement>('#controls-hint-content')!.innerHTML = isMobileDevice
-  ? '<span><i class="mouse left"></i>Tap to Select or Place</span><span><i class="mouse left"></i>Drag Towers or Pan</span><span><i class="mouse key">Q</i>Tap Ability, then Tap Target</span><span><i class="mouse wheel"></i>Pinch to Zoom</span>'
+  ? '<span><i class="mouse left"></i>Tap to Select or Place</span><span><i class="mouse left"></i>Drag Towers or Pan</span><span><i class="mouse key">X</i>Delete mode removes towers on tap</span><span><i class="mouse key">Q</i>Tap Ability, then Tap Target</span><span><i class="mouse wheel"></i>Pinch to Zoom</span>'
   : '<span><i class="mouse left"></i>Click to Select or Place</span><span><i class="mouse left"></i>Drag Towers or Pan</span><span><i class="mouse right"></i>Remove Tower</span><span><i class="mouse key">Z</i>Zoom to Fit Map</span><span><i class="mouse key">R</i>Remove all Towers</span><span><i class="mouse middle"></i>Pan Camera</span><span><i class="mouse wheel"></i>Zoom</span>';
 
 document.querySelector<HTMLButtonElement>('#controls-hint-close')!.addEventListener('click', () => {
@@ -272,6 +273,9 @@ document.querySelector<HTMLButtonElement>('#in-game-menu-button')!.addEventListe
   game.returnToMainMenu();
   document.querySelector<HTMLElement>('#main-menu')!.hidden = false;
 });
+document.querySelector<HTMLButtonElement>('#remove-mode-button')!.addEventListener('click', () => {
+  game.toggleRemoveMode();
+});
 
 new GameLoop((deltaTime) => {
   game.updateSimulation(deltaTime);
@@ -280,6 +284,11 @@ new GameLoop((deltaTime) => {
   metaMenu.setBattleMode(game.currentPhase === 'battle', () => game.endRound());
   document.querySelector<HTMLButtonElement>('#in-game-menu-button')!.hidden = game.currentPhase === 'idle';
   document.querySelector<HTMLButtonElement>('#build-settings-button')!.hidden = game.currentPhase !== 'build';
+  const removeModeButton = document.querySelector<HTMLButtonElement>('#remove-mode-button')!;
+  const showRemoveButton = game.currentPhase === 'build';
+  removeModeButton.hidden = !showRemoveButton;
+  removeModeButton.textContent = game.removeModeEnabled() ? 'Cancel Delete' : 'Delete';
+  removeModeButton.classList.toggle('active', game.removeModeEnabled());
   debugPanel.update(game.debugState);
   abilityPanel.update((id) => game.getAbilityCooldown(id), (id) => game.getAbilityTotalCooldown(id));
   buildBar.update(game.buildSlotStates(), game.currentPhase === 'build', game.armedKind());

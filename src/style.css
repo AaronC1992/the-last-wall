@@ -3,7 +3,7 @@
 body { margin: 0; min-width: 0; min-height: 100vh; background: #05080a; overflow: hidden; }
 button { font: inherit; }
 
-.game-shell { display: grid; grid-template-rows: 1fr auto; height: 100vh; }
+.game-shell { display: grid; grid-template-rows: 1fr auto; height: 100vh; height: 100dvh; }
 .battlefield { position: relative; overflow: hidden; display: grid; place-items: center; background: #05080a; }
 #game-canvas { display: block; max-width: 100%; max-height: 100%; touch-action: none; cursor: crosshair; }
 
@@ -59,7 +59,7 @@ button { font: inherit; }
 .mouse.key::before { display: none; }
 
 /* Build bar */
-.build-bar { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 4px; padding: 6px; background: rgba(10, 13, 16, .86); border: 1px solid #3a464f; }
+.build-bar { position: absolute; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: 12px; display: flex; gap: 4px; padding: 6px; background: rgba(10, 13, 16, .86); border: 1px solid #3a464f; }
 .build-bar[hidden] { display: none; }
 .build-slot { position: relative; width: 58px; height: 58px; display: grid; place-items: center; border: 1px solid #46525b; background: #141b21; color: var(--slot-color); cursor: pointer; }
 .build-slot[hidden] { display: none; }
@@ -71,13 +71,17 @@ button { font: inherit; }
 .slot-count { position: absolute; bottom: 2px; left: 0; right: 0; color: #e4eaef; font: bold 10px Verdana, sans-serif; text-align: center; }
 .slot-cost { position: absolute; top: 2px; right: 4px; color: #d8c14a; font: 9px Verdana, sans-serif; }
 
-.start-battle { position: absolute; right: 14px; bottom: 14px; padding: 12px 22px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 20px; }
+.start-battle { position: absolute; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 12px 22px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 20px; }
 .start-battle[hidden] { display: none; }
 .start-battle:hover { background: #253039; }
-.main-menu-button { position: absolute; right: 180px; bottom: 14px; padding: 10px 18px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 16px; }
+.remove-mode-button { position: absolute; right: 154px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 10px 14px; border: 1px solid #b97a7a; background: rgba(31, 21, 21, .9); color: #f6d2d2; cursor: pointer; font-size: 15px; }
+.remove-mode-button[hidden] { display: none; }
+.remove-mode-button:hover { background: #432626; }
+.remove-mode-button.active { border-color: #f17f7f; background: #5a2b2b; color: #ffe1e1; }
+.main-menu-button { position: absolute; right: 250px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 10px 18px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 16px; }
 .main-menu-button[hidden] { display: none; }
 .main-menu-button:hover { background: #253039; }
-.build-settings-button { position: absolute; right: 350px; bottom: 14px; padding: 10px 16px; border: 1px solid #6b7d86; background: rgba(18, 24, 29, .9); color: #dbe6eb; cursor: pointer; font-size: 15px; }
+.build-settings-button { position: absolute; right: 430px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 10px 16px; border: 1px solid #6b7d86; background: rgba(18, 24, 29, .9); color: #dbe6eb; cursor: pointer; font-size: 15px; }
 .build-settings-button[hidden] { display: none; }
 .build-settings-button:hover { background: #253039; }
 
@@ -224,7 +228,8 @@ button { font: inherit; }
 	.build-bar { padding-left: 10px; padding-right: 10px; justify-content: flex-start; scrollbar-width: thin; }
 	.build-slot { width: 50px; height: 50px; flex: 0 0 50px; }
 	.start-battle { top: 166px; right: 8px; bottom: auto; padding: 8px 12px; font-size: 14px; }
-	.build-settings-button { top: 166px; right: 112px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.remove-mode-button { top: 166px; right: 107px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.build-settings-button { top: 166px; right: 208px; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.main-menu-button { top: 166px; left: 8px; right: auto; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.ability-strip { left: 8px; right: 8px; bottom: 78px; display: flex; gap: 5px; overflow-x: auto; }
 	.ability-button { min-width: 108px; flex: 0 0 108px; padding: 5px 7px; font-size: 10px; }
