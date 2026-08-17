@@ -35,12 +35,4 @@ export class Mortar extends TowerBase {
     this.targeting.radius = 82;
   }
 
-  applyUpgrade(id: string): void {
-    if (id === 'mortarDamage') this.damage *= 1.25;
-    if (id === 'mortarSpeed') this.cooldownDuration *= 0.8;
-    if (id === 'mortarRadius') { this.blastRadius *= 1.2; this.targeting.radius *= 1.2; }
-    if (id === 'mortarRange') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; }
-    if (id === 'doubleShot') this.cooldownDuration *= 0.65;
-    if (id === 'ironRain') { this.barrageCount += 3; this.blastRadius *= 1.2; }
-  }
 }

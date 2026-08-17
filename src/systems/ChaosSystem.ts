@@ -568,19 +568,6 @@ export class ChaosSystem {
     this.damageMultiplier = multiplier;
   }
 
-  applyUpgrade(id: string): void {
-    const ability = id.startsWith('meteor') ? AbilityId.Meteor
-      : id.startsWith('artillery') ? AbilityId.Artillery
-      : id.startsWith('dragon') ? AbilityId.Dragon
-      : id.startsWith('deathBeam') ? AbilityId.DeathBeam
-      : id.startsWith('apocalypse') ? AbilityId.Apocalypse
-      : -1;
-    if (ability < 0) return;
-    if (id.endsWith('Damage')) this.abilityDamageMultiplier[ability] *= 1.25;
-    if (id.endsWith('Radius')) this.abilityRadiusMultiplier[ability] *= 1.2;
-    if (id.endsWith('Cooldown')) this.abilityCooldownMultiplier[ability] *= 0.85;
-  }
-
   private queueTargetedStrike(enemies: EnemyManager, grid: SpatialGrid, delay: number, radius: number, damage: number, kind: number, targetX: number, targetY: number): void {
     if (targetX !== this.width / 2 || targetY !== this.height * 0.42) {
       this.queueStrike(targetX, targetY, delay, radius, damage, kind);

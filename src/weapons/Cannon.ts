@@ -47,14 +47,4 @@ export class Cannon extends TowerBase {
     this.targeting.distance = 620;
   }
 
-  applyUpgrade(id: string): void {
-    if (id === 'cannonDamage') this.damage *= 1.25;
-    else if (id === 'cannonRadius') this.radius *= 1.25;
-    else if (id === 'cannonRange') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; }
-    else if (id === 'cannonSpeed') this.cooldownDuration *= 0.8;
-    else if (id === 'clusterShells') this.clusterShells = true;
-    else if (id === 'doubleBarrel') this.doubleBarrel = true;
-    else if (id === 'carpetBombardment') this.carpetBombardment = true;
-  }
-
 }

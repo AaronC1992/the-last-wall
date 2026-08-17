@@ -30,6 +30,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <span class="resource enemies"><i></i><small>Enemies</small><b id="enemy-value">0</b></span>
         </div>
       </div>
+      <button id="game-speed-button" type="button" class="game-speed-button" aria-label="Set game speed to 1 times">Speed 1x</button>
 
       <aside id="tower-stock" class="tower-stock" aria-label="Tower stock"></aside>
 
@@ -121,7 +122,7 @@ const progression = new MetaProgression();
 const audio = new AudioSystem();
 audio.setSettings(progression.settings);
 
-const hud = new HUD(() => game.startBattle());
+const hud = new HUD(() => game.startBattle(), () => game.increaseGameSpeed());
 const results = new ResultsScreen(
   () => {
     results.hide();

@@ -4,13 +4,13 @@ import { TowerBase } from './TowerBase';
 
 export class FireTower extends TowerBase {
   private tickTimer = 0;
-  private burnDamage = 18;
-  private burnDuration = 3.5;
+  private burnDamage = 9;
+  private burnDuration = 2.5;
   private wildfire = false;
   isFiring = false;
 
   constructor(x: number, y: number) {
-    super(x, y, 'cone', 145, 0, 0.7);
+    super(x, y, 'cone', 125, 0, 0.6);
   }
 
   update(deltaTime: number, enemies: EnemyManager, grid: SpatialGrid): void {
@@ -20,7 +20,7 @@ export class FireTower extends TowerBase {
     }
     this.isFiring = true;
     this.tickTimer += deltaTime;
-    if (this.tickTimer < 0.08 / this.towerSpeedMultiplier) return;
+    if (this.tickTimer < 0.12 / this.towerSpeedMultiplier) return;
     this.tickTimer = 0;
     const count = grid.collectInRange(this.x, this.y, this.targeting.maxDistance, enemies, 80);
     for (let index = 0; index < count; index++) {
@@ -32,11 +32,9 @@ export class FireTower extends TowerBase {
   reset(): void {
     this.tickTimer = 0;
     this.isFiring = false;
-    this.burnDamage = 18 * this.towerDamageMultiplier; this.burnDuration = 3.5; this.targeting.maxDistance = 145; this.targeting.distance = 145; this.targeting.coneAngle = 0.7;
+    this.burnDamage = 9 * this.towerDamageMultiplier; this.burnDuration = 2.5; this.targeting.maxDistance = 125; this.targeting.distance = 125; this.targeting.coneAngle = 0.6;
     this.wildfire = false;
   }
-
-  applyUpgrade(id: string): void { if (id === 'fireDamage') this.burnDamage *= 1.3; if (id === 'fireDuration') this.burnDuration += 1; if (id === 'fireRadius') { this.targeting.maxDistance *= 1.2; this.targeting.distance = this.targeting.maxDistance; } if (id === 'fireCone') this.targeting.coneAngle += 0.18; if (id === 'fireSpread') this.wildfire = true; if (id === 'hellfire') { this.burnDamage *= 2; this.targeting.maxDistance *= 1.5; this.targeting.distance = this.targeting.maxDistance; this.targeting.coneAngle += 0.2; this.wildfire = true; } }
 
   spreadFromDeath(x: number, y: number, enemies: EnemyManager, grid: SpatialGrid): void {
     if (!this.wildfire) return;

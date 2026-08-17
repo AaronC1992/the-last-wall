@@ -83,14 +83,6 @@ export class TeslaCoil extends TowerBase {
     this.hasAim = true;
   }
 
-  applyUpgrade(id: string): void {
-    if (id === 'teslaDamage') this.damage *= 1.3;
-    if (id === 'teslaChains') this.chains += 2;
-    if (id === 'teslaReach') { this.targeting.radius *= 1.2; this.chainRange *= 1.2; }
-    if (id === 'teslaShock') this.shock = true;
-    if (id === 'plasmaStorm') { this.chains += 8; this.chainRange *= 1.4; this.damage *= 1.6; this.shock = true; }
-  }
-
   setAim(_x: number, _y: number): void {
   }
 }

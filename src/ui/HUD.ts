@@ -18,6 +18,7 @@ export interface HudState {
   announcement: string;
   mapIntro: boolean;
   warTokens: number;
+  gameSpeed: number;
   buildPhase: boolean;
   towers: readonly TowerReadout[];
 }
@@ -32,10 +33,11 @@ export class HUD {
   private readonly announcement = this.element('horde-announcement');
   private readonly buildBanner = this.element('build-banner');
   private readonly startBattle = document.querySelector<HTMLButtonElement>('#start-battle')!;
+  private readonly gameSpeed = document.querySelector<HTMLButtonElement>('#game-speed-button')!;
   private readonly stockRoot = this.element('tower-stock');
   private readonly stockRows = new Map<TowerKind, { row: HTMLElement; fill: HTMLElement; value: HTMLElement }>();
 
-  constructor(onStartBattle: () => void) {
+  constructor(onStartBattle: () => void, onIncreaseGameSpeed: () => void) {
     let markup = '';
     for (const config of TOWER_CONFIG) {
       markup += `<div class="stock-row" data-kind="${config.kind}" style="--stock-color:${config.accent}"><span class="stock-glyph">${config.glyph}</span><span class="stock-bar"><i></i></span><span class="stock-value">0</span></div>`;
@@ -46,6 +48,7 @@ export class HUD {
       this.stockRows.set(config.kind, { row, fill: row.querySelector<HTMLElement>('.stock-bar i')!, value: row.querySelector<HTMLElement>('.stock-value')! });
     }
     this.startBattle.addEventListener('click', onStartBattle);
+    this.gameSpeed.addEventListener('click', onIncreaseGameSpeed);
   }
 
   update(state: HudState): void {
@@ -57,6 +60,8 @@ export class HUD {
     this.buildPoints.textContent = this.compact(state.buildPoints);
     this.kills.textContent = this.compact(state.kills);
     this.enemies.textContent = this.compact(state.enemyCount);
+    this.gameSpeed.textContent = `Speed ${state.gameSpeed}x`;
+    this.gameSpeed.setAttribute('aria-label', `Set game speed to ${state.gameSpeed} times`);
     this.fps.textContent = Math.round(state.fps).toString();
     this.announcement.textContent = state.announcement;
     this.announcement.hidden = state.announcement.length === 0 || showBuildControls;

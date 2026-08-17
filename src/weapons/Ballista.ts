@@ -2,7 +2,6 @@ import { TUNING } from '../core/Constants';
 import { EnemyManager } from '../enemies/EnemyManager';
 import { ProjectileManager } from './ProjectileManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
-import type { UpgradeKind } from '../systems/UpgradeDefinitions';
 import { TowerBase } from './TowerBase';
 
 export class Ballista extends TowerBase {
@@ -36,18 +35,6 @@ export class Ballista extends TowerBase {
       projectiles.fireDirection(this.x, this.y, Math.cos(this.targeting.angle + spread), Math.sin(this.targeting.angle + spread), critical ? this.damage * this.criticalDamage : this.damage, this.projectileSpeed, this.penetration, this.targeting.distance);
     }
     this.cooldown = this.cooldownDuration;
-  }
-
-  applyUpgrade(kind: UpgradeKind): void {
-    if (kind === 'damage') this.damage *= 1.25;
-    if (kind === 'attackSpeed') this.cooldownDuration *= 0.8;
-    if (kind === 'range') { this.rangeValue *= 1.2; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; }
-    if (kind === 'projectiles') this.projectileCount++;
-    if (kind === 'criticalChance') this.criticalChance = Math.min(0.9, this.criticalChance + 0.12);
-    if (kind === 'criticalDamage') this.criticalDamage += 0.5;
-    if (kind === 'penetration') this.penetration++;
-    if (kind === 'projectileSpeed') this.projectileSpeed *= 1.35;
-    if (kind === 'boltStorm') { this.projectileCount += 8; this.cooldownDuration *= 0.5; this.penetration += 5; }
   }
 
   reset(): void {

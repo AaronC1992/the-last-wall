@@ -982,17 +982,21 @@ export class MapRenderer {
 
   private generateStaticTerrain(): void {
     const context = this.cachedContext;
-    context.fillStyle = '#a0875d'; context.fillRect(0, 0, this.cache.width, this.cache.height);
+    context.fillStyle = '#6f8a55'; context.fillRect(0, 0, this.cache.width, this.cache.height);
     for (let y = 0; y < this.grid.height; y++) for (let x = 0; x < this.grid.width; x++) {
       const cell = this.grid.get(x, y); const left = x * this.grid.cellSize; const top = y * this.grid.cellSize;
       if (cell === TerrainCell.Blocked) {
-        context.fillStyle = '#3b443b'; context.fillRect(left, top, this.grid.cellSize, this.grid.cellSize);
+        const stone = this.random.next() > 0.5 ? '#465044' : '#3b443b';
+        context.fillStyle = stone; context.fillRect(left, top, this.grid.cellSize, this.grid.cellSize);
+        context.fillStyle = '#68705e'; context.globalAlpha = 0.25; context.fillRect(left + 3, top + 4, this.grid.cellSize - 7, 2); context.globalAlpha = 1;
       } else if (cell === TerrainCell.Path || cell === TerrainCell.Spawn || cell === TerrainCell.Goal) {
-        context.fillStyle = cell === TerrainCell.Goal ? '#51453a' : '#776956'; context.fillRect(left, top, this.grid.cellSize, this.grid.cellSize);
-        context.fillStyle = '#8f806b'; context.globalAlpha = 0.22; context.fillRect(left + 4, top + 5, this.grid.cellSize - 8, 3); context.globalAlpha = 1;
+        const dirt = cell === TerrainCell.Goal ? '#51453a' : this.random.next() > 0.5 ? '#806b50' : '#776956';
+        context.fillStyle = dirt; context.fillRect(left, top, this.grid.cellSize, this.grid.cellSize);
+        context.fillStyle = '#b0956d'; context.globalAlpha = 0.22; context.fillRect(left + 4, top + 5, this.grid.cellSize - 8, 3); context.globalAlpha = 1;
       } else {
-        context.fillStyle = '#a0875d'; context.fillRect(left, top, this.grid.cellSize, this.grid.cellSize);
-        context.fillStyle = '#b89a6b'; context.globalAlpha = 0.13; context.fillRect(left + 5 + this.random.range(0, 8), top + 8 + this.random.range(0, 12), 2, 5); context.globalAlpha = 1;
+        const grass = this.random.next() > 0.72 ? '#78945d' : this.random.next() > 0.45 ? '#6f8a55' : '#66804f';
+        context.fillStyle = grass; context.fillRect(left, top, this.grid.cellSize, this.grid.cellSize);
+        context.fillStyle = '#9caf70'; context.globalAlpha = 0.18; context.fillRect(left + 5 + this.random.range(0, 8), top + 8 + this.random.range(0, 12), 2, 5); context.globalAlpha = 1;
       }
     }
     this.drawCliffEdges(context);

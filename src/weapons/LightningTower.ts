@@ -64,5 +64,4 @@ export class LightningTower extends TowerBase {
     this.damage = 42 * this.towerDamageMultiplier; this.beamWidth = 0.09; this.rangeValue = 560; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; this.targeting.coneAngle = this.beamWidth;
   }
 
-  applyUpgrade(id: string): void { if (id === 'lightningDamage') this.damage *= 1.3; if (id === 'lightningChains') this.beamWidth += 0.04; if (id === 'lightningRange') { this.rangeValue *= 1.2; this.targeting.maxDistance = this.rangeValue; this.targeting.distance = this.rangeValue; } if (id === 'lightningStun') this.damage *= 1.2; if (id === 'thunderstorm') { this.damage *= 2; this.beamWidth += 0.12; } this.targeting.coneAngle = this.beamWidth; }
 }

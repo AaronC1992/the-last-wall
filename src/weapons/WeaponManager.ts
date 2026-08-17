@@ -1,6 +1,5 @@
 import { EnemyManager } from '../enemies/EnemyManager';
 import { SpatialGrid } from '../systems/SpatialGrid';
-import type { UpgradeKind } from '../systems/UpgradeDefinitions';
 import { Ballista } from './Ballista';
 import { Cannon } from './Cannon';
 import { FireTower } from './FireTower';
@@ -33,7 +32,6 @@ export const TOWER_FOOTPRINT = 20;
 
 export class WeaponManager {
   private readonly placed: PlacedTower[] = [];
-  private readonly appliedUpgrades: UpgradeKind[] = [];
   private readonly limitBonus: Record<TowerKind, number> = { ballista: 0, cannon: 0, fireTower: 0, lightningTower: 0, mortar: 0, teslaCoil: 0, sniperTower: 0 };
   private readonly towerDamageBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
   private readonly towerSpeedBonus: Record<TowerKind, number> = { ballista: 1, cannon: 1, fireTower: 1, lightningTower: 1, mortar: 1, teslaCoil: 1, sniperTower: 1 };
@@ -95,7 +93,6 @@ export class WeaponManager {
   place(kind: TowerKind, x: number, y: number): PlacedTower | null {
     if (!this.canPlaceAt(kind, x, y)) return null;
     const instance = this.createInstance(kind, x, y);
-    for (const upgrade of this.appliedUpgrades) this.applyToInstance(kind, instance, upgrade);
     const tower: PlacedTower = { id: this.nextId++, kind, instance };
     this.placed.push(tower);
     return tower;
@@ -180,14 +177,8 @@ export class WeaponManager {
     this.towerCostMultiplier[kind] = multiplier;
   }
 
-  applyUpgrade(kind: UpgradeKind): void {
-    this.appliedUpgrades.push(kind);
-    for (const tower of this.placed) this.applyToInstance(tower.kind, tower.instance, kind);
-  }
-
   reset(): void {
     this.placed.length = 0;
-    this.appliedUpgrades.length = 0;
     this.nextId = 1;
   }
 
@@ -264,31 +255,4 @@ export class WeaponManager {
     return instance;
   }
 
-  private applyToInstance(kind: TowerKind, instance: TowerBase, upgrade: UpgradeKind): void {
-    if (upgrade.startsWith('cannon') || upgrade === 'carpetBombardment') {
-      if (kind === 'cannon') (instance as Cannon).applyUpgrade(upgrade);
-      return;
-    }
-    if (upgrade.startsWith('fire') || upgrade === 'hellfire') {
-      if (kind === 'fireTower') (instance as FireTower).applyUpgrade(upgrade);
-      return;
-    }
-    if (upgrade.startsWith('lightning') || upgrade === 'thunderstorm') {
-      if (kind === 'lightningTower') (instance as LightningTower).applyUpgrade(upgrade);
-      return;
-    }
-    if (upgrade.startsWith('mortar') || upgrade === 'doubleShot' || upgrade === 'ironRain') {
-      if (kind === 'mortar') (instance as Mortar).applyUpgrade(upgrade);
-      return;
-    }
-    if (upgrade.startsWith('tesla') || upgrade === 'plasmaStorm') {
-      if (kind === 'teslaCoil') (instance as TeslaCoil).applyUpgrade(upgrade);
-      return;
-    }
-    if (upgrade.startsWith('sniper') || upgrade === 'deadeyeProtocol') {
-      if (kind === 'sniperTower') (instance as SniperTower).applyUpgrade(upgrade);
-      return;
-    }
-    if (kind === 'ballista') (instance as Ballista).applyUpgrade(upgrade);
-  }
 }

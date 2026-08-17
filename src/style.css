@@ -26,6 +26,8 @@ button { font: inherit; }
 .resource.token i { background: #4aa8f0; transform: rotate(45deg); }
 .resource.level i { background: #e08a3c; border-radius: 50%; }
 .resource.wave i { background: #d45fa8; }
+.game-speed-button { position: absolute; top: 12px; left: 132px; padding: 7px 12px; border: 1px solid #55636d; background: rgba(20, 27, 33, .86); color: #dfe7ee; cursor: pointer; font: bold 12px Verdana, sans-serif; }
+.game-speed-button:hover { background: #253039; border-color: #9eb4bf; }
 
 /* Right side tower stock */
 .tower-stock { position: absolute; top: 12px; right: 12px; display: grid; gap: 5px; pointer-events: none; }
@@ -173,6 +175,7 @@ button { font: inherit; }
 	.results-actions { flex-wrap: wrap; width: 100%; }
 	.results-actions button { flex: 1 1 130px; min-width: 0; font-size: 14px; }
 	.hud-top { top: 6px; }
+	.game-speed-button { top: 8px; left: 8px; padding: 6px 8px; font-size: 10px; }
 	.health-bar { width: 190px; }
 	.resource-row { gap: 9px; }
 	.tower-stock { top: 8px; right: 7px; }

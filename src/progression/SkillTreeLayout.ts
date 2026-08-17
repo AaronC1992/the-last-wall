@@ -45,15 +45,11 @@ interface Placement {
 const RING = 96;
 
 const PLACEMENTS: readonly Placement[] = [
-  { id: 'globalDamage', branch: 'offense', angle: -108, ring: 1, parent: 'core' },
-  { id: 'ballistaMastery', branch: 'offense', angle: -134, ring: 2, parent: 'globalDamage' },
-  { id: 'ballistaSlots', branch: 'offense', angle: -86, ring: 2, parent: 'globalDamage' },
-  { id: 'globalDamageII', branch: 'offense', angle: -108, ring: 2.2, parent: 'globalDamage' },
-  { id: 'ballistaSlotsII', branch: 'offense', angle: -72, ring: 3.2, parent: 'ballistaSlots' },
-  { id: 'abilityHaste', branch: 'offense', angle: -158, ring: 3.2, parent: 'ballistaMastery' },
-  { id: 'rareUpgrades', branch: 'offense', angle: -150, ring: 3, parent: 'ballistaMastery' },
-  { id: 'epicUpgrades', branch: 'offense', angle: -122, ring: 3.4, parent: 'ballistaMastery' },
-  { id: 'legendaryUpgrades', branch: 'offense', angle: -136, ring: 4.4, parent: 'epicUpgrades' },
+  { id: 'globalDamage', branch: 'offense', angle: -112, ring: 1, parent: 'core' },
+  { id: 'ballistaMastery', branch: 'offense', angle: -142, ring: 2, parent: 'globalDamage' },
+  { id: 'ballistaSlots', branch: 'offense', angle: -82, ring: 2, parent: 'globalDamage' },
+  { id: 'globalDamageII', branch: 'offense', angle: -112, ring: 2.2, parent: 'globalDamage' },
+  { id: 'ballistaSlotsII', branch: 'offense', angle: -62, ring: 3.2, parent: 'ballistaSlots' },
 
   { id: 'wallIntegrity', branch: 'defense', angle: 168, ring: 1, parent: 'core' },
   { id: 'wallArmor', branch: 'defense', angle: 148, ring: 2, parent: 'wallIntegrity' },
@@ -82,10 +78,9 @@ const PLACEMENTS: readonly Placement[] = [
   { id: 'teslaCoil', branch: 'arcane', angle: 72, ring: 4.5, parent: 'lightningTower' },
   { id: 'teslaSlots', branch: 'tesla', angle: 76, ring: 5.4, parent: 'teslaCoil' },
   { id: 'teslaSlotsII', branch: 'tesla', angle: 82, ring: 6.4, parent: 'teslaSlots' },
-  { id: 'sniperTower', branch: 'offense', angle: -116, ring: 4.4, parent: 'ballistaMastery' },
+  { id: 'sniperTower', branch: 'sniper', angle: -112, ring: 4.4, parent: 'ballistaMastery' },
   { id: 'sniperSlots', branch: 'sniper', angle: -124, ring: 5.4, parent: 'sniperTower' },
   { id: 'sniperSlotsII', branch: 'sniper', angle: -132, ring: 6.4, parent: 'sniperSlots' },
-  { id: 'evolutions', branch: 'arcane', angle: 40, ring: 3.8, parent: 'fireSlots' },
 
   { id: 'meteor', branch: 'abilities', angle: 104, ring: 1.2, parent: 'core' },
   { id: 'artillery', branch: 'abilities', angle: 88, ring: 2.4, parent: 'meteor' },
@@ -94,6 +89,7 @@ const PLACEMENTS: readonly Placement[] = [
   { id: 'apocalypse', branch: 'abilities', angle: 126, ring: 4.2, parent: 'dragon' },
 
   { id: 'abilityPower', branch: 'command', angle: 12, ring: 1.4, parent: 'core' },
+  { id: 'abilityHaste', branch: 'command', angle: -8, ring: 2.4, parent: 'abilityPower' },
   { id: 'repairMastery', branch: 'command', angle: 36, ring: 2.4, parent: 'abilityPower' },
   { id: 'fieldMedics', branch: 'command', angle: 58, ring: 3.4, parent: 'repairMastery' },
   { id: 'enemySuppression', branch: 'command', angle: -12, ring: 2.5, parent: 'abilityPower' },

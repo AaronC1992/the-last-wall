@@ -7,14 +7,14 @@ const HEIGHT = DEFAULT_MAP_HEIGHT;
 const SOURCE_WIDTH = 80;
 const SOURCE_HEIGHT = 48;
 
-export function createMapDefinition(id: string, name: string, routes: readonly (readonly MapPoint[])[], spawns: readonly MapPoint[], goal: MapPoint, settings: MapEnemySettings, seed: number): MapDefinition {
+export function createMapDefinition(id: string, name: string, routes: readonly (readonly MapPoint[])[], spawns: readonly MapPoint[], goal: MapPoint, settings: MapEnemySettings, seed: number, routeRadius = 1): MapDefinition {
   const terrain = new Uint8Array(WIDTH * HEIGHT);
   terrain.fill(TerrainCell.Buildable);
   for (let x = 0; x < WIDTH; x++) {
     terrain[x] = TerrainCell.Blocked;
     terrain[(HEIGHT - 1) * WIDTH + x] = TerrainCell.Blocked;
   }
-  for (const route of routes) carveRoute(terrain, route.map(scalePoint), 1);
+  for (const route of routes) carveRoute(terrain, route.map(scalePoint), routeRadius);
   const scaledSpawns = spawns.map(scalePoint);
   const scaledGoal = scalePoint(goal);
   for (const spawn of scaledSpawns) carveCell(terrain, spawn, 1, TerrainCell.Spawn);

@@ -5,7 +5,6 @@ import type { SaveData } from '../systems/SaveSystem';
 import { FEATURE_UNLOCKS } from './FeatureUnlocks';
 import type { FeatureUnlockDefinition, FeatureUnlockId } from './FeatureUnlocks';
 import { SKILL_NODES } from './SkillTreeLayout';
-import type { UpgradeRarity } from '../systems/UpgradeDefinitions';
 
 export interface PermanentBonuses {
   damageMultiplier: number;
@@ -55,13 +54,6 @@ export class MetaProgression {
 
   isUnlocked(id: FeatureUnlockId): boolean {
     return this.data.unlocks[id] === true;
-  }
-
-  isRarityUnlocked(rarity: UpgradeRarity): boolean {
-    if (rarity === 'Common' || rarity === 'Uncommon') return true;
-    if (rarity === 'Rare') return this.isUnlocked('rareUpgrades');
-    if (rarity === 'Epic') return this.isUnlocked('epicUpgrades');
-    return this.isUnlocked('legendaryUpgrades');
   }
 
   purchaseUnlock(id: FeatureUnlockId): boolean {

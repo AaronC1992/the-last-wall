@@ -171,6 +171,7 @@ export class Game implements BattlefieldActions {
       announcement: this.waveDirector.announcement,
       mapIntro: this.mapIntroTimer > 0,
       warTokens: this.progression.warTokens,
+      gameSpeed: this.gameSpeed,
       buildPhase: this.phase === 'build',
       towers: this.towerReadouts(),
     });
@@ -486,6 +487,14 @@ export class Game implements BattlefieldActions {
 
   private onKeyDown(event: KeyboardEvent): void {
     if (event.target instanceof HTMLInputElement) return;
+    if (event.key === '=' || event.key === '+') {
+      event.preventDefault();
+      this.increaseGameSpeed();
+    }
+    if (event.key === '-') {
+      event.preventDefault();
+      this.gameSpeed = this.gameSpeed <= 1 ? 4 : this.gameSpeed - 1;
+    }
     if (event.code === 'Space' && this.phase === 'build') {
       event.preventDefault();
       this.startBattle();
@@ -576,7 +585,7 @@ export class Game implements BattlefieldActions {
     this.wallArmor = bonuses.wallArmor;
     this.chaos.setCooldownHaste(bonuses.abilityHaste);
     this.chaos.setAbilityPower(bonuses.abilityPower);
-    this.weapons.setPermanentBonuses(bonuses.damageMultiplier, bonuses.ballistaSpeedMultiplier);
+    this.weapons.setPermanentBonuses(bonuses.damageMultiplier, 1);
     for (const config of TOWER_CONFIG) {
       this.weapons.setLimitBonus(config.kind, bonuses.towerSlots[config.kind]);
       this.weapons.setTowerBonuses(config.kind, bonuses.towerDamage[config.kind], bonuses.towerSpeed[config.kind]);
