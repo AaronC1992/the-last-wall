@@ -119,7 +119,7 @@ export class BattlefieldInput {
       } else {
         this.dragMode = towerId === this.actions.selectedTowerId() ? 'aim' : 'move';
       }
-      this.draggedTowerId = towerId;
+      this.draggedTowerId = this.dragMode === 'none' ? 0 : towerId;
       return;
     }
     if (this.actions.selectedTowerId() > 0 && !this.actions.armedKind()) {
