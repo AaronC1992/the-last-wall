@@ -66,9 +66,80 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </section>
 
       <section id="main-menu" class="main-menu">
-        <div class="menu-mark">${GAME_TEXT.title}</div>
-        <p>Hold the line until the sky catches fire.</p>
-        <nav><button id="menu-play" type="button">Play Campaign</button><button id="menu-custom-maps" type="button">Custom Maps</button><button id="menu-map-builder" type="button">Map Builder</button><button id="menu-upgrades" type="button">Tech Tree</button><button id="menu-tutorial" type="button">Tutorial</button><button id="menu-settings" type="button">Settings</button></nav>
+        <div class="main-menu-card">
+          <div class="menu-crest">
+            <span class="crest-emblem">🛡️</span>
+            <span class="crest-subtitle">TACTICAL FORTRESS DEFENSE</span>
+          </div>
+          <div class="menu-mark">${GAME_TEXT.title}</div>
+          <div class="menu-tagline">
+            <span class="tagline-ornament">✦</span>
+            <span>Hold the line until the sky catches fire</span>
+            <span class="tagline-ornament">✦</span>
+          </div>
+
+          <div class="menu-divider"></div>
+
+          <nav class="main-menu-nav">
+            <button id="menu-play" type="button" class="menu-btn menu-btn-primary">
+              <span class="btn-icon">⚔️</span>
+              <span class="btn-body">
+                <strong>Play Campaign</strong>
+                <small>Twenty tactical defense operations</small>
+              </span>
+              <span class="btn-badge">Campaign</span>
+            </button>
+
+            <div class="menu-btn-grid">
+              <button id="menu-upgrades" type="button" class="menu-btn">
+                <span class="btn-icon">🔮</span>
+                <span class="btn-body">
+                  <strong>Tech Tree</strong>
+                  <small>Doctrines and power</small>
+                </span>
+              </button>
+
+              <button id="menu-custom-maps" type="button" class="menu-btn">
+                <span class="btn-icon">🗺️</span>
+                <span class="btn-body">
+                  <strong>Custom Maps</strong>
+                  <small>Saved battlefields</small>
+                </span>
+              </button>
+
+              <button id="menu-map-builder" type="button" class="menu-btn">
+                <span class="btn-icon">⚒️</span>
+                <span class="btn-body">
+                  <strong>Map Builder</strong>
+                  <small>Terrain workshop</small>
+                </span>
+              </button>
+
+              <button id="menu-armory" type="button" class="menu-btn">
+                <span class="btn-icon">🏹</span>
+                <span class="btn-body">
+                  <strong>Armory</strong>
+                  <small>Tower unlock index</small>
+                </span>
+              </button>
+            </div>
+
+            <div class="menu-btn-row">
+              <button id="menu-tutorial" type="button" class="menu-btn menu-btn-sub">
+                <span class="btn-icon">📖</span>
+                <span>Tutorial</span>
+              </button>
+              <button id="menu-statistics" type="button" class="menu-btn menu-btn-sub">
+                <span class="btn-icon">📊</span>
+                <span>Statistics</span>
+              </button>
+              <button id="menu-settings" type="button" class="menu-btn menu-btn-sub">
+                <span class="btn-icon">⚙️</span>
+                <span>Settings</span>
+              </button>
+            </div>
+          </nav>
+        </div>
       </section>
       <section id="tutorial-menu" class="menu-panel tutorial-menu" hidden><div class="panel-heading"><strong>How to Play</strong><button id="tutorial-close" type="button">Back</button></div><div class="tutorial-grid"><section><h2>Defend the Gate</h2><p>Build towers on high ground, aim every tower, then start the battle. Enemies follow the valleys toward your castle gate.</p><p>Use different tower types together. Ballistas provide reliable fire, Cannons strike groups, Fire Towers burn crowds, Lightning chains between enemies, and Mortars hit distant areas.</p></section><section><h2>Build and Aim</h2><p>Choose a tower from the build bar, tap or click a buildable location, then aim it toward the enemy paths.</p><p>You can move towers and change their aim during the build phase. The gate area must remain open so enemies can reach the wall.</p></section><section><h2>Abilities</h2><p>Select an ability, then choose a target on the battlefield. Apocalypse is map wide and activates immediately.</p><p>Abilities have long cooldowns, so save them for dense groups, dangerous enemies, or moments when several routes converge.</p></section><section><h2>Progression</h2><p>Survive campaign levels to earn War Tokens. Spend them in the Tech Tree to unlock towers, abilities, stronger attacks, lower costs, extra slots, and faster cooldowns.</p><p>You need at least three kills in a campaign round to earn token rewards.</p></section><section><h2>PC Controls</h2><p><b>Left click:</b> Select, place, or target.</p><p><b>Left drag:</b> Move or aim towers, or pan on empty terrain.</p><p><b>Right click:</b> Remove a tower.</p><p><b>Middle drag and mouse wheel:</b> Pan and zoom.</p><p><b>W, A, S, D or arrow keys:</b> Pan the camera.</p><p><b>Z:</b> Zoom to fit whole map.</p><p><b>Q, W, E, F, G:</b> Activate abilities.</p><p><b>R:</b> Remove all towers during build. <b>Escape:</b> Cancel targeting.</p></section><section><h2>Mobile Controls</h2><p><b>Tap:</b> Select, place, or target.</p><p><b>Drag a tower:</b> Move or aim it.</p><p><b>Drag empty terrain:</b> Pan around the larger map.</p><p><b>Pinch:</b> Zoom the camera.</p><p><b>Ability buttons:</b> Choose an ability, then tap its battlefield target.</p><p>Use the build phase Settings button to adjust graphics and open the full Controls guide.</p></section></div></section>
       <section id="campaign-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Campaign</strong><button id="campaign-close" type="button">Close</button></div><div id="campaign-levels" class="statistics-grid"></div></section>
