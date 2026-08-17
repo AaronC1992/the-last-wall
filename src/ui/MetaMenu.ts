@@ -54,7 +54,7 @@ export class MetaMenu {
     });
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
     document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => { this.hide(); this.backAction(); });
-    this.legendToggle.addEventListener('click', () => this.setLegendVisible(this.legend.hidden));
+    this.legendToggle.addEventListener('click', () => this.setLegendVisible(this.legend.hidden === true));
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
     });
