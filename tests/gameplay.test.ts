@@ -15,6 +15,7 @@ import { WaveDirector } from '../src/systems/WaveDirector';
 import { FlowField } from '../src/map/FlowField';
 import { TerrainGrid } from '../src/map/TerrainGrid';
 import { TerrainCell } from '../src/map/TerrainTypes';
+import { Game } from '../src/core/Game';
 
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -189,6 +190,41 @@ describe('progression effects', () => {
     sniper.setAim(0, 500);
     expect(sniper.isPointThreatened(0, 400)).toBe(true);
     expect(sniper.isPointThreatened(400, 0)).toBe(false);
+  });
+
+  it('refreshes build-phase points and tower bonuses after an upgrade purchase', () => {
+    vi.stubGlobal('localStorage', memoryStorage());
+    const progression = new MetaProgression();
+    progression.grantWarTokens(5);
+    expect(progression.purchase('startingGold')).toBe(true);
+
+    const fakeGame = {
+      phase: 'build',
+      progression,
+      appliedProgressionRevision: 0,
+      wallHp: 100,
+      wallMaxHp: 100,
+      buildPoints: 10,
+      map: { baseBuildPointBonus: 0 },
+      chaos: { setCooldownHaste: vi.fn(), setAbilityPower: vi.fn() },
+      weapons: {
+        totalCost: vi.fn(() => 50),
+        setPermanentBonuses: vi.fn(),
+        setLimitBonus: vi.fn(),
+        setTowerBonuses: vi.fn(),
+        setTowerCostMultiplier: vi.fn(),
+        setTowerSpecialBonuses: vi.fn(),
+      },
+      rebuildNavigationFields: vi.fn(),
+      configurePermanentBonuses: (Game.prototype as { configurePermanentBonuses: (bonuses: unknown) => void }).configurePermanentBonuses,
+    };
+
+    (Game.prototype as unknown as { syncBuildPhaseProgression: () => void }).syncBuildPhaseProgression.call(fakeGame);
+
+    expect(fakeGame.buildPoints).toBe(20);
+    expect(fakeGame.appliedProgressionRevision).toBe(progression.revision);
+    expect(fakeGame.rebuildNavigationFields).toHaveBeenCalledOnce();
+    expect(fakeGame.weapons.setTowerCostMultiplier).toHaveBeenCalled();
   });
 });
 
