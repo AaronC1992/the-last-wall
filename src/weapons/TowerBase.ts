@@ -86,6 +86,14 @@ export abstract class TowerBase {
     this.towerSpecialBonuses = specialBonuses;
   }
 
+  getThreatStrength(): number {
+    return this.towerDamageMultiplier * this.towerSpeedMultiplier * (1 + this.towerSpecialBonuses.projectiles * 0.35 + this.towerSpecialBonuses.penetration * 0.12 + this.towerSpecialBonuses.teslaChains * 0.08);
+  }
+
+  threatAtPoint(x: number, y: number, cellPadding = 0): number {
+    return this.isPointThreatened(x, y, cellPadding) ? this.getThreatStrength() : 0;
+  }
+
   get range(): number {
     return this.targeting.distance;
   }

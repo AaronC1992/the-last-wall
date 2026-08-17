@@ -43,7 +43,9 @@ export interface TokenBreakdown {
   flatBonus: number;
   total: number;
   firstClearBonus: number;
+  ratingBonus: number;
   rating: number;
+  newBest: boolean;
 }
 
 export class MetaProgression {
@@ -95,12 +97,13 @@ export class MetaProgression {
     return true;
   }
 
-  awardTokens(kills: number, elapsed: number, buildPoints: number, highestCombo: number, awardCurrency = true, firstClearBonus = 0, rating = 0): TokenBreakdown {
+  awardTokens(kills: number, _elapsed: number, buildPoints: number, highestCombo: number, awardCurrency = true, firstClearBonus = 0, rating = 0, levelReward = 0, newBest = false): TokenBreakdown {
     const bonuses = this.bonuses;
-    const base = awardCurrency ? Math.max(1, Math.floor(kills / 20 + elapsed / 90)) : 0;
+    const ratingBonus = awardCurrency ? Math.max(0, rating - 1) : 0;
+    const base = awardCurrency ? Math.max(1, levelReward + Math.floor(kills / 45)) : 0;
     const percentBonus = awardCurrency ? Math.floor(base * (bonuses.tokenMultiplier - 1)) : 0;
     const flatBonus = awardCurrency ? bonuses.flatTokenBonus : 0;
-    const total = awardCurrency ? base + percentBonus + flatBonus + firstClearBonus : 0;
+    const total = awardCurrency ? base + percentBonus + flatBonus + ratingBonus + firstClearBonus : 0;
     this.data.warTokens += total;
     this.data.statistics.totalKills += kills;
     this.data.statistics.totalRuns++;
@@ -108,7 +111,7 @@ export class MetaProgression {
     this.data.statistics.highestKills = Math.max(this.data.statistics.highestKills, kills);
     this.data.statistics.highestLifetimeCombo = Math.max(this.data.statistics.highestLifetimeCombo, highestCombo);
     this.persist();
-    return { kills, base, percentBonus, percentLabel: `${((bonuses.tokenMultiplier - 1) * 100).toFixed(1)}%`, flatBonus, total, firstClearBonus, rating };
+    return { kills, base, percentBonus, percentLabel: `${((bonuses.tokenMultiplier - 1) * 100).toFixed(1)}%`, flatBonus, ratingBonus, total, firstClearBonus, rating, newBest };
   }
 
   get bonuses(): PermanentBonuses {
@@ -221,12 +224,17 @@ export class MetaProgression {
     return this.data.completedCampaign.includes(`campaign-${String(index).padStart(2, '0')}`);
   }
 
-  completeCampaign(id: string): void {
+  completeCampaign(id: string, rating = 0): boolean {
+    const newBest = rating > (this.data.campaignRatings[id] ?? 0);
     if (!this.data.completedCampaign.includes(id)) {
       this.data.completedCampaign.push(id);
-      this.persist();
     }
+    if (newBest) this.data.campaignRatings[id] = rating;
+    this.persist();
+    return newBest;
   }
+
+  campaignRating(id: string): number { return this.data.campaignRatings[id] ?? 0; }
 
   claimFirstClearReward(id: string, amount: number): number {
     if (!this.data.firstClearRewards || this.data.firstClearRewards[id] || amount <= 0) return 0;

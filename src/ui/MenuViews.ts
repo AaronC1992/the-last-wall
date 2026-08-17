@@ -3,6 +3,7 @@ import { MetaProgression } from '../progression/MetaProgression';
 import { CAMPAIGN_MAPS } from '../map/CampaignMaps';
 import type { MapDefinition } from '../map/TerrainTypes';
 import { CustomMapStorage } from '../map/CustomMapStorage';
+import { EnemyType } from '../enemies/EnemyTypes';
 
 export class MenuViews {
   private readonly progression: MetaProgression;
@@ -79,7 +80,14 @@ export class MenuViews {
   showCampaign(onSelect: (map: MapDefinition) => void): void {
     this.main.hidden = true;
     const levels = document.querySelector<HTMLElement>('#campaign-levels')!;
-    levels.innerHTML = CAMPAIGN_MAPS.map((map, index) => `<button type="button" data-campaign="${map.id}" ${this.progression.isCampaignUnlocked(index) ? '' : 'disabled'}>${index + 1}. ${map.name}</button>`).join('');
+    const enemyNames = ['Grunt', 'Runner', 'Brute', 'Armored', 'Exploder', 'Boss'];
+    levels.innerHTML = CAMPAIGN_MAPS.map((map, index) => {
+      const rating = this.progression.campaignRating(map.id);
+      const stars = `${'★'.repeat(rating)}${'☆'.repeat(3 - rating)}`;
+      const enemies = [...new Set(map.encounter?.groups.map((group) => enemyNames[group.type]) ?? [])].join(', ');
+      const boss = map.encounter?.groups.some((group) => group.type === EnemyType.Boss) ? ' Boss present' : '';
+      return `<button type="button" data-campaign="${map.id}" title="Enemies: ${enemies}.${boss}" ${this.progression.isCampaignUnlocked(index) ? '' : 'disabled'}>${index + 1}. ${map.name} ${stars}<small>${enemies}${boss}</small></button>`;
+    }).join('');
     CAMPAIGN_MAPS.forEach((map) => levels.querySelector<HTMLButtonElement>(`[data-campaign="${map.id}"]`)!.addEventListener('click', () => onSelect(map)));
     this.campaign.hidden = false;
   }

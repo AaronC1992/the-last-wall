@@ -15,7 +15,10 @@ export interface CampaignEnemyGroup {
   startDelay?: number;
   spawnInterval?: number;
   burstSize?: number;
-  spawnPreference?: number | 'random' | 'all';
+  spawnPreference?: number | string | 'random' | 'all';
+  announcement?: string;
+  hpMultiplier?: number;
+  speedMultiplier?: number;
 }
 
 export interface CampaignEncounter {
@@ -46,12 +49,14 @@ export interface MapDefinition {
   cellSize: number;
   terrain: readonly number[];
   spawnCells: readonly MapPoint[];
+  spawnLabels?: Record<string, number>;
   goalCell: MapPoint;
   seed: number;
   enemySettings: MapEnemySettings;
   encounter?: CampaignEncounter;
   baseBuildPointBonus?: number;
   firstClearReward?: number;
+  baseTokenReward?: number;
   custom: boolean;
   createdDate?: string;
   modifiedDate?: string;

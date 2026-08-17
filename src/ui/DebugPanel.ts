@@ -11,7 +11,7 @@ export interface DebugState {
   maximumEnemyY: number;
   invincible: boolean;
   gameSpeed: number;
-  timings: { enemy: number; grid: number; congestion: number; towers: number; projectiles: number; compact: number };
+  timings: { enemy: number; grid: number; congestion: number; towers: number; projectiles: number; compact: number; threat: number; armoredFlow: number; bossFlow: number };
 }
 
 export interface DebugActions {
@@ -70,7 +70,7 @@ export class DebugPanel {
     this.effects.textContent = state.activeEffects.toString();
     this.stuck.textContent = state.stuckRecoveries.toString();
     const timings = state.timings;
-    this.mode.textContent = `Speed ${state.gameSpeed}x  Enemy ${timings.enemy.toFixed(1)}ms  Grid ${timings.grid.toFixed(1)}ms  Congestion ${timings.congestion.toFixed(1)}ms  Towers ${timings.towers.toFixed(1)}ms  Projectiles ${timings.projectiles.toFixed(1)}ms  Compact ${timings.compact.toFixed(1)}ms  Invincible ${state.invincible ? 'On' : 'Off'}`;
+    this.mode.textContent = `Speed ${state.gameSpeed}x  Enemy ${timings.enemy.toFixed(1)}ms  Grid ${timings.grid.toFixed(1)}ms  Congestion ${timings.congestion.toFixed(1)}ms  Towers ${timings.towers.toFixed(1)}ms  Projectiles ${timings.projectiles.toFixed(1)}ms  Compact ${timings.compact.toFixed(1)}ms  Threat ${timings.threat.toFixed(1)}ms  Armored Flow ${timings.armoredFlow.toFixed(1)}ms  Boss Flow ${timings.bossFlow.toFixed(1)}ms  Invincible ${state.invincible ? 'On' : 'Off'}`;
   }
 
   private bind(id: string, action: () => void): void {

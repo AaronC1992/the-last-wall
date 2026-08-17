@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SAVE_KEY = 'the-last-wall-save';
 export const SAVE_BACKUP_KEY = 'the-last-wall-save-backup';
 export type GraphicsQuality = 'low' | 'medium' | 'high';
@@ -12,6 +12,7 @@ export interface SaveData {
   settings: { damageNumbers: boolean; screenShake: boolean; masterVolume: number; sfxVolume: number; musicVolume: number; graphicsQuality: GraphicsQuality; showDecals: boolean; showTowerEffects: boolean; showAbilityEffects: boolean; animateGateTorches: boolean; detailedEnemies: boolean; showStatusEffects: boolean };
   completedCampaign: string[];
   firstClearRewards: Record<string, boolean>;
+  campaignRatings: Record<string, number>;
 }
 
 type RawSave = Partial<SaveData> & {
@@ -55,6 +56,7 @@ export function migrateSave(raw: unknown): SaveData | null {
     },
     completedCampaign: Array.isArray(parsed.completedCampaign) ? parsed.completedCampaign.filter((id): id is string => typeof id === 'string') : [],
       firstClearRewards: isBooleanRecord(parsed.firstClearRewards) ? parsed.firstClearRewards : {},
+      campaignRatings: isNumberRecord(parsed.campaignRatings) ? parsed.campaignRatings : {},
   };
 }
 
@@ -96,6 +98,7 @@ export class SaveSystem {
       settings: { damageNumbers: true, screenShake: true, masterVolume: 0.5, sfxVolume: 0.6, musicVolume: 0.3, graphicsQuality: 'medium', showDecals: true, showTowerEffects: true, showAbilityEffects: true, animateGateTorches: true, detailedEnemies: true, showStatusEffects: true },
       completedCampaign: [],
       firstClearRewards: {},
+      campaignRatings: {},
     };
   }
 }

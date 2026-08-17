@@ -18,7 +18,7 @@ export class ThreatMap {
         const cell = this.terrain.get(x, y);
         if (cell !== TerrainCell.Path && cell !== TerrainCell.Spawn && cell !== TerrainCell.Goal) continue;
         const point = this.terrain.cellToWorld(x, y);
-        const contribution = tower.instance.isPointThreatened(point.x, point.y, this.terrain.cellSize * 0.45) ? baseThreat : 0;
+        const contribution = tower.instance.threatAtPoint(point.x, point.y, this.terrain.cellSize * 0.45) * baseThreat;
         this.values[this.terrain.index(x, y)] += contribution;
       }
     }

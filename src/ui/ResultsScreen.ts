@@ -23,7 +23,9 @@ export class ResultsScreen {
     if (breakdown.percentBonus > 0) markup += row(`Bonus (${breakdown.percentLabel})`, breakdown.percentBonus);
     if (breakdown.flatBonus > 0) markup += row('Bonus', breakdown.flatBonus);
     if (breakdown.firstClearBonus > 0) markup += row('First Clear', breakdown.firstClearBonus);
+    if (breakdown.ratingBonus > 0) markup += row('Gate Rating Bonus', breakdown.ratingBonus);
     if (breakdown.rating > 0) markup += `<div class="results-row"><span>Gate Rating</span><strong>${'★'.repeat(breakdown.rating)}</strong></div>`;
+    if (breakdown.newBest) markup += '<div class="results-row"><span>New Best Rating</span><strong>NEW BEST</strong></div>';
     markup += `<div class="results-row total"><span>Total</span><strong>${breakdown.total.toLocaleString()}<i class="token-gem"></i></strong></div>`;
     this.rows.innerHTML = markup;
     this.nextLevel.hidden = !survived || nextMapName === null;

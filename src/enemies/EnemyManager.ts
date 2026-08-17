@@ -64,7 +64,7 @@ export class EnemyManager {
     return true;
   }
 
-  update(deltaTime: number, width: number, wallY: number, onWallHit: (damage: number) => void, onDeath: (reward: number, index: number, burning: boolean) => void = () => undefined, flowField?: FlowField, terrain?: TerrainGrid, congestion?: CongestionGrid, threat?: ThreatMap, spatial?: SpatialGrid): void {
+  update(deltaTime: number, width: number, wallY: number, onWallHit: (damage: number) => void, onDeath: (reward: number, index: number, burning: boolean) => void = () => undefined, flowField?: FlowField, terrain?: TerrainGrid, congestion?: CongestionGrid, threat?: ThreatMap, spatial?: SpatialGrid, armoredFlowField?: FlowField, bossFlowField?: FlowField): void {
     this.minimumY = Number.POSITIVE_INFINITY;
     this.maximumY = Number.NEGATIVE_INFINITY;
     for (let index = 0; index < this.count; index++) {
@@ -79,7 +79,10 @@ export class EnemyManager {
       this.stunTime[index] = Math.max(0, this.stunTime[index] - deltaTime);
       this.electrifiedTime[index] = Math.max(0, this.electrifiedTime[index] - deltaTime);
       if (this.stunTime[index] > 0) continue;
-      if (flowField && terrain) this.updateOnTerrain(index, deltaTime, onWallHit, flowField, terrain, congestion, threat, spatial);
+      if (flowField && terrain) {
+        const navigationField = this.type[index] === EnemyType.Armored ? armoredFlowField ?? flowField : this.type[index] === EnemyType.Boss ? bossFlowField ?? flowField : flowField;
+        this.updateOnTerrain(index, deltaTime, onWallHit, navigationField, terrain, congestion, threat, spatial);
+      }
       else this.updateLegacy(index, deltaTime, wallY, onWallHit, width);
     }
   }
@@ -133,9 +136,9 @@ export class EnemyManager {
     this.routeCommit[index] = Math.max(0, this.routeCommit[index] - deltaTime);
     let direction = this.recoveryVector(this.x[index], this.y[index], cell.x, cell.y, currentCost, flowField, terrain);
     if (Math.hypot(direction.x, direction.y) < 0.15) direction = flowField.smoothDirectionAtWorld(this.x[index], this.y[index], this.routeBias[index]);
-    if (behavior.smartRouting || this.routeCommit[index] <= 0) {
+    if (this.routeCommit[index] <= 0) {
       direction = this.chooseDirection(index, cell.x, cell.y, currentCost, behavior, flowField, terrain, congestion, threat);
-      this.routeCommit[index] = behavior.routeCommitment;
+      this.routeCommit[index] = behavior.smartRouting ? behavior.routeCommitment * (1.5 + Math.random()) : behavior.routeCommitment;
     }
     const lookAheadX = this.x[index] + direction.x * terrain.cellSize * 0.65;
     const lookAheadY = this.y[index] + direction.y * terrain.cellSize * 0.65;

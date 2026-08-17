@@ -24,6 +24,12 @@ export class Cannon extends TowerBase {
     return super.isPointThreatened(x, y, cellPadding) || Math.hypot(x - this.aimX, y - this.aimY) <= this.radius + cellPadding;
   }
 
+  threatAtPoint(x: number, y: number, cellPadding = 0): number {
+    const blastRadius = this.radius + cellPadding;
+    if (Math.hypot(x - this.aimX, y - this.aimY) <= blastRadius) return this.getThreatStrength() * 2.2;
+    return super.threatAtPoint(x, y, cellPadding);
+  }
+
   update(deltaTime: number, _enemies: EnemyManager, _grid: SpatialGrid, _onKill: (reward: number) => void, projectiles: ProjectileManager): void {
     this.cooldown -= deltaTime;
     if (this.cooldown > 0) return;

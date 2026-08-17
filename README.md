@@ -90,7 +90,9 @@ There are twenty campaign levels using the same physical terrain engine and inte
 19. **The Last Labyrinth** fields multiple Bosses.
 20. **The Twentyfold Wall** uses every enemy category.
 
-Campaign encounters introduce Runners, Brutes, Armored enemies, Exploders, Elites, and Bosses progressively. Later levels specialize enemy groups by spawn lane and release them in controlled bursts.
+Campaign encounters introduce Runners, Brutes, Armored enemies, Exploders, Elites, and Bosses progressively. Groups have independent start delays, spawn intervals, burst sizes, announcements, and lane preferences, so battles arrive as staged assaults rather than one queue. Total scheduled enemies range from about 350 on Level 1 to more than 10,000 on Level 20.
+
+Campaign victories award one to three Gate Stars based on remaining health. The best rating for each level is saved and shown in level select. Campaign rewards use level value, kills, Gate Stars, first clear bonuses, and Tech Tree multipliers. Elapsed time does not increase rewards, and Custom Maps award no permanent tokens.
 
 ## Map Builder
 
@@ -132,7 +134,7 @@ War Tokens are spent in the permanent Tech Tree. The tree controls:
 * War Token rewards
 * Ability unlocks
 
-The Settings menu includes **Reset and Start Over**, which clears progression, campaign completion, custom maps, and saved tower layouts after confirmation.
+The Settings menu includes **Reset and Start Over**, which backs up the save, then clears progression, campaign completion, custom maps, and saved tower layouts after confirmation.
 
 ## Controls
 
@@ -150,6 +152,15 @@ The Settings menu includes **Reset and Start Over**, which clears progression, c
 * Press `F2` to open the performance monitor.
 * Press `T` to toggle the defense threat map.
 * Click the speed control or press `+` and `-` to change game speed.
+
+### Validation
+
+```bash
+npm test
+npm run build
+```
+
+GitHub Pages deployment runs both commands before uploading the site.
 
 ## Local development
 

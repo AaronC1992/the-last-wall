@@ -47,6 +47,8 @@ export class Game implements BattlefieldActions {
   private map: MapDefinition;
   private terrain: TerrainGrid;
   private flowField: FlowField;
+  private armoredFlowField: FlowField;
+  private bossFlowField: FlowField;
   private mapSpawns: MapSpawnSystem;
   private congestion: CongestionGrid;
   private threatMap: ThreatMap;
@@ -75,7 +77,7 @@ export class Game implements BattlefieldActions {
   private showThreatMap = false;
   private hudFrame = 0;
   private pendingAbility: AbilityIdValue | null = null;
-  private readonly timings = { enemy: 0, grid: 0, congestion: 0, towers: 0, projectiles: 0, compact: 0 };
+  private readonly timings = { enemy: 0, grid: 0, congestion: 0, towers: 0, projectiles: 0, compact: 0, threat: 0, armoredFlow: 0, bossFlow: 0 };
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -92,6 +94,8 @@ export class Game implements BattlefieldActions {
     this.flowField = new FlowField(this.terrain, this.map.goalCell);
     this.congestion = new CongestionGrid(this.terrain);
     this.threatMap = new ThreatMap(this.terrain);
+    this.armoredFlowField = new FlowField(this.terrain, this.map.goalCell, this.threatMap, 1.5);
+    this.bossFlowField = new FlowField(this.terrain, this.map.goalCell, this.threatMap, 2.4);
     this.mapSpawns = new MapSpawnSystem(this.map);
     this.renderer = new Renderer(canvas.getContext('2d')!, this.map);
     this.weapons = new WeaponManager(TUNING.worldHeight - TUNING.wallHeight, TUNING.worldWidth, this.terrain);
@@ -109,13 +113,13 @@ export class Game implements BattlefieldActions {
     const graphicsQuality = this.progression.settings.graphicsQuality;
     this.mapIntroTimer = Math.max(0, this.mapIntroTimer - simulationDelta);
     this.elapsed += simulationDelta;
-    this.waveDirector.update(simulationDelta, this.enemies.count, (type, elite, spawnPreference) => {
-      const spawn = this.mapSpawns.nextSpawn(spawnPreference < 0 ? 'random' : spawnPreference);
+    this.waveDirector.update(simulationDelta, this.enemies.count, (campaignSpawn) => {
+      const spawn = this.mapSpawns.nextSpawn(typeof campaignSpawn.spawnPreference === 'number' && campaignSpawn.spawnPreference < 0 ? 'random' : campaignSpawn.spawnPreference);
       const bonuses = this.progression.bonuses;
       const encounter = this.map.encounter;
-      const speedMultiplier = encounter ? encounter.speedMultiplier ?? 1 : 1 + this.waveDirector.currentWave * 0.012;
-      const hpMultiplier = encounter ? encounter.hpMultiplier ?? 1 : 1 + this.waveDirector.currentWave * 0.018;
-      this.enemies.spawnAt(spawn.x, spawn.y, speedMultiplier * bonuses.enemySpeedMultiplier, hpMultiplier, type, elite, spawn.targetX);
+      const speedMultiplier = (encounter ? encounter.speedMultiplier ?? 1 : 1 + this.waveDirector.currentWave * 0.012) * (campaignSpawn.speedMultiplier ?? 1);
+      const hpMultiplier = (encounter ? encounter.hpMultiplier ?? 1 : 1 + this.waveDirector.currentWave * 0.018) * (campaignSpawn.hpMultiplier ?? 1);
+      this.enemies.spawnAt(spawn.x, spawn.y, speedMultiplier * bonuses.enemySpeedMultiplier, hpMultiplier, campaignSpawn.type, campaignSpawn.elite, spawn.targetX);
     });
     let timingStart = performance.now();
     this.grid.rebuild(this.enemies);
@@ -127,7 +131,7 @@ export class Game implements BattlefieldActions {
     this.enemies.update(simulationDelta, this.map.width * this.map.cellSize, this.map.height * this.map.cellSize - TUNING.wallHeight, (damage) => this.damageWall(damage), (_reward, index, burning) => {
       this.registerKill();
       if (burning) this.weapons.handleBurnDeath(index, this.enemies, this.grid);
-    }, this.flowField, this.terrain, this.congestion, this.threatMap, graphicsQuality === 'low' ? undefined : this.grid);
+    }, this.flowField, this.terrain, this.congestion, this.threatMap, graphicsQuality === 'low' ? undefined : this.grid, this.armoredFlowField, this.bossFlowField);
     this.timings.enemy = performance.now() - timingStart;
     timingStart = performance.now();
     this.grid.rebuild(this.enemies);
@@ -204,7 +208,7 @@ export class Game implements BattlefieldActions {
     this.applyPermanentBonuses();
     const savedLayout = existingLayout.length > 0 ? existingLayout : this.readLayout();
     this.weapons.importLayout(savedLayout);
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
     this.wallHp = this.wallMaxHp;
     this.buildPoints = Math.max(0, this.progression.bonuses.startingBuildPoints + (this.map.baseBuildPointBonus ?? 0) - this.weapons.totalCost());
     this.kills = 0;
@@ -234,6 +238,8 @@ export class Game implements BattlefieldActions {
     this.flowField = new FlowField(this.terrain, map.goalCell);
     this.congestion = new CongestionGrid(this.terrain);
     this.threatMap = new ThreatMap(this.terrain);
+    this.armoredFlowField = new FlowField(this.terrain, map.goalCell, this.threatMap, 1.5);
+    this.bossFlowField = new FlowField(this.terrain, map.goalCell, this.threatMap, 2.4);
     this.mapSpawns = new MapSpawnSystem(map);
     this.renderer = new Renderer(this.canvas.getContext('2d')!, map);
     const worldWidth = map.width * map.cellSize;
@@ -279,7 +285,7 @@ export class Game implements BattlefieldActions {
     this.mapIntroTimer = 0;
     this.highestCombo = 0;
     this.selectedId = 0;
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
   }
 
   get currentPhase(): GamePhase {
@@ -384,7 +390,7 @@ export class Game implements BattlefieldActions {
     const aimTargetY = (Math.abs(this.pointerX - spot.x) > 2 || Math.abs(this.pointerY - spot.y) > 2) ? this.pointerY : spot.y - 100;
     this.weapons.aimTower(placed.id, aimTargetX, aimTargetY);
     this.saveLayout();
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
   }
 
   towerIdAt(x: number, y: number): number {
@@ -406,13 +412,13 @@ export class Game implements BattlefieldActions {
     this.weapons.moveTower(id, spot.x, spot.y);
     this.selectedId = id;
     this.saveLayout();
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
   }
 
   aimTower(id: number, x: number, y: number): void {
     if (this.phase === 'build') this.weapons.aimTower(id, x, y);
     this.saveLayout();
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
   }
 
   removeTower(id: number): void {
@@ -422,7 +428,7 @@ export class Game implements BattlefieldActions {
     this.buildPoints += this.weapons.costOf(kind);
     if (this.selectedId === id) this.selectedId = 0;
     this.saveLayout();
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
   }
 
   removeAllTowers(): void {
@@ -430,7 +436,7 @@ export class Game implements BattlefieldActions {
     for (const kind of this.weapons.removeAll()) this.buildPoints += this.weapons.costOf(kind);
     this.selectedId = 0;
     this.saveLayout();
-    this.threatMap.rebuild(this.weapons.towers);
+    this.rebuildNavigationFields();
   }
 
   setPointer(x: number, y: number, overCanvas: boolean): void {
@@ -596,11 +602,12 @@ export class Game implements BattlefieldActions {
     const survived = this.wallHp > 0;
     const rating = survived && !this.map.custom ? this.wallHp >= this.wallMaxHp * 0.8 ? 3 : this.wallHp >= this.wallMaxHp * 0.5 ? 2 : 1 : 0;
     let firstClearBonus = 0;
+    let newBest = false;
     if (survived && !this.map.custom) {
-      this.progression.completeCampaign(this.map.id);
+      newBest = this.progression.completeCampaign(this.map.id, rating);
       firstClearBonus = this.progression.claimFirstClearReward(this.map.id, this.map.firstClearReward ?? 0);
     }
-    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom && this.kills >= 3, firstClearBonus, rating);
+    const breakdown = this.progression.awardTokens(this.kills, this.elapsed, this.buildPoints, this.highestCombo, !this.map.custom && this.kills >= 3, firstClearBonus, rating, this.map.baseTokenReward ?? 0, newBest);
     this.onRunEnd(breakdown, survived);
   }
 
@@ -623,6 +630,18 @@ export class Game implements BattlefieldActions {
     this.weapons.setTowerSpecialBonuses('teslaCoil', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, ...bonuses.towerSpecials.teslaCoil, mortarBarrage: 0, sniperPenetration: 0 });
     this.weapons.setTowerSpecialBonuses('sniperTower', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, ...bonuses.towerSpecials.sniperTower });
     this.wallHp = this.wallMaxHp;
+  }
+
+  private rebuildNavigationFields(): void {
+    const start = performance.now();
+    this.threatMap.rebuild(this.weapons.towers);
+    this.timings.threat = performance.now() - start;
+    const armoredStart = performance.now();
+    this.armoredFlowField.rebuild(this.map.goalCell, this.threatMap, 1.5);
+    this.timings.armoredFlow = performance.now() - armoredStart;
+    const bossStart = performance.now();
+    this.bossFlowField.rebuild(this.map.goalCell, this.threatMap, 2.4);
+    this.timings.bossFlow = performance.now() - bossStart;
   }
 
 }

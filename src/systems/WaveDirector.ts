@@ -2,6 +2,21 @@ import { EnemyType } from '../enemies/EnemyTypes';
 import type { EnemyTypeId } from '../enemies/EnemyTypes';
 import type { CampaignEncounter, MapEnemySettings } from '../map/TerrainTypes';
 
+export interface CampaignSpawn {
+  type: EnemyTypeId;
+  elite: boolean;
+  spawnPreference: number | string;
+  hpMultiplier?: number;
+  speedMultiplier?: number;
+}
+
+interface CampaignGroupState {
+  group: CampaignEncounter['groups'][number];
+  spawned: number;
+  nextSpawnAt: number;
+  active: boolean;
+}
+
 export class WaveDirector {
   private readonly queueType = new Uint8Array(200000);
   private readonly queueElite = new Uint8Array(200000);
@@ -14,14 +29,21 @@ export class WaveDirector {
   private wave = 0;
   private waveBudget = 0;
   private mapSettings: MapEnemySettings | null = null;
+  private campaignGroups: CampaignGroupState[] = [];
+  private campaignElapsed = 0;
+  private campaignActive = false;
 
-  update(deltaTime: number, _activeEnemies: number, spawn: (type: EnemyTypeId, elite: boolean, spawnPreference: number) => void): void {
+  update(deltaTime: number, _activeEnemies: number, spawn: (campaignSpawn: CampaignSpawn) => void): void {
+    if (this.campaignActive) {
+      this.updateCampaign(deltaTime, spawn);
+      return;
+    }
     this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer > 0) return;
     const burst = Math.min(this.queueTail - this.queueHead, Math.min(this.mapSettings?.spawnBurst ?? 400, 60 + this.wave * 10));
     for (let index = 0; index < burst; index++) {
-      spawn(this.queueType[this.queueHead] as EnemyTypeId, this.queueElite[this.queueHead] !== 0, this.queueSpawnPreference[this.queueHead]);
+      spawn({ type: this.queueType[this.queueHead] as EnemyTypeId, elite: this.queueElite[this.queueHead] !== 0, spawnPreference: this.queueSpawnPreference[this.queueHead] });
       this.queueHead++;
     }
     this.spawnTimer = Math.max(0.025, (this.mapSettings?.spawnInterval ?? 0.14) - this.wave * 0.003);
@@ -36,6 +58,9 @@ export class WaveDirector {
     this.announcementTimer = 0;
     this.announcementText = '';
     this.mapSettings = null;
+    this.campaignGroups = [];
+    this.campaignElapsed = 0;
+    this.campaignActive = false;
   }
 
   get currentWave(): number {
@@ -58,22 +83,23 @@ export class WaveDirector {
   startCampaign(encounter: CampaignEncounter): void {
     this.reset();
     this.wave = 1;
-    this.announcementText = encounter.groups.some((group) => group.type === EnemyType.Boss) ? 'BOSS APPROACHING' : 'THE HORDE IS COMING';
-    this.announcementTimer = 2.5;
-    for (const group of encounter.groups) {
-      const count = Math.max(0, Math.floor(group.count));
-      const spawnPreference = typeof group.spawnPreference === 'number' ? group.spawnPreference : -1;
-      for (let index = 0; index < count && this.queueTail < this.queueType.length; index++) {
-        this.queueType[this.queueTail] = group.type;
-        this.queueElite[this.queueTail] = Math.random() < Math.max(0, Math.min(1, group.eliteChance ?? 0)) ? 1 : 0;
-        this.queueSpawnPreference[this.queueTail] = spawnPreference;
-        this.queueTail++;
-      }
-    }
+    this.campaignActive = true;
+    this.campaignGroups = encounter.groups.map((group) => ({ group, spawned: 0, nextSpawnAt: Math.max(0, group.startDelay ?? 0), active: false }));
+    this.announcementText = '';
+    this.announcementTimer = 0;
   }
 
   isWaveCleared(activeEnemies: number): boolean {
+    if (this.campaignActive) return this.campaignGroups.length > 0 && this.campaignGroups.every((state) => state.spawned >= state.group.count) && activeEnemies === 0;
     return this.wave > 0 && this.queueHead >= this.queueTail && activeEnemies === 0;
+  }
+
+  get campaignFinishedSpawning(): boolean {
+    return !this.campaignActive || this.campaignGroups.every((state) => state.spawned >= state.group.count);
+  }
+
+  get campaignElapsedSeconds(): number {
+    return this.campaignElapsed;
   }
 
   get remainingInQueue(): number {
@@ -112,6 +138,37 @@ export class WaveDirector {
       const next = this.pickEnemy(style, budget);
       this.enqueue(next.type, next.elite);
       budget -= next.cost;
+    }
+  }
+
+  private updateCampaign(deltaTime: number, spawn: (campaignSpawn: CampaignSpawn) => void): void {
+    this.campaignElapsed += deltaTime;
+    this.announcementTimer = Math.max(0, this.announcementTimer - deltaTime);
+    for (const state of this.campaignGroups) {
+      const group = state.group;
+      if (state.spawned >= group.count || this.campaignElapsed < state.nextSpawnAt) continue;
+      if (!state.active) {
+        state.active = true;
+        if (group.announcement) {
+          this.announcementText = group.announcement;
+          this.announcementTimer = 2.5;
+        }
+      }
+      const burstSize = Math.max(1, Math.floor(group.burstSize ?? 20));
+      const remaining = Math.max(0, group.count - state.spawned);
+      const burst = Math.min(burstSize, remaining);
+      const spawnPreference = typeof group.spawnPreference === 'number' || typeof group.spawnPreference === 'string' ? group.spawnPreference : -1;
+      for (let index = 0; index < burst; index++) {
+        spawn({
+          type: group.type,
+          elite: Math.random() < Math.max(0, Math.min(1, group.eliteChance ?? 0)),
+          spawnPreference,
+          hpMultiplier: group.hpMultiplier,
+          speedMultiplier: group.speedMultiplier,
+        });
+      }
+      state.spawned += burst;
+      state.nextSpawnAt = this.campaignElapsed + Math.max(0.025, group.spawnInterval ?? 0.12);
     }
   }
 
