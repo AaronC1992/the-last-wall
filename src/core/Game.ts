@@ -13,7 +13,7 @@ import { SpatialGrid } from '../systems/SpatialGrid';
 import { WaveDirector } from '../systems/WaveDirector';
 import { EnemyType } from '../enemies/EnemyTypes';
 import { MetaProgression } from '../progression/MetaProgression';
-import type { TokenBreakdown } from '../progression/MetaProgression';
+import type { PermanentBonuses, TokenBreakdown } from '../progression/MetaProgression';
 import { ChaosSystem } from '../systems/ChaosSystem';
 import type { AbilityIdValue } from '../systems/ChaosSystem';
 import type { FeatureUnlockId } from '../progression/FeatureUnlocks';
@@ -82,6 +82,7 @@ export class Game implements BattlefieldActions {
   private readonly timings = { enemy: 0, grid: 0, congestion: 0, towers: 0, projectiles: 0, compact: 0, threat: 0, armoredFlow: 0, bossFlow: 0 };
   private navigationDirty = false;
   private navigationRebuildCount = 0;
+  private appliedProgressionRevision = 0;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -159,6 +160,7 @@ export class Game implements BattlefieldActions {
 
   render(fps: number): void {
     this.fps = fps;
+    this.syncBuildPhaseProgression();
     this.renderer.render({
       width: TUNING.logicalWidth,
       height: TUNING.logicalHeight,
@@ -671,7 +673,24 @@ export class Game implements BattlefieldActions {
   }
 
   private applyPermanentBonuses(): void {
+    this.configurePermanentBonuses(this.progression.bonuses);
+    this.wallHp = this.wallMaxHp;
+    this.appliedProgressionRevision = this.progression.revision;
+  }
+
+  private syncBuildPhaseProgression(): void {
+    if (this.phase !== 'build' || this.appliedProgressionRevision === this.progression.revision) return;
     const bonuses = this.progression.bonuses;
+    const wallWasFull = this.wallHp >= this.wallMaxHp;
+    const previousWallHp = this.wallHp;
+    this.configurePermanentBonuses(bonuses);
+    this.wallHp = wallWasFull ? this.wallMaxHp : Math.min(this.wallMaxHp, previousWallHp);
+    this.buildPoints = Math.max(0, bonuses.startingBuildPoints + (this.map.baseBuildPointBonus ?? 0) - this.weapons.totalCost());
+    this.appliedProgressionRevision = this.progression.revision;
+    this.rebuildNavigationFields();
+  }
+
+  private configurePermanentBonuses(bonuses: PermanentBonuses): void {
     this.wallMaxHp = bonuses.wallMaxHp;
     this.wallArmor = bonuses.wallArmor;
     this.chaos.setCooldownHaste(bonuses.abilityHaste);
@@ -688,7 +707,6 @@ export class Game implements BattlefieldActions {
     this.weapons.setTowerSpecialBonuses('mortar', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, ...bonuses.towerSpecials.mortar, sniperPenetration: 0 });
     this.weapons.setTowerSpecialBonuses('teslaCoil', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, ...bonuses.towerSpecials.teslaCoil, mortarBarrage: 0, sniperPenetration: 0 });
     this.weapons.setTowerSpecialBonuses('sniperTower', { penetration: 0, projectiles: 0, clusterShells: false, doubleBarrel: false, carpetBombardment: false, wildfire: false, teslaShock: false, teslaChains: 0, mortarBarrage: 0, ...bonuses.towerSpecials.sniperTower });
-    this.wallHp = this.wallMaxHp;
   }
 
   private rebuildNavigationFields(): void {

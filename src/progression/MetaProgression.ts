@@ -51,9 +51,14 @@ export interface TokenBreakdown {
 export class MetaProgression {
   private readonly saveSystem = new SaveSystem();
   private readonly data = this.saveSystem.load();
+  private revisionValue = 0;
 
   get warTokens(): number {
     return this.data.warTokens;
+  }
+
+  get revision(): number {
+    return this.revisionValue;
   }
 
   get upgrades(): readonly MetaUpgradeDefinition[] {
@@ -265,5 +270,6 @@ export class MetaProgression {
 
   private persist(): void {
     this.saveSystem.save(this.data);
+    this.revisionValue++;
   }
 }
