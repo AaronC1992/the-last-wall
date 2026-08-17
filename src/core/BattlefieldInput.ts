@@ -155,6 +155,11 @@ export class BattlefieldInput {
     this.activePointers.delete(event.pointerId);
     this.lastPinchDistance = 0;
     if (this.activePointers.size > 0) {
+      const remaining = this.activePointers.values().next().value;
+      if (remaining) {
+        this.lastScreenX = remaining.x;
+        this.lastScreenY = remaining.y;
+      }
       return;
     }
     if (this.dragMode === 'none' && event.button !== 0) return;
