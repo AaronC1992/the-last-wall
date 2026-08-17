@@ -177,7 +177,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             <p id="skill-mobile-description"></p>
             <footer id="skill-mobile-status"></footer>
             <div class="skill-mobile-actions">
-              <button id="skill-mobile-buy" type="button">Buy</button>
+              <button id="skill-mobile-buy" type="button" aria-label="Buy selected upgrade">Buy</button>
               <button id="skill-mobile-close" type="button">Close</button>
             </div>
           </div>

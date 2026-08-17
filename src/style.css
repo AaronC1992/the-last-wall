@@ -307,10 +307,6 @@ button { font: inherit; }
 .skill-play { position: absolute; right: 18px; bottom: 18px; padding: 12px 30px; border: 1px solid #7c8992; background: rgba(18, 24, 29, .9); color: #f2f6f8; cursor: pointer; font-size: 26px; }
 .skill-play:hover { background: #253039; }
 
-@media (min-width: 761px) and (pointer: fine) {
-  .skill-mobile-dialog { display: none; }
-}
-
 /* Corner controls */
 .corner-button { position: absolute; top: 12px; left: 14px; padding: 7px 12px; border: 1px solid #55636d; background: rgba(20, 27, 33, .86); color: #dfe7ee; cursor: pointer; font: 12px Verdana, sans-serif; }
 .corner-button:hover { background: #253039; }

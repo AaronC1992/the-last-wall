@@ -237,9 +237,16 @@ export class MetaMenu {
     this.mobileDialogTitle.textContent = node.title;
     this.mobileDialogLevel.textContent = `${level}/${node.maxLevel}`;
     this.mobileDialogDescription.textContent = node.description;
-    this.mobileDialogStatus.textContent = locked ? 'Locked, unlock the previous node' : capped ? 'Complete' : affordable ? `${cost} War Tokens` : `Need ${cost} War Tokens`;
+    this.mobileDialogBuy.setAttribute('aria-label', `Buy ${node.title}`);
+    this.mobileDialogStatus.textContent = this.mobileStatusText(cost, locked, capped, affordable);
     this.mobileDialogBuy.disabled = locked || capped || !affordable;
     this.mobileDialog.hidden = false;
+  }
+
+  private mobileStatusText(cost: number, locked: boolean, capped: boolean, affordable: boolean): string {
+    if (locked) return 'Locked: prerequisites not met';
+    if (capped) return 'Complete';
+    return affordable ? `${cost} War Tokens` : `Need ${cost} War Tokens`;
   }
 
   private hideMobileDialog(): void {
@@ -256,6 +263,7 @@ export class MetaMenu {
       return;
     }
     this.showMobileDialog(node);
+    if (!this.mobileDialogBuy.disabled) this.mobileDialogStatus.textContent = 'Purchase failed. Try again.';
   }
 
   private showTooltip(node: SkillNode, screenX: number, screenY: number): void {
