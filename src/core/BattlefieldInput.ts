@@ -37,6 +37,8 @@ export class BattlefieldInput {
   private readonly activePointers = new Map<number, { x: number; y: number }>();
   private lastPinchDistance = 0;
 
+  private readonly prefersTouch = window.matchMedia('(pointer: coarse)').matches;
+
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly camera: Camera,
@@ -183,8 +185,12 @@ export class BattlefieldInput {
       } else if (this.actions.armedKind()) {
         this.actions.placeTower(world.x, world.y);
       } else if (this.actions.selectedTowerId() > 0) {
-        this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
-        this.actions.selectTower(0);
+        if (this.prefersTouch || event.pointerType === 'touch') {
+          this.actions.moveTower(this.actions.selectedTowerId(), world.x, world.y);
+        } else {
+          this.actions.aimTower(this.actions.selectedTowerId(), world.x, world.y);
+          this.actions.selectTower(0);
+        }
       } else {
         this.actions.selectTower(0);
       }

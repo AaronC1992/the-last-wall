@@ -5,11 +5,26 @@ import type { SkillNode } from '../progression/SkillTreeLayout';
 const NODE_SIZE = 30;
 const VIEW_WIDTH = 1280;
 const VIEW_HEIGHT = 760;
+const TREE_PADDING = 120;
+
+const TREE_BOUNDS = SKILL_NODES.reduce((bounds, node) => ({
+  minX: Math.min(bounds.minX, node.x - NODE_SIZE / 2),
+  maxX: Math.max(bounds.maxX, node.x + NODE_SIZE / 2),
+  minY: Math.min(bounds.minY, node.y - NODE_SIZE / 2),
+  maxY: Math.max(bounds.maxY, node.y + NODE_SIZE / 2 + (node.kind === 'core' ? 0 : 16)),
+}), {
+  minX: Number.POSITIVE_INFINITY,
+  maxX: Number.NEGATIVE_INFINITY,
+  minY: Number.POSITIVE_INFINITY,
+  maxY: Number.NEGATIVE_INFINITY,
+});
 
 export class MetaMenu {
   private readonly panel = document.querySelector<HTMLElement>('#meta-menu')!;
   private readonly canvas = document.querySelector<HTMLCanvasElement>('#skill-tree-canvas')!;
   private readonly context = this.canvas.getContext('2d')!;
+  private readonly legend = document.querySelector<HTMLElement>('#skill-legend')!;
+  private readonly legendToggle = document.querySelector<HTMLButtonElement>('#skill-legend-toggle')!;
   private readonly tooltip = document.querySelector<HTMLElement>('#skill-tooltip')!;
   private readonly tokenValue = document.querySelector<HTMLElement>('#tokens-value')!;
   private readonly metaButton = document.querySelector<HTMLButtonElement>('#meta-button')!;
@@ -39,6 +54,7 @@ export class MetaMenu {
     });
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
     document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => { this.hide(); this.backAction(); });
+    this.legendToggle.addEventListener('click', () => this.setLegendVisible(this.legend.hidden === true));
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
     });
@@ -58,6 +74,8 @@ export class MetaMenu {
 
   show(backAction: () => void = this.onCloseToMenu): void {
     this.backAction = backAction;
+    this.resetView();
+    this.setLegendVisible(!this.isCompactLayout());
     this.panel.hidden = false;
     this.onVisibilityChange(true);
     this.render();
@@ -163,6 +181,28 @@ export class MetaMenu {
       this.hovered = null;
       this.render();
     }
+  }
+
+  private isCompactLayout(): boolean {
+    return window.matchMedia('(max-width: 760px)').matches || window.matchMedia('(pointer: coarse)').matches;
+  }
+
+  private setLegendVisible(visible: boolean): void {
+    this.legend.hidden = !visible;
+    this.legendToggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
+    this.legendToggle.textContent = visible ? 'Hide Legend' : 'Show Legend';
+  }
+
+  private resetView(): void {
+    const width = TREE_BOUNDS.maxX - TREE_BOUNDS.minX;
+    const height = TREE_BOUNDS.maxY - TREE_BOUNDS.minY;
+    const zoomX = (VIEW_WIDTH - TREE_PADDING) / width;
+    const zoomY = (VIEW_HEIGHT - TREE_PADDING) / height;
+    this.zoom = Math.min(1, zoomX, zoomY);
+    const centerX = (TREE_BOUNDS.minX + TREE_BOUNDS.maxX) / 2;
+    const centerY = (TREE_BOUNDS.minY + TREE_BOUNDS.maxY) / 2;
+    this.offsetX = VIEW_WIDTH / 2 - centerX * this.zoom;
+    this.offsetY = VIEW_HEIGHT / 2 - centerY * this.zoom;
   }
 
   private render(): void {

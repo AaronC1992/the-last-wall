@@ -437,7 +437,7 @@ export class Game implements BattlefieldActions {
   moveTower(id: number, x: number, y: number): void {
     if (this.phase !== 'build') return;
     const spot = this.weapons.clampToBuildZone(x, y);
-    this.weapons.moveTower(id, spot.x, spot.y);
+    if (!this.weapons.moveTower(id, spot.x, spot.y)) return;
     this.selectedId = id;
     this.saveLayout();
     this.navigationDirty = true;
