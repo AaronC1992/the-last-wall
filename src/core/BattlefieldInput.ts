@@ -32,6 +32,8 @@ export class BattlefieldInput {
   private pressScreenX = 0;
   private pressScreenY = 0;
   private moved = false;
+  private readonly activePointers = new Map<number, { x: number; y: number }>();
+  private lastPinchDistance = 0;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -59,6 +61,15 @@ export class BattlefieldInput {
 
   private onPointerDown(event: PointerEvent): void {
     const screen = this.toLogical(event);
+    this.activePointers.set(event.pointerId, { x: screen.x, y: screen.y });
+
+    if (this.activePointers.size >= 2) {
+      this.dragMode = 'none';
+      this.moved = true;
+      this.lastPinchDistance = 0;
+      return;
+    }
+
     this.lastScreenX = screen.x;
     this.lastScreenY = screen.y;
     this.pressScreenX = screen.x;
@@ -102,6 +113,20 @@ export class BattlefieldInput {
 
   private onPointerMove(event: PointerEvent): void {
     const screen = this.toLogical(event);
+    this.activePointers.set(event.pointerId, { x: screen.x, y: screen.y });
+
+    if (this.activePointers.size >= 2) {
+      const [a, b] = Array.from(this.activePointers.values());
+      const dist = Math.hypot(b.x - a.x, b.y - a.y);
+      if (this.lastPinchDistance > 0 && dist > 0) {
+        const steps = Math.log(dist / this.lastPinchDistance) / Math.log(1.12);
+        this.camera.zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, steps);
+      }
+      this.lastPinchDistance = dist;
+      return;
+    }
+    this.lastPinchDistance = 0;
+
     const world = this.camera.screenToWorld(screen.x, screen.y);
     const inside = screen.x >= 0 && screen.y >= 0 && screen.x <= this.logicalWidth && screen.y <= this.logicalHeight;
     this.actions.setPointer(world.x, world.y, inside);
@@ -127,6 +152,11 @@ export class BattlefieldInput {
   }
 
   private onPointerUp(event: PointerEvent): void {
+    this.activePointers.delete(event.pointerId);
+    this.lastPinchDistance = 0;
+    if (this.activePointers.size > 0) {
+      return;
+    }
     if (this.dragMode === 'none' && event.button !== 0) return;
     const screen = this.toLogical(event);
     const world = this.camera.screenToWorld(screen.x, screen.y);
