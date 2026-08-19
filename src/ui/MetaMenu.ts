@@ -32,7 +32,6 @@ export class MetaMenu {
       if (this.inBattle) this.endRoundAction();
       else this.show();
     });
-    document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
     document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => { this.hide(); this.backAction(); });
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
