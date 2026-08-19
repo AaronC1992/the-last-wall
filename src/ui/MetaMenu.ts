@@ -1,30 +1,11 @@
 import { MetaProgression } from '../progression/MetaProgression';
-import { SKILL_NODES, BRANCH_COLORS } from '../progression/SkillTreeLayout';
-import type { SkillNode } from '../progression/SkillTreeLayout';
-
-const NODE_SIZE = 30;
-const VIEW_WIDTH = 1280;
-const VIEW_HEIGHT = 760;
-const TREE_PADDING = 120;
-
-const TREE_BOUNDS = SKILL_NODES.reduce((bounds, node) => ({
-  minX: Math.min(bounds.minX, node.x - NODE_SIZE / 2),
-  maxX: Math.max(bounds.maxX, node.x + NODE_SIZE / 2),
-  minY: Math.min(bounds.minY, node.y - NODE_SIZE / 2),
-  maxY: Math.max(bounds.maxY, node.y + NODE_SIZE / 2 + (node.kind === 'core' ? 0 : 16)),
-}), {
-  minX: Number.POSITIVE_INFINITY,
-  maxX: Number.NEGATIVE_INFINITY,
-  minY: Number.POSITIVE_INFINITY,
-  maxY: Number.NEGATIVE_INFINITY,
-});
+import { SKILL_NODES, BRANCH_COLORS, BRANCH_ORDER } from '../progression/SkillTreeLayout';
+import type { SkillNode, SkillBranch } from '../progression/SkillTreeLayout';
 
 export class MetaMenu {
   private readonly panel = document.querySelector<HTMLElement>('#meta-menu')!;
-  private readonly canvas = document.querySelector<HTMLCanvasElement>('#skill-tree-canvas')!;
-  private readonly context = this.canvas.getContext('2d')!;
-  private readonly legend = document.querySelector<HTMLElement>('#skill-legend')!;
-  private readonly legendToggle = document.querySelector<HTMLButtonElement>('#skill-legend-toggle')!;
+  private readonly tabBar = document.querySelector<HTMLElement>('#skill-tab-bar')!;
+  private readonly branchColumn = document.querySelector<HTMLElement>('#skill-branch-column')!;
   private readonly tooltip = document.querySelector<HTMLElement>('#skill-tooltip')!;
   private readonly mobileDialog = document.querySelector<HTMLElement>('#skill-mobile-dialog')!;
   private readonly mobileDialogTitle = document.querySelector<HTMLElement>('#skill-mobile-title')!;
@@ -37,18 +18,9 @@ export class MetaMenu {
   private readonly metaButton = document.querySelector<HTMLButtonElement>('#meta-button')!;
   private inBattle = false;
   private endRoundAction = (): void => undefined;
-  private offsetX = VIEW_WIDTH / 2;
-  private offsetY = VIEW_HEIGHT / 2;
-  private zoom = 1;
-  private hovered: SkillNode | null = null;
-  private dragging = false;
-  private moved = false;
-  private lastX = 0;
-  private lastY = 0;
-  private readonly activePointers = new Map<number, { x: number; y: number }>();
-  private lastPinchDistance = 0;
   private backAction: () => void;
   private selectedNode: SkillNode | null = null;
+  private activeBranch: SkillBranch = BRANCH_ORDER[0].branch;
 
   constructor(
     private readonly progression: MetaProgression,
@@ -56,26 +28,18 @@ export class MetaMenu {
     private readonly onCloseToMenu: () => void = () => undefined,
   ) {
     this.backAction = onCloseToMenu;
-    this.canvas.width = VIEW_WIDTH;
-    this.canvas.height = VIEW_HEIGHT;
     this.metaButton.addEventListener('click', () => {
       if (this.inBattle) this.endRoundAction();
       else this.show();
     });
     document.querySelector<HTMLButtonElement>('#meta-close')!.addEventListener('click', () => { this.hide(); this.onCloseToMenu(); });
     document.querySelector<HTMLButtonElement>('#skill-play')!.addEventListener('click', () => { this.hide(); this.backAction(); });
-    this.legendToggle.addEventListener('click', () => this.setLegendVisible(this.legend.hidden === true));
     document.querySelector<HTMLButtonElement>('#skill-hints-close')!.addEventListener('click', () => {
       document.querySelector<HTMLElement>('#skill-hints')!.hidden = true;
     });
     this.mobileDialogBuy.addEventListener('click', () => this.purchaseSelectedNode());
     this.mobileDialogClose.addEventListener('click', () => this.hideMobileDialog());
-    this.canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event));
-    window.addEventListener('pointermove', (event) => this.onPointerMove(event));
-    window.addEventListener('pointerup', (event) => this.onPointerUp(event));
-    this.canvas.addEventListener('pointerleave', () => { if (!this.dragging && this.activePointers.size === 0) this.hideTooltip(); });
-    this.canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false });
-    this.canvas.addEventListener('click', (event) => this.onClick(event));
+    this.buildTabBar();
   }
 
   setBattleMode(inBattle: boolean, onEndRound: () => void): void {
@@ -86,144 +50,192 @@ export class MetaMenu {
 
   show(backAction: () => void = this.onCloseToMenu): void {
     this.backAction = backAction;
-    this.resetView();
-    this.setLegendVisible(!this.isCompactLayout());
     this.panel.hidden = false;
     this.onVisibilityChange(true);
-    this.render();
+    this.renderBranch(this.activeBranch);
   }
 
   hide(): void {
     this.panel.hidden = true;
     this.hideTooltip();
     this.hideMobileDialog();
-    this.dragging = false;
-    this.activePointers.clear();
-    this.lastPinchDistance = 0;
     this.onVisibilityChange(false);
   }
 
-  private toCanvas(event: PointerEvent | MouseEvent | WheelEvent): { x: number; y: number } {
-    const bounds = this.canvas.getBoundingClientRect();
-    return {
-      x: ((event.clientX - bounds.left) / bounds.width) * VIEW_WIDTH,
-      y: ((event.clientY - bounds.top) / bounds.height) * VIEW_HEIGHT,
-    };
-  }
-
-  private toTree(event: PointerEvent | MouseEvent | WheelEvent): { x: number; y: number } {
-    const point = this.toCanvas(event);
-    return { x: (point.x - this.offsetX) / this.zoom, y: (point.y - this.offsetY) / this.zoom };
-  }
-
-  private nodeAt(x: number, y: number): SkillNode | null {
-    const half = NODE_SIZE / 2 + 4;
-    for (const node of SKILL_NODES) {
-      if (Math.abs(node.x - x) <= half && Math.abs(node.y - y) <= half) return node;
-    }
-    return null;
-  }
-
-  private onPointerDown(event: PointerEvent): void {
-    const point = this.toCanvas(event);
-    this.activePointers.set(event.pointerId, point);
-
-    if (this.activePointers.size >= 2) {
-      this.dragging = false;
-      this.moved = true;
-      this.lastPinchDistance = 0;
-      return;
-    }
-
-    this.dragging = true;
-    this.moved = false;
-    this.lastX = point.x;
-    this.lastY = point.y;
-  }
-
-  private onPointerMove(event: PointerEvent): void {
-    const point = this.toCanvas(event);
-
-    if (this.activePointers.has(event.pointerId)) {
-      this.activePointers.set(event.pointerId, point);
-
-      if (this.activePointers.size >= 2) {
-        const [a, b] = Array.from(this.activePointers.values());
-        const dist = Math.hypot(b.x - a.x, b.y - a.y);
-        if (this.lastPinchDistance > 0 && dist > 0) {
-          const midX = (a.x + b.x) / 2;
-          const midY = (a.y + b.y) / 2;
-          const beforeX = (midX - this.offsetX) / this.zoom;
-          const beforeY = (midY - this.offsetY) / this.zoom;
-          this.zoom = Math.min(2.2, Math.max(0.45, this.zoom * (dist / this.lastPinchDistance)));
-          this.offsetX = midX - beforeX * this.zoom;
-          this.offsetY = midY - beforeY * this.zoom;
-          this.render();
+  private buildTabBar(): void {
+    this.tabBar.innerHTML = '';
+    for (const { branch, label } of BRANCH_ORDER) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.role = 'tab';
+      btn.className = 'skill-tab' + (branch === this.activeBranch ? ' active' : '');
+      btn.dataset['branch'] = branch;
+      btn.textContent = label;
+      btn.style.setProperty('--tab-color', BRANCH_COLORS[branch]);
+      btn.setAttribute('aria-selected', branch === this.activeBranch ? 'true' : 'false');
+      btn.addEventListener('click', () => {
+        this.activeBranch = branch;
+        for (const b of this.tabBar.querySelectorAll<HTMLButtonElement>('.skill-tab')) {
+          const active = b.dataset['branch'] === branch;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
         }
-        this.lastPinchDistance = dist;
-        return;
+        this.renderBranch(branch);
+      });
+      this.tabBar.appendChild(btn);
+    }
+  }
+
+  private renderBranch(branch: SkillBranch): void {
+    this.tokenValue.textContent = this.progression.warTokens.toLocaleString();
+
+    const branchNodes = SKILL_NODES.filter((n) => n.branch === branch || n.id === 'core');
+    const color = BRANCH_COLORS[branch];
+
+    // Build a flat ordered list: walk the parent chain from branch-root down
+    const inBranch = SKILL_NODES.filter((n) => n.branch === branch);
+    const ordered = this.topoSort(inBranch);
+
+    this.branchColumn.innerHTML = '';
+    this.branchColumn.style.setProperty('--branch-color', color);
+
+    // Find the root of this branch (its parent is 'core' or another branch)
+    const coreNode = SKILL_NODES.find((n) => n.id === 'core')!;
+
+    for (let i = 0; i < ordered.length; i++) {
+      const node = ordered[i];
+      const hasNext = i < ordered.length - 1;
+
+      // Connector line above each card (except the first)
+      if (i > 0) {
+        const connector = document.createElement('div');
+        connector.className = 'skill-connector';
+        this.branchColumn.appendChild(connector);
+      } else {
+        // First card: show a mini "War Council" root link
+        const rootLink = document.createElement('div');
+        rootLink.className = 'skill-root-link';
+        rootLink.innerHTML = `<div class="skill-root-node" title="${coreNode.title}">${coreNode.title.charAt(0)}</div><div class="skill-connector skill-connector--root"></div>`;
+        this.branchColumn.appendChild(rootLink);
       }
-      this.lastPinchDistance = 0;
 
-      if (this.dragging) {
-        if (Math.abs(point.x - this.lastX) > 2 || Math.abs(point.y - this.lastY) > 2) this.moved = true;
-        this.offsetX += point.x - this.lastX;
-        this.offsetY += point.y - this.lastY;
-        this.lastX = point.x;
-        this.lastY = point.y;
-        this.render();
-        return;
+      const card = this.buildCard(node);
+      this.branchColumn.appendChild(card);
+
+      void branchNodes;
+      void hasNext;
+    }
+  }
+
+  private topoSort(nodes: readonly SkillNode[]): SkillNode[] {
+    const result: SkillNode[] = [];
+    const visited = new Set<string>();
+
+    const visit = (node: SkillNode): void => {
+      if (visited.has(node.id)) return;
+      visited.add(node.id);
+      // Visit parent first if it's within the same branch
+      if (node.parent) {
+        const parent = nodes.find((n) => n.id === node.parent);
+        if (parent) visit(parent);
       }
-    } else {
-      const bounds = this.canvas.getBoundingClientRect();
-      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) return;
-    }
+      result.push(node);
+    };
 
-    const tree = this.toTree(event);
-    const node = this.nodeAt(tree.x, tree.y);
-    if (node !== this.hovered) {
-      this.hovered = node;
-      this.render();
-    }
-    if (node) this.showTooltip(node, point.x, point.y);
-    else this.hideTooltip();
+    for (const node of nodes) visit(node);
+    return result;
   }
 
-  private onPointerUp(event: PointerEvent): void {
-    this.activePointers.delete(event.pointerId);
-    this.lastPinchDistance = 0;
-    if (this.activePointers.size > 0) {
-      const remaining = this.activePointers.values().next().value!;
-      this.lastX = remaining.x;
-      this.lastY = remaining.y;
-      this.dragging = true;
-      return;
-    }
-    this.dragging = false;
+  private buildCard(node: SkillNode): HTMLElement {
+    const level = this.progression.nodeLevel(node.id);
+    const cost = this.progression.nodeCost(node.id);
+    const locked = !this.progression.isNodeUnlocked(node.id);
+    const capped = level >= node.maxLevel;
+    const affordable = this.progression.warTokens >= cost;
+    const owned = level > 0;
+    const color = BRANCH_COLORS[node.branch];
+
+    const card = document.createElement('div');
+    card.className = 'skill-card';
+    if (owned) card.classList.add('owned');
+    else if (locked) card.classList.add('locked');
+    else if (affordable) card.classList.add('purchasable');
+    card.style.setProperty('--node-color', color);
+    card.dataset['nodeId'] = node.id;
+
+    const pips = node.maxLevel > 1
+      ? `<span class="skill-pips">${Array.from({ length: node.maxLevel }, (_, i) =>
+          `<i class="skill-pip${i < level ? ' filled' : ''}"></i>`).join('')}</span>`
+      : `<span class="skill-level-badge">${level > 0 ? '✓' : (locked ? '🔒' : '◈')}</span>`;
+
+    const statusLine = locked
+      ? `<span class="skill-status locked">Locked</span>`
+      : capped
+        ? `<span class="skill-status complete">Complete</span>`
+        : `<span class="skill-status cost${affordable ? '' : ' unaffordable'}">${cost} WT</span>`;
+
+    card.innerHTML = `
+      <div class="skill-card-glyph">${node.title.charAt(0)}</div>
+      <div class="skill-card-body">
+        <div class="skill-card-top">
+          <strong class="skill-card-title">${node.title}</strong>
+          ${pips}
+        </div>
+        <p class="skill-card-desc">${node.description}</p>
+        <div class="skill-card-footer">${statusLine}</div>
+      </div>`;
+
+    card.addEventListener('pointerenter', (event) => this.showTooltip(node, event));
+    card.addEventListener('pointerleave', () => this.hideTooltip());
+    card.addEventListener('click', () => this.onCardClick(node));
+
+    return card;
   }
 
-  private onWheel(event: WheelEvent): void {
-    event.preventDefault();
-    const before = this.toTree(event);
-    this.zoom = Math.min(2.2, Math.max(0.45, this.zoom * (event.deltaY > 0 ? 0.9 : 1.1)));
-    const point = this.toCanvas(event);
-    this.offsetX = point.x - before.x * this.zoom;
-    this.offsetY = point.y - before.y * this.zoom;
-    this.render();
-  }
-
-  private onClick(event: MouseEvent): void {
-    if (this.moved) return;
-    const tree = this.toTree(event);
-    const node = this.nodeAt(tree.x, tree.y);
-    if (!node || node.kind === 'core') return;
+  private onCardClick(node: SkillNode): void {
     if (this.isCompactLayout()) {
       this.showMobileDialog(node);
       return;
     }
     if (this.progression.purchaseNode(node.id)) {
-      this.render();
-      this.showTooltip(node, this.toCanvas(event).x, this.toCanvas(event).y);
+      this.refreshCards();
+    }
+  }
+
+  private refreshCards(): void {
+    this.tokenValue.textContent = this.progression.warTokens.toLocaleString();
+    const cards = this.branchColumn.querySelectorAll<HTMLElement>('.skill-card');
+    for (const card of cards) {
+      const id = card.dataset['nodeId'];
+      if (!id) continue;
+      const node = SKILL_NODES.find((n) => n.id === id);
+      if (!node) continue;
+      const level = this.progression.nodeLevel(node.id);
+      const cost = this.progression.nodeCost(node.id);
+      const locked = !this.progression.isNodeUnlocked(node.id);
+      const capped = level >= node.maxLevel;
+      const affordable = this.progression.warTokens >= cost;
+      const owned = level > 0;
+
+      card.classList.toggle('owned', owned);
+      card.classList.toggle('locked', !owned && locked);
+      card.classList.toggle('purchasable', !owned && !locked && affordable);
+
+      // Update pips
+      const pipContainer = card.querySelector('.skill-pips');
+      if (pipContainer) {
+        pipContainer.innerHTML = Array.from({ length: node.maxLevel }, (_, i) =>
+          `<i class="skill-pip${i < level ? ' filled' : ''}"></i>`).join('');
+      }
+
+      const badge = card.querySelector('.skill-level-badge');
+      if (badge) badge.textContent = owned ? '✓' : locked ? '🔒' : '◈';
+
+      const status = card.querySelector('.skill-status');
+      if (status) {
+        status.className = 'skill-status' + (locked ? ' locked' : capped ? ' complete' : affordable ? ' cost' : ' cost unaffordable');
+        status.textContent = locked ? 'Locked' : capped ? 'Complete' : `${cost} WT`;
+      }
     }
   }
 
@@ -258,7 +270,7 @@ export class MetaMenu {
     const node = this.selectedNode;
     if (!node) return;
     if (this.progression.purchaseNode(node.id)) {
-      this.render();
+      this.refreshCards();
       this.hideMobileDialog();
       return;
     }
@@ -266,125 +278,27 @@ export class MetaMenu {
     if (!this.mobileDialogBuy.disabled) this.mobileDialogStatus.textContent = 'Purchase failed. Try again.';
   }
 
-  private showTooltip(node: SkillNode, screenX: number, screenY: number): void {
+  private showTooltip(node: SkillNode, event: PointerEvent): void {
     const level = this.progression.nodeLevel(node.id);
     const cost = node.kind === 'core' ? 0 : this.progression.nodeCost(node.id);
     const locked = !this.progression.isNodeUnlocked(node.id);
     const capped = level >= node.maxLevel;
-    const canvasBounds = this.canvas.getBoundingClientRect();
-    const panelBounds = this.panel.getBoundingClientRect();
-    const scale = canvasBounds.width / VIEW_WIDTH;
-    const offsetLeft = canvasBounds.left - panelBounds.left;
-    const offsetTop = canvasBounds.top - panelBounds.top;
     this.tooltip.innerHTML = `<header><strong>${node.title}</strong><span>${node.kind === 'core' ? '' : `${level}/${node.maxLevel}`}</span></header><p>${node.description}</p><footer>${locked ? 'Locked, unlock the previous node' : capped ? 'Complete' : `${cost} War Tokens`}</footer>`;
     this.tooltip.hidden = false;
-    const x = screenX * scale + offsetLeft + 20;
-    const y = screenY * scale + offsetTop - 10;
-    this.tooltip.style.left = `${Math.min(x, panelBounds.width - this.tooltip.offsetWidth - 4)}px`;
-    this.tooltip.style.top = `${Math.max(0, Math.min(y, panelBounds.height - this.tooltip.offsetHeight - 4))}px`;
+
+    const panelBounds = this.panel.getBoundingClientRect();
+    const ex = event.clientX - panelBounds.left + 14;
+    const ey = event.clientY - panelBounds.top - 10;
+    this.tooltip.style.left = `${Math.min(ex, panelBounds.width - this.tooltip.offsetWidth - 4)}px`;
+    this.tooltip.style.top = `${Math.max(0, Math.min(ey, panelBounds.height - this.tooltip.offsetHeight - 4))}px`;
   }
 
   private hideTooltip(): void {
     this.tooltip.hidden = true;
-    if (this.hovered) {
-      this.hovered = null;
-      this.render();
-    }
   }
 
   private isCompactLayout(): boolean {
     return window.matchMedia('(max-width: 760px)').matches || window.matchMedia('(pointer: coarse)').matches;
   }
-
-  private setLegendVisible(visible: boolean): void {
-    this.legend.hidden = !visible;
-    this.legendToggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
-    this.legendToggle.textContent = visible ? 'Hide Legend' : 'Show Legend';
-  }
-
-  private resetView(): void {
-    const width = TREE_BOUNDS.maxX - TREE_BOUNDS.minX;
-    const height = TREE_BOUNDS.maxY - TREE_BOUNDS.minY;
-    const zoomX = (VIEW_WIDTH - TREE_PADDING) / width;
-    const zoomY = (VIEW_HEIGHT - TREE_PADDING) / height;
-    const fitZoom = Math.min(1, zoomX, zoomY);
-    this.zoom = this.isCompactLayout() ? Math.min(1.35, Math.max(1.15, fitZoom * 1.9)) : fitZoom;
-    const centerX = (TREE_BOUNDS.minX + TREE_BOUNDS.maxX) / 2;
-    const centerY = (TREE_BOUNDS.minY + TREE_BOUNDS.maxY) / 2;
-    this.offsetX = VIEW_WIDTH / 2 - centerX * this.zoom;
-    this.offsetY = VIEW_HEIGHT / 2 - centerY * this.zoom;
-  }
-
-  private render(): void {
-    this.tokenValue.textContent = this.progression.warTokens.toLocaleString();
-    const context = this.context;
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.fillStyle = '#05070a';
-    context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-    const glow = context.createRadialGradient(VIEW_WIDTH / 2, VIEW_HEIGHT / 2, 20, VIEW_WIDTH / 2, VIEW_HEIGHT / 2, VIEW_HEIGHT);
-    glow.addColorStop(0, 'rgba(90, 30, 40, .35)');
-    glow.addColorStop(1, 'rgba(5, 7, 10, 0)');
-    context.fillStyle = glow;
-    context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-
-    context.setTransform(this.zoom, 0, 0, this.zoom, this.offsetX, this.offsetY);
-    this.renderEdges(context);
-    for (const node of SKILL_NODES) this.renderNode(context, node);
-    context.setTransform(1, 0, 0, 1, 0, 0);
-  }
-
-  private renderEdges(context: CanvasRenderingContext2D): void {
-    for (const node of SKILL_NODES) {
-      if (!node.parent) continue;
-      const parent = SKILL_NODES.find((entry) => entry.id === node.parent)!;
-      const owned = this.progression.nodeLevel(node.id) > 0;
-      const reachable = this.progression.isNodeUnlocked(node.id);
-      context.strokeStyle = BRANCH_COLORS[node.branch];
-      context.globalAlpha = owned ? 0.95 : reachable ? 0.45 : 0.16;
-      context.lineWidth = owned ? 2.5 : 1.5;
-      context.beginPath();
-      context.moveTo(parent.x, parent.y);
-      context.lineTo(node.x, node.y);
-      context.stroke();
-    }
-    context.globalAlpha = 1;
-  }
-
-  private renderNode(context: CanvasRenderingContext2D, node: SkillNode): void {
-    const level = this.progression.nodeLevel(node.id);
-    const owned = level > 0;
-    const reachable = this.progression.isNodeUnlocked(node.id);
-    const color = BRANCH_COLORS[node.branch];
-    const half = NODE_SIZE / 2;
-    const hovered = this.hovered === node;
-
-    context.globalAlpha = owned ? 1 : reachable ? 0.75 : 0.3;
-    if (owned) {
-      context.save();
-      context.shadowColor = color;
-      context.shadowBlur = hovered ? 26 : 14;
-      context.fillStyle = color;
-      context.fillRect(node.x - half, node.y - half, NODE_SIZE, NODE_SIZE);
-      context.restore();
-    } else {
-      context.fillStyle = '#101720';
-      context.fillRect(node.x - half, node.y - half, NODE_SIZE, NODE_SIZE);
-    }
-    context.strokeStyle = hovered ? '#ffffff' : color;
-    context.lineWidth = hovered ? 2.5 : 1.5;
-    context.strokeRect(node.x - half, node.y - half, NODE_SIZE, NODE_SIZE);
-
-    context.fillStyle = owned ? '#0b1016' : color;
-    context.font = 'bold 15px Verdana, sans-serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(node.title.charAt(0), node.x, node.y - 1);
-
-    if (node.kind !== 'core') {
-      context.fillStyle = owned ? color : '#7d8894';
-      context.font = '10px Verdana, sans-serif';
-      context.fillText(`${level}/${node.maxLevel}`, node.x, node.y + half + 9);
-    }
-    context.globalAlpha = 1;
-  }
 }
+

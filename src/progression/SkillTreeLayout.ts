@@ -161,3 +161,14 @@ function buildNodes(): SkillNode[] {
 }
 
 export const SKILL_NODES: readonly SkillNode[] = buildNodes();
+
+export type BranchTab = { branch: SkillBranch; label: string };
+
+export const BRANCH_ORDER: readonly BranchTab[] = [
+  { branch: 'offense',   label: 'Offense'   },
+  { branch: 'defense',   label: 'Defense'   },
+  { branch: 'economy',   label: 'Economy'   },
+  { branch: 'arcane',    label: 'Arcane'    },
+  { branch: 'abilities', label: 'Abilities' },
+  { branch: 'command',   label: 'Command'   },
+];
