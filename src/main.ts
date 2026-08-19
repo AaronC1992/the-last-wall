@@ -160,7 +160,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           </div>
           <nav id="skill-tab-bar" class="skill-tab-bar" role="tablist"></nav>
           <div class="skill-header-actions">
-            <button id="meta-close" type="button" class="skill-close">Close</button>
             <button id="skill-play" type="button" class="skill-play-btn">Back</button>
           </div>
         </header>
