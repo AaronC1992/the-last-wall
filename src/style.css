@@ -233,7 +233,7 @@ button { font: inherit; }
 	.build-slot { width: 50px; height: 50px; flex: 0 0 50px; }
 	.start-battle { top: 166px; right: 8px; bottom: auto; padding: 8px 12px; font-size: 14px; }
 	.move-mode-button { top: 166px; right: 194px; bottom: auto; padding: 8px 10px; font-size: 12px; }
-	.remove-mode-button { top: 166px; right: 100px; bottom: auto; padding: 8px 10px; font-size: 12px; }
+	.remove-mode-button { top: 166px; right: 116px; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.build-settings-button { top: 166px; right: 287px; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.main-menu-button { top: 166px; left: 8px; right: auto; bottom: auto; padding: 8px 10px; font-size: 12px; }
 	.ability-strip { left: 8px; right: 8px; bottom: 78px; display: flex; flex-direction: row; gap: 5px; overflow-x: auto; overflow-y: hidden; }
