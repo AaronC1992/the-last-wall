@@ -154,19 +154,20 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <section id="armory-menu" class="menu-panel" hidden><div class="panel-heading"><strong>Armory</strong><button id="armory-close" type="button">Close</button></div><div class="statistics-grid"><span>Ballista <b>Online</b></span><span>Cannon <b id="armory-cannon">Locked, 15 Tokens</b></span><span>Fire Tower <b id="armory-fire">Locked, 30 Tokens</b></span><span>Lightning Tower <b id="armory-lightning">Locked, 55 Tokens</b></span><span>Mortar <b id="armory-mortar">Locked, 45 Tokens</b></span></div></section>
 
       <section id="meta-menu" class="meta-menu" hidden>
-        <canvas id="skill-tree-canvas"></canvas>
-        <div class="skill-currency">
-          <span class="resource token"><i></i><strong>War Tokens</strong><b id="tokens-value">0</b></span>
-        </div>
-        <button id="skill-legend-toggle" type="button" class="skill-legend-toggle" aria-expanded="false">Show Legend</button>
-        <div id="skill-legend" class="skill-legend" aria-label="Tech Tree legend">
-          <strong>TECH TREE LEGEND</strong>
-          <span><i class="legend-swatch offense"></i>Offense, Ballista damage and fire rate</span>
-          <span><i class="legend-swatch defense"></i>Defense, wall strength and Cannon plans</span>
-          <span><i class="legend-swatch economy"></i>Economy, Build Points and War Token rewards</span>
-          <span><i class="legend-swatch arcane"></i>Arcane, Fire, Lightning and Mortar plans</span>
-          <span><i class="legend-swatch abilities"></i>Abilities, battlefield powers</span>
-          <small>All purchases use blue War Tokens earned from completed runs. Branch colors show what a node improves.</small>
+        <header class="skill-header">
+          <div class="skill-currency">
+            <span class="resource token"><i></i><strong>War Tokens</strong><b id="tokens-value">0</b></span>
+          </div>
+          <nav id="skill-tab-bar" class="skill-tab-bar" role="tablist"></nav>
+          <div class="skill-header-actions">
+            <button id="meta-close" type="button" class="skill-close">Close</button>
+            <button id="skill-play" type="button" class="skill-play-btn">Back</button>
+          </div>
+        </header>
+        <div id="skill-tree-content" class="skill-tree-content">
+          <div id="skill-branch-scroll" class="skill-branch-scroll">
+            <div id="skill-branch-column" class="skill-branch-column"></div>
+          </div>
         </div>
         <div id="skill-tooltip" class="skill-tooltip" hidden></div>
         <div id="skill-mobile-dialog" class="skill-mobile-dialog" hidden>
@@ -187,8 +188,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <button id="skill-hints-close" type="button" aria-label="Dismiss controls">X</button>
           <div id="skill-hints-content"></div>
         </div>
-        <button id="meta-close" type="button" class="skill-close">Close</button>
-        <button id="skill-play" type="button" class="skill-play">Back</button>
       </section>
 
       <button id="meta-button" type="button" class="corner-button">Upgrades</button>
